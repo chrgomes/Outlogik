@@ -110,3 +110,56 @@ def token_from_last_email(path: str) -> str:
     match = re.search(rf"{re.escape(path)}\?token=([\w-]+)", body)
     assert match, body
     return match.group(1)
+
+
+# --- organization helpers -------------------------------------------------------------------
+
+def seed_member(db, org_slug: str, email: str, role_key: str, *, name: str | None = None,
+                password: str = PASSWORD, status: str = "active"):
+    """Create a user and add them straight to an organization (bypassing invitations)."""
+    from sqlalchemy import select as _select
+
+    from app.core.security import hash_password
+    from app.models import Organization, OrganizationMember, Role, User
+
+    org = db.scalar(_select(Organization).where(Organization.slug == org_slug))
+    role = db.scalar(_select(Role).where(Role.organization_id == org.id,
+                                         Role.system_key == role_key))
+    user = db.scalar(_select(User).where(User.email == email))
+    if user is None:
+        user = User(email=email, full_name=name or email.split("@")[0].title(),
+                    password_hash=hash_password(password))
+        db.add(user)
+        db.flush()
+    member = OrganizationMember(organization_id=org.id, user_id=user.id, role_id=role.id,
+                                status=status)
+    db.add(member)
+    db.commit()
+    return member
+
+
+def seed_client(db, org_slug: str, name: str = "Client Co"):
+    from sqlalchemy import select as _select
+
+    from app.models import Client, Organization
+
+    org = db.scalar(_select(Organization).where(Organization.slug == org_slug))
+    client = Client(organization_id=org.id, name=name)
+    db.add(client)
+    db.commit()
+    return client
+
+
+def role_id(db, org_slug: str, role_key: str) -> str:
+    from sqlalchemy import select as _select
+
+    from app.models import Organization, Role
+
+    return str(db.scalar(
+        _select(Role.id).join(Organization, Organization.id == Role.organization_id)
+        .where(Organization.slug == org_slug, Role.system_key == role_key)
+    ))
+
+
+def slug_of(me: dict) -> str:
+    return me["memberships"][0]["organization_slug"]

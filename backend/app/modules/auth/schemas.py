@@ -63,3 +63,20 @@ class MeOut(BaseModel):
 
 class MessageOut(BaseModel):
     message: str
+
+
+class AcceptInviteIn(BaseModel):
+    token: Annotated[str, Field(min_length=10, max_length=200)]
+    # Only needed when the invited email has no account yet.
+    full_name: Name | None = None
+    password: Password | None = None
+
+
+class InvitePreviewOut(BaseModel):
+    email: str
+    organization_name: str
+    role_name: str
+    client_name: str | None
+    invited_by: str | None
+    account_exists: bool
+    expires_at: datetime

@@ -6,9 +6,11 @@ from app.core.request import client_ip, user_agent
 from app.modules.audit.service import record
 from app.modules.auth import service
 from app.modules.auth.cookies import clear_session_cookie, set_session_cookie
-from app.modules.auth.deps import DB, CurrentAuth, CurrentUser
+from app.modules.auth.deps import DB, CurrentAuth, CurrentUser, OptionalAuth
 from app.modules.auth.schemas import (
+    AcceptInviteIn,
     ForgotPasswordIn,
+    InvitePreviewOut,
     LoginIn,
     MeOut,
     MessageOut,
@@ -17,6 +19,7 @@ from app.modules.auth.schemas import (
     TokenIn,
     UserOut,
 )
+from app.modules.organizations import invitations
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -127,3 +130,33 @@ def resend_verification(user: CurrentUser, db: DB) -> MessageOut:
         service.send_verification_email(db, user)
         db.commit()
     return MessageOut(message="If your email isn't confirmed yet, we've sent a new link.")
+
+
+@router.post("/invitations/preview", response_model=InvitePreviewOut,
+             summary="Show who invited whom to what, for the accept-invite page")
+def preview_invitation(body: TokenIn, request: Request, db: DB) -> InvitePreviewOut:
+    hit("invite:ip", client_ip(request) or "unknown", get_settings().rate_limit_login)
+    found = invitations.find_open(db, body.token)
+    return InvitePreviewOut(
+        email=found.invitation.email, organization_name=found.organization.name,
+        role_name=found.role.name, client_name=found.client.name if found.client else None,
+        invited_by=found.inviter.full_name if found.inviter else None,
+        account_exists=found.existing_user is not None,
+        expires_at=found.invitation.expires_at,
+    )
+
+
+@router.post("/accept-invite", response_model=MeOut)
+def accept_invite(body: AcceptInviteIn, request: Request, response: Response, db: DB,
+                  auth: OptionalAuth) -> MeOut:
+    ip = client_ip(request)
+    hit("invite:ip", ip or "unknown", get_settings().rate_limit_login)
+    user, _, created = invitations.accept(
+        db, body.token, current_user=auth.user if auth else None,
+        full_name=body.full_name, password=body.password, ip=ip,
+    )
+    if created:
+        token = service.create_session(db, user, ip, user_agent(request))
+        set_session_cookie(response, token)
+    db.commit()
+    return _me(db, user)

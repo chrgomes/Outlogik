@@ -29,10 +29,17 @@ def get_auth(request: Request, db: Session = Depends(get_db)) -> AuthContext:
     return AuthContext(*resolved)
 
 
+def get_optional_auth(request: Request, db: Session = Depends(get_db)) -> AuthContext | None:
+    token = request.cookies.get(get_settings().session_cookie_name)
+    resolved = resolve_session(db, token) if token else None
+    return AuthContext(*resolved) if resolved else None
+
+
 def get_current_user(auth: AuthContext = Depends(get_auth)) -> User:
     return auth.user
 
 
 CurrentAuth = Annotated[AuthContext, Depends(get_auth)]
+OptionalAuth = Annotated[AuthContext | None, Depends(get_optional_auth)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 DB = Annotated[Session, Depends(get_db)]

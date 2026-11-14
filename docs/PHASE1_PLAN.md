@@ -191,4 +191,4 @@ Each step ends with the app running and the tests passing, committed to a featur
 2. **Mailpit:** approved as a dev-only email container.
 3. **Sign-up:** open sign-up (anyone can register a new agency), matching the spec's end-to-end test flow. Can be switched to invite-only with a config flag.
 4. **Tenant isolation:** app-level scoping + isolation tests now; PostgreSQL row-level security later.
-5. **GitHub repo:** not chosen yet. Code is delivered as a zip until then.
+5. **GitHub repo:** `chrgomes/Outlogik`. Work is pushed to feature branches.
