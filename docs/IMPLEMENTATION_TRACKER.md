@@ -10,7 +10,7 @@ Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the
 | 4 | Organizations, members, invitations + tests | ✅ Done | 37 tests, incl. tenant isolation |
 | 5 | Roles and permissions + permission tests | ⏳ Next | Done early: catalogue, default roles, `require(permission)` enforcement. To do: roles API, custom roles, permission tests across every route |
 | 6 | Clients and websites + tenant isolation tests | ☐ | |
-| 7 | Frontend: brand, themes, layout shell | ◐ Partly | Logo vectorised, favicon and app icons done (`docs/brand/`); themes and layout to do |
+| 7 | Frontend: brand, themes, layout shell | ◐ Partly | Logo done (symbol redrawn, wordmark in Albert Sans), favicon and app icons (`docs/brand/`). Themes and layout to do |
 | 8 | Frontend: authentication pages | ☐ | |
 | 9 | Frontend: clients, websites, settings pages | ☐ | |
 | 10 | Dashboard (backend + frontend) | ☐ | |
@@ -21,8 +21,9 @@ Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the
 - **No third-party CDNs in the frontend.** Fonts, scripts, styles and icons are bundled and
   served by Outlogik itself. In particular, nothing loads from Google Fonts. (Privacy and
   GDPR: visitors' browsers only talk to Outlogik.)
-- **Wordmark:** the AI-generated concept wordmark resembled Logitech's and will be replaced
-  by one set in an open-licensed typeface (being chosen). The symbol stays.
+- **Brand typeface: Albert Sans** (SIL OFL 1.1), for the wordmark and the UI. The
+  AI-generated concept wordmark was dropped because it resembled Logitech's. See
+  `docs/brand/README.md`.
 
 ## Changes from the plan
 

@@ -18,6 +18,11 @@ Frontend (npm)
   RxJS ................... Apache-2.0
   tslib .................. 0BSD
 
+Brand typeface
+  Albert Sans ............ SIL Open Font License 1.1
+                           (wordmark outlines in frontend/public/brand; font files
+                           bundled and self-hosted by the app)
+
 Development services (docker-compose.yml, not distributed)
   PostgreSQL ............. PostgreSQL License
   Redis 7 ................ BSD-3-Clause
