@@ -11,7 +11,7 @@ Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the
 | 5 | Roles and permissions + permission tests | ✅ Done | Roles API, custom roles, escalation guard, system-role sync; 38 tests incl. a permission matrix over every org route |
 | 6 | Clients and websites + tenant isolation tests | ✅ Done | Migration `0002`; 56 tests incl. client-portal scoping and cross-org attempts |
 | 7 | Frontend: brand, themes, layout shell | ✅ Done | Tokens + Bootstrap 5.3, light/dark/system theme, collapsible sidebar, org switcher, user menu; 15 frontend tests |
-| 8 | Frontend: authentication pages | ⏳ Next | |
+| 8 | Frontend: authentication pages | ✅ Done | Sign in/up, forgot/reset, verify email, accept invite, verify banner; 25 new frontend tests; all flows checked in Chromium |
 | 9 | Frontend: clients, websites, settings pages | ☐ | |
 | 10 | Dashboard (backend + frontend) | ☐ | |
 | 11 | Docs, tracker, final test pass | ☐ | |
@@ -100,6 +100,17 @@ Small additions made while building. None change an approved decision.
 - **Placeholders:** Dashboard, Clients, Websites and Settings say which step builds them, and show no sample data. `/login` is a placeholder until step 8.
 - **Fixed during browser testing:** opening or reloading an organization URL showed "not found", because route guards run in parallel. The organization guard now waits for the user itself, and a unit test covers a fresh page load.
 - **Bundle budget** raised to 700 kB warning / 1 MB error. Currently 579 kB raw, about 123 kB compressed.
+
+## Authentication pages (step 8)
+
+- **Pages:** `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`, `/accept-invite`. Each loads on demand (1–6 kB) and uses the same centred card.
+- **Return after sign-in** goes only to same-app paths; external, `//` and `/\` URLs fall back to `/` (no open redirect). Unit-tested.
+- **Emailed-link tokens** are read once, then removed from the address bar (`replaceUrl`), so they don't stay in browser history. `<meta name="referrer" content="same-origin">` stops them leaking to other sites.
+- **Accept invitation** covers every case: new account (name + password); existing account signed out ("Sign in to accept", coming back with the token); signed in as someone else ("Sign out and continue"); signed in as the invitee (one click); and invalid, expired or cancelled links.
+- **Errors:** API field errors show on the matching inputs. "Email already registered" offers a sign-in link. Rate limits say how long to wait, and network failures say so. A failed sign-in clears the password field.
+- **Unconfirmed email:** a banner in the app with "Resend link" until the address is confirmed.
+- **Expired or revoked sessions:** the next API call sends the user to sign-in, with a link back and an explanation. Pages that make no API calls (the current placeholders) find out on the next call.
+- Backend: the invitation preview now also returns `organization_slug`, so the page can open the right organization after accepting.
 
 ## Known gaps / follow-ups
 

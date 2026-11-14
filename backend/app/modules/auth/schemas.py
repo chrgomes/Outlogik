@@ -75,6 +75,7 @@ class AcceptInviteIn(BaseModel):
 class InvitePreviewOut(BaseModel):
     email: str
     organization_name: str
+    organization_slug: str
     role_name: str
     client_name: str | None
     invited_by: str | None

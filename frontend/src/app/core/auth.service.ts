@@ -1,9 +1,9 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 
-import { Me } from './api.types';
+import { InvitePreview, Me } from './api.types';
 
 const API = '/api/v1/auth';
 
@@ -47,18 +47,62 @@ export class AuthService {
     return this.ensureLoaded();
   }
 
+  // --- sign-in flows (each sets the signed-in user from the response) -----------------------
+
+  async login(email: string, password: string): Promise<Me> {
+    return this.signedIn(this.http.post<Me>(`${API}/login`, { email, password }));
+  }
+
+  async register(body: {
+    email: string; password: string; full_name: string; organization_name: string;
+  }): Promise<Me> {
+    return this.signedIn(this.http.post<Me>(`${API}/register`, body));
+  }
+
+  async acceptInvite(body: { token: string; full_name?: string; password?: string }): Promise<Me> {
+    return this.signedIn(this.http.post<Me>(`${API}/accept-invite`, body));
+  }
+
+  previewInvite(token: string): Promise<InvitePreview> {
+    return firstValueFrom(this.http.post<InvitePreview>(`${API}/invitations/preview`, { token }));
+  }
+
+  forgotPassword(email: string): Promise<unknown> {
+    return firstValueFrom(this.http.post(`${API}/forgot-password`, { email }));
+  }
+
+  resetPassword(token: string, password: string): Promise<unknown> {
+    return firstValueFrom(this.http.post(`${API}/reset-password`, { token, password }));
+  }
+
+  async verifyEmail(token: string): Promise<void> {
+    await firstValueFrom(this.http.post(`${API}/verify-email`, { token }));
+    if (this.me()) await this.refresh();
+  }
+
+  resendVerification(): Promise<unknown> {
+    return firstValueFrom(this.http.post(`${API}/resend-verification`, {}));
+  }
+
+  private async signedIn(request: Observable<Me>): Promise<Me> {
+    const me = await firstValueFrom(request);
+    this.me.set(me);
+    this.loaded = true;
+    return me;
+  }
+
   /** Forget the session locally (it has expired or been revoked server-side). */
   clear(): void {
     this.me.set(null);
     this.loaded = true;
   }
 
-  async logout(everywhere = false): Promise<void> {
+  async logout(everywhere = false, then = '/login'): Promise<void> {
     try {
       await firstValueFrom(this.http.post(`${API}/${everywhere ? 'logout-all' : 'logout'}`, {}));
     } finally {
       this.clear();
-      await this.router.navigateByUrl('/login');
+      await this.router.navigateByUrl(then);
     }
   }
 }

@@ -139,6 +139,7 @@ def preview_invitation(body: TokenIn, request: Request, db: DB) -> InvitePreview
     found = invitations.find_open(db, body.token)
     return InvitePreviewOut(
         email=found.invitation.email, organization_name=found.organization.name,
+        organization_slug=found.organization.slug,
         role_name=found.role.name, client_name=found.client.name if found.client else None,
         invited_by=found.inviter.full_name if found.inviter else None,
         account_exists=found.existing_user is not None,

@@ -23,8 +23,35 @@ export const routes: Routes = [
         path: 'login',
         canActivate: [guestGuard],
         title: 'Sign in · Outlogik',
+        loadComponent: () => import('./features/auth/login').then((m) => m.Login),
+      },
+      {
+        path: 'register',
+        canActivate: [guestGuard],
+        title: 'Create account · Outlogik',
+        loadComponent: () => import('./features/auth/register').then((m) => m.Register),
+      },
+      {
+        path: 'forgot-password',
+        title: 'Reset password · Outlogik',
         loadComponent: () =>
-          import('./features/auth/login-placeholder').then((m) => m.LoginPlaceholder),
+          import('./features/auth/forgot-password').then((m) => m.ForgotPassword),
+      },
+      {
+        path: 'reset-password',
+        title: 'Choose a new password · Outlogik',
+        loadComponent: () =>
+          import('./features/auth/reset-password').then((m) => m.ResetPassword),
+      },
+      {
+        path: 'verify-email',
+        title: 'Confirm email · Outlogik',
+        loadComponent: () => import('./features/auth/verify-email').then((m) => m.VerifyEmail),
+      },
+      {
+        path: 'accept-invite',
+        title: 'Accept invitation · Outlogik',
+        loadComponent: () => import('./features/auth/accept-invite').then((m) => m.AcceptInvite),
       },
       { path: 'not-found', component: NotFound, title: 'Not found · Outlogik' },
       {

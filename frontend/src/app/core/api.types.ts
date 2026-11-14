@@ -34,3 +34,14 @@ export interface Page<T> {
   page: number;
   page_size: number;
 }
+
+export interface InvitePreview {
+  email: string;
+  organization_name: string;
+  organization_slug: string;
+  role_name: string;
+  client_name: string | null;
+  invited_by: string | null;
+  account_exists: boolean;
+  expires_at: string;
+}
