@@ -10,8 +10,8 @@ Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the
 | 4 | Organizations, members, invitations + tests | ✅ Done | 37 tests, incl. tenant isolation |
 | 5 | Roles and permissions + permission tests | ✅ Done | Roles API, custom roles, escalation guard, system-role sync; 38 tests incl. a permission matrix over every org route |
 | 6 | Clients and websites + tenant isolation tests | ✅ Done | Migration `0002`; 56 tests incl. client-portal scoping and cross-org attempts |
-| 7 | Frontend: brand, themes, layout shell | ⏳ Next | Logo done (symbol redrawn, wordmark in Albert Sans), favicon and app icons (`docs/brand/`). Themes and layout to do |
-| 8 | Frontend: authentication pages | ☐ | |
+| 7 | Frontend: brand, themes, layout shell | ✅ Done | Tokens + Bootstrap 5.3, light/dark/system theme, collapsible sidebar, org switcher, user menu; 15 frontend tests |
+| 8 | Frontend: authentication pages | ⏳ Next | |
 | 9 | Frontend: clients, websites, settings pages | ☐ | |
 | 10 | Dashboard (backend + frontend) | ☐ | |
 | 11 | Docs, tracker, final test pass | ☐ | |
@@ -89,6 +89,17 @@ Small additions made while building. None change an approved decision.
 - **Non-public addresses are refused:** IP literals, `localhost`, single-label hosts and internal suffixes (`.local`, `.internal`, `.lan`, …), plus URLs with credentials. This is a first line of defence only. The Phase 2 crawler must also check the resolved IP at fetch time (SSRF).
 - Search inputs escape SQL `LIKE` wildcards, so searching for `_` or `%` matches them literally.
 - Audit entries: `client.create` / `update` / `delete`, `client_user.link` / `unlink`, `website.create` / `update` / `delete`.
+
+## Frontend foundation (step 7)
+
+- **Styling:** Bootstrap 5.3.8 SCSS (only the modules used) under Outlogik tokens in `frontend/src/styles/`. Components use semantic CSS variables (`--ol-surface`, `--ol-text-muted`, …), defined for both themes. Colour is reserved for status.
+- **Typeface:** Albert Sans 400/500/600, bundled from `@fontsource/albert-sans`. **Icons:** 28 Bootstrap Icons inlined as SVG via `<ol-icon>`; regenerate with `npm run icons`. Nothing loads from a CDN.
+- **Themes:** Light, Dark or Match system (default), remembered per browser. An inline script in `index.html` applies it before first paint, so there's no flash.
+- **Shell:** the sidebar collapses to icons (remembered) and becomes a slide-over below 992 px. The top bar has the organization switcher, theme menu and account menu (sign out / sign out of all devices). Menus use Angular CDK for keyboard and screen-reader support. There's a skip-to-content link, and navigation sets `aria-current`.
+- **Routing:** `/` goes to your first organization. `/o/:slug/…` requires sign-in and membership; another organization's URL shows "not found". Pages your role can't open show "no access" (the API refuses too). Nav items are hidden by permission. If any API call returns 401, you're sent to sign-in with a link back.
+- **Placeholders:** Dashboard, Clients, Websites and Settings say which step builds them, and show no sample data. `/login` is a placeholder until step 8.
+- **Fixed during browser testing:** opening or reloading an organization URL showed "not found", because route guards run in parallel. The organization guard now waits for the user itself, and a unit test covers a fresh page load.
+- **Bundle budget** raised to 700 kB warning / 1 MB error. Currently 579 kB raw, about 123 kB compressed.
 
 ## Known gaps / follow-ups
 

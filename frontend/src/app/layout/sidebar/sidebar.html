@@ -1,0 +1,56 @@
+<div class="brand">
+  <a [routerLink]="['/o', org.slug()]" class="brand-link" aria-label="Outlogik home">
+    @if (collapsed()) {
+      <ol-logo variant="symbol" />
+    } @else {
+      <ol-logo variant="full" />
+    }
+  </a>
+  @if (layout.isMobile()) {
+    <button type="button" class="icon-btn" (click)="layout.closeMobile()" aria-label="Close menu">
+      <ol-icon name="x-lg" />
+    </button>
+  }
+</div>
+
+<nav aria-label="Main">
+  @for (section of sections(); track $index) {
+    @if (section.label) {
+      @if (collapsed()) {
+        <div class="section-divider" role="separator"></div>
+      } @else {
+        <div class="section-label">{{ section.label }}</div>
+      }
+    }
+    <ul>
+      @for (item of section.items; track item.path) {
+        <li>
+          <a
+            [routerLink]="['/o', org.slug(), item.path]"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            [attr.title]="collapsed() ? item.label : null"
+            [attr.aria-label]="collapsed() ? item.label : null"
+          >
+            <ol-icon [name]="item.icon" size="1.0625rem" />
+            <span class="label">{{ item.label }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</nav>
+
+@if (!layout.isMobile()) {
+  <button
+    type="button"
+    class="collapse-btn"
+    (click)="layout.toggleCollapsed()"
+    [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+    [attr.aria-expanded]="!collapsed()"
+    [attr.title]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+  >
+    <ol-icon name="layout-sidebar" size="1.0625rem" />
+    <span class="label">Collapse</span>
+  </button>
+}

@@ -14,14 +14,18 @@ Backend (Python)
   redis-py ............... MIT
 
 Frontend (npm)
-  Angular ................ MIT
+  Angular, Angular CDK ... MIT
+  Bootstrap .............. MIT
+  Bootstrap Icons ........ MIT (selected icons inlined as SVG, see
+                           frontend/scripts/build-icons.mjs)
+  @fontsource/albert-sans  SIL Open Font License 1.1 (font files bundled)
   RxJS ................... Apache-2.0
   tslib .................. 0BSD
 
 Brand typeface
   Albert Sans ............ SIL Open Font License 1.1
                            (wordmark outlines in frontend/public/brand; font files
-                           bundled and self-hosted by the app)
+                           bundled from @fontsource/albert-sans and self-hosted)
 
 Development services (docker-compose.yml, not distributed)
   PostgreSQL ............. PostgreSQL License
