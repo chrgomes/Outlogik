@@ -16,6 +16,14 @@ Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the
 | 10 | Dashboard (backend + frontend) | ☐ | |
 | 11 | Docs, tracker, final test pass | ☐ | |
 
+## Project rules
+
+- **No third-party CDNs in the frontend.** Fonts, scripts, styles and icons are bundled and
+  served by Outlogik itself. In particular, nothing loads from Google Fonts. (Privacy and
+  GDPR: visitors' browsers only talk to Outlogik.)
+- **Wordmark:** the AI-generated concept wordmark resembled Logitech's and will be replaced
+  by one set in an open-licensed typeface (being chosen). The symbol stays.
+
 ## Changes from the plan
 
 Small additions made while building. None change an approved decision.
