@@ -1,0 +1,26 @@
+Outlogik uses the following third-party software. Versions are pinned in
+backend/pyproject.toml, frontend/package.json and frontend/package-lock.json.
+
+Backend (Python)
+  FastAPI ................ MIT
+  Starlette .............. BSD-3-Clause
+  Uvicorn ................ BSD-3-Clause
+  SQLAlchemy ............. MIT
+  Alembic ................ MIT
+  psycopg ................ LGPL-3.0 (used unmodified as a library)
+  Pydantic, pydantic-settings ... MIT
+  email-validator ........ Unlicense
+  argon2-cffi ............ MIT
+  redis-py ............... MIT
+
+Frontend (npm)
+  Angular ................ MIT
+  RxJS ................... Apache-2.0
+  tslib .................. 0BSD
+
+Development services (docker-compose.yml, not distributed)
+  PostgreSQL ............. PostgreSQL License
+  Redis 7 ................ BSD-3-Clause
+  Mailpit ................ MIT
+
+Full license texts are available in each package's distribution.

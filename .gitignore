@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+coverage/
+
+# Env and local files
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+dump.rdb
