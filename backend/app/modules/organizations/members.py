@@ -13,6 +13,7 @@ from app.modules.organizations.models import OrganizationMember
 from app.modules.organizations.schemas import MemberOut, RoleRef
 from app.modules.rbac.catalogue import CLIENT, OWNER
 from app.modules.rbac.models import Role
+from app.modules.rbac.service import ensure_can_grant
 from app.modules.users.models import User
 from app.tenancy.context import OrgContext
 from app.tenancy.scoped import get_scoped
@@ -81,8 +82,7 @@ def update_member(db: Session, ctx: OrgContext, member_id: uuid.UUID, *,
     new_role = role
     if role_id is not None and role_id != role.id:
         new_role = get_scoped(db, Role, role_id, ctx, label="Role")
-        if new_role.system_key == OWNER and not ctx.is_owner:
-            raise Forbidden("Only an owner can make someone an owner.", code="owner_required")
+        ensure_can_grant(db, ctx.permissions, ctx.is_owner, new_role)
         if (role.system_key == CLIENT) != (new_role.system_key == CLIENT):
             raise Conflict(
                 "Client users and team members can't be switched into each other. "

@@ -8,8 +8,8 @@ Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the
 | 2 | Database, Alembic, Phase 1 models, first migration | ✅ Done | Migration `0001`; upgrade/downgrade tested; `alembic check` clean |
 | 3 | Authentication backend + tests | ✅ Done | 27 auth tests |
 | 4 | Organizations, members, invitations + tests | ✅ Done | 37 tests, incl. tenant isolation |
-| 5 | Roles and permissions + permission tests | ⏳ Next | Done early: catalogue, default roles, `require(permission)` enforcement. To do: roles API, custom roles, permission tests across every route |
-| 6 | Clients and websites + tenant isolation tests | ☐ | |
+| 5 | Roles and permissions + permission tests | ✅ Done | Roles API, custom roles, escalation guard, system-role sync; 38 tests incl. a permission matrix over every org route |
+| 6 | Clients and websites + tenant isolation tests | ⏳ Next | |
 | 7 | Frontend: brand, themes, layout shell | ◐ Partly | Logo done (symbol redrawn, wordmark in Albert Sans), favicon and app icons (`docs/brand/`). Themes and layout to do |
 | 8 | Frontend: authentication pages | ☐ | |
 | 9 | Frontend: clients, websites, settings pages | ☐ | |
@@ -64,6 +64,19 @@ Small additions made while building. None change an approved decision.
 - **Accepting:** if the email already has an account, the invitee must be signed in as that account. A new account is created with the email marked verified (they opened the emailed link) and is signed in. Invitations still work when sign-up is invite-only.
 - Removing a member also removes their client-portal links in that organization.
 - Audit entries: `organization.update`, `member.update` (with from/to), `member.remove`, `member.leave`, `invitation.create` / `resend` / `revoke` / `accept`.
+
+## Roles and permissions (step 5)
+
+- **Only owners manage roles.** The plan says owners create custom roles, so the Admin role no longer has `roles.manage`. Admins and Team Members can still view roles.
+- **Built-in roles are read-only.** Custom roles are for anything else. Names are unique per organization, ignoring case.
+- **Built-in roles stay in sync.** At startup, every organization's built-in roles are reset to the catalogue's default permission sets (set-based SQL, so cost doesn't grow per organization). New permissions reach existing organizations automatically. Custom roles are never touched.
+- **No privilege escalation.** You can only assign a role, or invite someone with it, if you hold every permission in that role (`role_exceeds_yours`). Owners hold everything; only owners can grant Owner.
+- A role still assigned to members or to open invitations can't be deleted (`role_in_use`, with counts).
+- Permission changes apply on the member's next request; nothing is cached.
+- `GET /orgs/{slug}/permissions` returns the catalogue with a display group for each code, for the role editor.
+- **Custom roles are team roles.** Client-portal access still uses the built-in Client role.
+- **Tests guard every route:** each `/orgs/{slug}/…` endpoint must resolve the organization and declare exactly one permission (only `leave` is exempt). Each built-in role is then run against every endpoint, and must be refused exactly where its permission set says so. Removing a permission check from any route fails the build.
+- Audit entries: `role.create`, `role.update` (with permissions added/removed), `role.delete`.
 
 ## Known gaps / follow-ups
 
