@@ -1,0 +1,14 @@
+<main class="placeholder">
+  <h1>Outlogik</h1>
+  <p>Phase 1 scaffold. The brand, layout and sign-in pages arrive in steps 7–8.</p>
+  <p class="status" [attr.data-status]="api.status()">
+    API:
+    @switch (api.status()) {
+      @case ('checking') { checking… }
+      @case ('ok') { connected }
+      @case ('degraded') { reachable, but the database or Redis is down }
+      @case ('unreachable') { not reachable — is uvicorn running on port 8000? }
+    }
+  </p>
+</main>
+<router-outlet />
