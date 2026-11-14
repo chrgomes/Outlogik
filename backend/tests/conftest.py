@@ -163,3 +163,19 @@ def role_id(db, org_slug: str, role_key: str) -> str:
 
 def slug_of(me: dict) -> str:
     return me["memberships"][0]["organization_slug"]
+
+
+def signed_in_as(new_client, db, org_slug: str, email: str, role_key: str):
+    """Seed a member with a built-in role and return (browser, member), already logged in."""
+    member = seed_member(db, org_slug, email, role_key)
+    browser = new_client()
+    assert login(browser, email).status_code == 200
+    return browser, member
+
+
+def link_client(db, member, client) -> None:
+    from app.models import ClientUser
+
+    db.add(ClientUser(organization_id=client.organization_id, client_id=client.id,
+                      user_id=member.user_id))
+    db.commit()

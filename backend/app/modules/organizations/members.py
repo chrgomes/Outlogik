@@ -6,7 +6,7 @@ from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import Conflict, Forbidden, NotFound
-from app.core.pagination import PageParams, apply_sort, paginate
+from app.core.pagination import PageParams, apply_sort, like_pattern, paginate
 from app.modules.audit.service import record
 from app.modules.clients.models import ClientUser
 from app.modules.organizations.models import OrganizationMember
@@ -40,8 +40,9 @@ def list_members(db: Session, ctx: OrgContext, params: PageParams, *, q: str | N
         .where(OrganizationMember.organization_id == ctx.org.id)
     )
     if q:
-        like = f"%{q.strip().lower()}%"
-        stmt = stmt.where(or_(func.lower(User.full_name).like(like), User.email.like(like)))
+        like = like_pattern(q)
+        stmt = stmt.where(or_(func.lower(User.full_name).like(like, escape="\\"),
+                              User.email.like(like, escape="\\")))
     if status:
         stmt = stmt.where(OrganizationMember.status == status)
     if role_id:

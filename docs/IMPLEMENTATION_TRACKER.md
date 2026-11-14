@@ -9,8 +9,8 @@ Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the
 | 3 | Authentication backend + tests | ✅ Done | 27 auth tests |
 | 4 | Organizations, members, invitations + tests | ✅ Done | 37 tests, incl. tenant isolation |
 | 5 | Roles and permissions + permission tests | ✅ Done | Roles API, custom roles, escalation guard, system-role sync; 38 tests incl. a permission matrix over every org route |
-| 6 | Clients and websites + tenant isolation tests | ⏳ Next | |
-| 7 | Frontend: brand, themes, layout shell | ◐ Partly | Logo done (symbol redrawn, wordmark in Albert Sans), favicon and app icons (`docs/brand/`). Themes and layout to do |
+| 6 | Clients and websites + tenant isolation tests | ✅ Done | Migration `0002`; 56 tests incl. client-portal scoping and cross-org attempts |
+| 7 | Frontend: brand, themes, layout shell | ⏳ Next | Logo done (symbol redrawn, wordmark in Albert Sans), favicon and app icons (`docs/brand/`). Themes and layout to do |
 | 8 | Frontend: authentication pages | ☐ | |
 | 9 | Frontend: clients, websites, settings pages | ☐ | |
 | 10 | Dashboard (backend + frontend) | ☐ | |
@@ -77,6 +77,18 @@ Small additions made while building. None change an approved decision.
 - **Custom roles are team roles.** Client-portal access still uses the built-in Client role.
 - **Tests guard every route:** each `/orgs/{slug}/…` endpoint must resolve the organization and declare exactly one permission (only `leave` is exempt). Each built-in role is then run against every endpoint, and must be refused exactly where its permission set says so. Removing a permission check from any route fails the build.
 - Audit entries: `role.create`, `role.update` (with permissions added/removed), `role.delete`.
+
+## Clients and websites (step 6)
+
+- **Client-portal scoping.** Members with the Client role see only the clients they're linked to (`client_users`) and those clients' websites. Anything else is a plain 404, including filtering websites by a hidden client's ID. A portal user with no links sees nothing.
+- **Internal notes stay internal.** Client records sent to portal users have `notes` and `portal_user_count` set to null.
+- **Portal access:** a client invitation links the new user to one client. `POST /clients/{id}/users` gives an existing Client-role member access to another client; only Client-role members can be linked (team members already see everything). Needs `client_users.manage`.
+- **Deleting a client** also deletes its websites, portal links and open client invitations (database cascades). The audit entry records the counts.
+- **Website URLs are normalised:** https is assumed, the host is lower-cased and IDNA-encoded, default ports, query, fragment and trailing slash are dropped. `domain` is the host without `www.`. If no name is given, it defaults to the domain.
+- **One record per URL per organization** (migration `0002`, unique on `organization_id, url`). Different paths on one domain are separate websites, and other organizations can add the same URL.
+- **Non-public addresses are refused:** IP literals, `localhost`, single-label hosts and internal suffixes (`.local`, `.internal`, `.lan`, …), plus URLs with credentials. This is a first line of defence only. The Phase 2 crawler must also check the resolved IP at fetch time (SSRF).
+- Search inputs escape SQL `LIKE` wildcards, so searching for `_` or `%` matches them literally.
+- Audit entries: `client.create` / `update` / `delete`, `client_user.link` / `unlink`, `website.create` / `update` / `delete`.
 
 ## Known gaps / follow-ups
 

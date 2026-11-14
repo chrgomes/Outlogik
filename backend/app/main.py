@@ -9,9 +9,11 @@ from app.core.db import SessionLocal
 from app.core.errors import install_error_handlers
 from app.modules import health
 from app.modules.auth.router import router as auth_router
+from app.modules.clients.router import router as clients_router
 from app.modules.organizations.router import router as organizations_router
 from app.modules.rbac.router import router as rbac_router
 from app.modules.rbac.service import sync_permissions
+from app.modules.websites.router import router as websites_router
 
 logging.basicConfig(level=logging.INFO)
 
@@ -41,6 +43,8 @@ def create_app() -> FastAPI:
     api.include_router(auth_router)
     api.include_router(organizations_router)
     api.include_router(rbac_router)
+    api.include_router(clients_router)
+    api.include_router(websites_router)
     app.include_router(api)
     return app
 

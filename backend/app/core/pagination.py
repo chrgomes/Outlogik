@@ -53,3 +53,9 @@ def paginate(db: Session, stmt: Select, params: PageParams) -> tuple[list[Any], 
         stmt.limit(params.page_size).offset((params.page - 1) * params.page_size)
     ).all()
     return list(rows), total
+
+
+def like_pattern(q: str) -> str:
+    """A case-insensitive 'contains' pattern with LIKE wildcards in the input escaped."""
+    escaped = q.strip().lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
