@@ -26,7 +26,7 @@ export const NAV: NavSection[] = [
     label: 'Settings',
     items: [
       { label: 'Organization', icon: 'building', path: 'settings/organization',
-        permission: 'organization.update' },
+        permission: 'organization.read' },
       { label: 'Team', icon: 'people', path: 'settings/members', permission: 'members.read' },
       { label: 'Roles', icon: 'shield-lock', path: 'settings/roles', permission: 'roles.read' },
     ],

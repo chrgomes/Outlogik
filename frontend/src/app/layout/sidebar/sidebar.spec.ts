@@ -24,14 +24,19 @@ describe('Sidebar', () => {
   }
 
   it('shows only the sections the role can open', () => {
-    const { links, el } = render(['dashboard.read', 'clients.read', 'websites.read']);
-    expect(links).toEqual(['Dashboard', 'Clients', 'Websites']);
+    // The built-in Client role: no team or role pages.
+    const { links } = render(['organization.read', 'dashboard.read', 'clients.read', 'websites.read']);
+    expect(links).toEqual(['Dashboard', 'Clients', 'Websites', 'Organization']);
+  });
+
+  it('hides the Settings heading when no settings page is available', () => {
+    const { el } = render(['dashboard.read', 'clients.read']);
     expect(el.textContent).not.toContain('Settings');
   });
 
   it('shows settings to roles that can manage them', () => {
     const { links } = render([
-      'dashboard.read', 'clients.read', 'websites.read', 'organization.update', 'members.read',
+      'dashboard.read', 'clients.read', 'websites.read', 'organization.read', 'members.read',
       'roles.read',
     ]);
     expect(links).toEqual(['Dashboard', 'Clients', 'Websites', 'Organization', 'Team', 'Roles']);

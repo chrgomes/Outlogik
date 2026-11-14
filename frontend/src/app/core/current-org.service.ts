@@ -12,6 +12,8 @@ export class CurrentOrgService {
     () => this.auth.memberships().find((m) => m.organization_slug === this.slug()) ?? null,
   );
   readonly permissions = computed(() => new Set(this.membership()?.permissions ?? []));
+  readonly isOwner = computed(() => this.membership()?.role_key === 'owner');
+  readonly isClientUser = computed(() => this.membership()?.role_key === 'client');
 
   /**
    * For showing or hiding UI only. The API enforces every permission itself.

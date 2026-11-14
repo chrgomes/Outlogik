@@ -8,6 +8,7 @@ export function membership(over: Partial<Membership> = {}): Membership {
     organization_status: 'active',
     role_id: 'role-1',
     role_name: 'Owner',
+    role_key: 'owner',
     permissions: [],
     ...over,
   };

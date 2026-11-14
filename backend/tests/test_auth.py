@@ -29,6 +29,7 @@ def test_register_creates_user_org_owner_membership_and_session(client, db):
     assert m["organization_name"] == "Acme Agency"
     assert m["organization_slug"] == "acme-agency"
     assert m["role_name"] == "Owner"
+    assert m["role_key"] == "owner"
     assert set(m["permissions"]) == set(PERMISSIONS)
 
     # Logged in straight away, with an HTTP-only, Secure, SameSite=Lax cookie.

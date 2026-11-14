@@ -7,12 +7,13 @@ import { LayoutService } from '../../core/layout.service';
 import { Sidebar } from '../sidebar/sidebar';
 import { Topbar } from '../topbar/topbar';
 import { VerifyBanner } from '../verify-banner/verify-banner';
+import { ToastHost } from '../../shared/toast/toast';
 
 /** The signed-in app frame: sidebar, top bar, and the page. */
 @Component({
   selector: 'ol-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, Sidebar, Topbar, VerifyBanner],
+  imports: [RouterOutlet, Sidebar, Topbar, VerifyBanner, ToastHost],
   host: { '(document:keydown.escape)': 'layout.closeMobile()' },
   template: `
     <a class="skip-link" href="#main">Skip to content</a>
@@ -27,6 +28,7 @@ import { VerifyBanner } from '../verify-banner/verify-banner';
         <router-outlet />
       </main>
     </div>
+    <ol-toast-host />
   `,
   styles: `
     :host { display: flex; min-height: 100dvh; }

@@ -13,7 +13,7 @@ Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the
 | 7 | Frontend: brand, themes, layout shell | ✅ Done | Tokens + Bootstrap 5.3, light/dark/system theme, collapsible sidebar, org switcher, user menu; 15 frontend tests |
 | 8 | Frontend: authentication pages | ✅ Done | Sign in/up, forgot/reset, verify email, accept invite, verify banner; 25 new frontend tests; all flows checked in Chromium |
 | 9 | Frontend: clients, websites, settings pages | ☐ | |
-| 10 | Dashboard (backend + frontend) | ☐ | |
+| 10 | Dashboard (backend + frontend) | ⏳ Next | |
 | 11 | Docs, tracker, final test pass | ☐ | |
 
 ## Project rules
@@ -111,6 +111,18 @@ Small additions made while building. None change an approved decision.
 - **Unconfirmed email:** a banner in the app with "Resend link" until the address is confirmed.
 - **Expired or revoked sessions:** the next API call sends the user to sign-in, with a link back and an explanation. Pages that make no API calls (the current placeholders) find out on the next call.
 - Backend: the invitation preview now also returns `organization_slug`, so the page can open the right organization after accepting.
+
+## Clients, websites and settings pages (step 9)
+
+- **Clients:** a list with search, a status filter and pages. The detail page shows internal notes (team only), the client's websites, and client-portal access (list, invite, add an existing client user, remove). Archive and restore; delete asks you to type the client's name.
+- **Websites:** a list with search and client and status filters. Add, edit (including moving to another client, or pausing) and delete from a row menu. URL errors from the API, such as IP addresses or duplicates, show on the address field.
+- **Organization:** rename (the switcher updates straight away; the web address doesn't change), and Leave organization. The nav item now needs `organization.read`, so every member can find Leave; only `organization.update` can rename.
+- **Team:** members with search and a status filter. Row actions are change role, disable or restore access, and remove. There are none on your own row, and owners can only be managed by owners. Pending and expired invitations can be resent or cancelled. The invite dialog asks which client when the Client role is chosen, and only owners see Owner.
+- **Roles:** built-in roles open read-only. Owners create, edit and delete custom roles with grouped permission checkboxes; a role still in use explains how many people and invitations use it.
+- **Shared UI:** CDK dialogs (focus trapped and restored), confirmation dialogs (type-to-confirm for destructive actions), toasts, a pager, debounced search, status badges, and the `*olCan` directive for hiding actions. Lists use Angular `httpResource`, with loading, empty, error-with-retry and no-results states on every page.
+- **Backend:** memberships in `/auth/me` now include `role_key` (the built-in role key, or null), so the UI can tell owners and client users apart without relying on role names.
+- **Bundle:** each page loads on demand; the first download is 625 kB raw, about 135 kB compressed.
+- **Browser walkthrough:** sign up; add three clients and websites (an IP address was refused); invite a team member and a client user and accept both; change a role; create a custom role; rename the organization; delete a client. The client user saw only their client and its website, no notes or edit actions, and "no access" on Team. No console errors, and no horizontal scroll on a phone in dark mode.
 
 ## Known gaps / follow-ups
 

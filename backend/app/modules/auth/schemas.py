@@ -53,6 +53,8 @@ class MembershipOut(BaseModel):
     organization_status: str
     role_id: uuid.UUID
     role_name: str
+    # Stable key of a built-in role ("owner", "admin", "member", "client"); null for custom roles.
+    role_key: str | None
     permissions: list[str]
 
 
