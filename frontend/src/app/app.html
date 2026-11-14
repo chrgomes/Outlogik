@@ -1,6 +1,11 @@
 <main class="placeholder">
-  <h1>Outlogik</h1>
-  <p>Phase 1 scaffold. The brand, layout and sign-in pages arrive in steps 7–8.</p>
+  <h1>
+    <picture>
+      <source srcset="brand/outlogik-logo-on-dark.svg" media="(prefers-color-scheme: dark)" />
+      <img class="logo" src="brand/outlogik-logo-on-light.svg" alt="Outlogik" width="233" height="50" />
+    </picture>
+  </h1>
+  <p>Phase 1 scaffold. The full layout and sign-in pages arrive in steps 7–8.</p>
   <p class="status" [attr.data-status]="api.status()">
     API:
     @switch (api.status()) {

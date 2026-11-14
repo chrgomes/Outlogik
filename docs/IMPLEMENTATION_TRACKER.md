@@ -10,7 +10,7 @@ Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the
 | 4 | Organizations, members, invitations + tests | ✅ Done | 37 tests, incl. tenant isolation |
 | 5 | Roles and permissions + permission tests | ⏳ Next | Done early: catalogue, default roles, `require(permission)` enforcement. To do: roles API, custom roles, permission tests across every route |
 | 6 | Clients and websites + tenant isolation tests | ☐ | |
-| 7 | Frontend: brand, themes, layout shell | ☐ | Needs logo files |
+| 7 | Frontend: brand, themes, layout shell | ◐ Partly | Logo vectorised, favicon and app icons done (`docs/brand/`); themes and layout to do |
 | 8 | Frontend: authentication pages | ☐ | |
 | 9 | Frontend: clients, websites, settings pages | ☐ | |
 | 10 | Dashboard (backend + frontend) | ☐ | |

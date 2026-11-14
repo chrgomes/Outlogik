@@ -1,1 +1,15 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* Temporary step-1 base; replaced by the brand tokens and themes in step 7. */
+:root {
+  color-scheme: light dark;
+  background: #ffffff;
+  color: #050505;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    background: #121212;
+    color: #e0dfdd;
+  }
+}
