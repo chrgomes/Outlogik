@@ -1,17 +1,9 @@
 import { Routes } from '@angular/router';
 
-import { ComingSoon } from './features/placeholder/coming-soon';
 import { NoAccess, NoOrganization, NotFound } from './features/system/system-pages';
 import { authGuard, guestGuard, homeRedirect, orgGuard, permissionGuard } from './core/guards';
 import { CenteredLayout } from './layout/centered/centered';
 import { Shell } from './layout/shell/shell';
-
-const page = (title: string, step: number, permission: string, extra: object = {}) => ({
-  component: ComingSoon,
-  canActivate: [permissionGuard],
-  title: `${title} · Outlogik`,
-  data: { title, step, permission, ...extra },
-});
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', canActivate: [homeRedirect], children: [] },
@@ -68,8 +60,13 @@ export const routes: Routes = [
     canActivate: [authGuard, orgGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'dashboard', ...page('Dashboard', 10, 'dashboard.read', { icon: 'grid-1x2',
-        description: 'An overview of your clients, websites and team.' }) },
+      {
+        path: 'dashboard',
+        canActivate: [permissionGuard],
+        data: { permission: 'dashboard.read' },
+        title: 'Dashboard · Outlogik',
+        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+      },
       {
         path: 'clients',
         canActivate: [permissionGuard],

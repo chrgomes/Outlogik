@@ -13,7 +13,7 @@ Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the
 | 7 | Frontend: brand, themes, layout shell | ✅ Done | Tokens + Bootstrap 5.3, light/dark/system theme, collapsible sidebar, org switcher, user menu; 15 frontend tests |
 | 8 | Frontend: authentication pages | ✅ Done | Sign in/up, forgot/reset, verify email, accept invite, verify banner; 25 new frontend tests; all flows checked in Chromium |
 | 9 | Frontend: clients, websites, settings pages | ☐ | |
-| 10 | Dashboard (backend + frontend) | ⏳ Next | |
+| 10 | Dashboard (backend + frontend) | ✅ Done | `GET /orgs/{slug}/dashboard`; stat tiles, get-started checklist, recent activity, Phase 2 'Not connected yet' cards; 7 backend + 11 frontend tests |
 | 11 | Docs, tracker, final test pass | ☐ | |
 
 ## Project rules
@@ -123,6 +123,18 @@ Small additions made while building. None change an approved decision.
 - **Backend:** memberships in `/auth/me` now include `role_key` (the built-in role key, or null), so the UI can tell owners and client users apart without relying on role names.
 - **Bundle:** each page loads on demand; the first download is 625 kB raw, about 135 kB compressed.
 - **Browser walkthrough:** sign up; add three clients and websites (an IP address was refused); invite a team member and a client user and accept both; change a role; create a custom role; rename the organization; delete a client. The client user saw only their client and its website, no notes or edit actions, and "no access" on Team. No console errors, and no horizontal scroll on a phone in dark mode.
+
+## Dashboard (step 10)
+
+- **API:** `GET /orgs/{slug}/dashboard` (`dashboard.read`) returns client counts by status, website counts by status, team counts (active members, active client-portal users, unexpired pending invitations), and the 10 most recent audit entries for the organization.
+- **Every number comes from real records.** Nothing is sampled, estimated or invented, and there are no trends or sparklines until there's history to draw them from.
+- **What each role sees:** client-portal users get counts for their own clients only, with no team section and no activity. Team counts need `members.read`, pending invitations need `members.invite`, and activity needs `audit.read`. With the default roles, only Owners and Admins see activity, because it includes emails and internal names.
+- **Page:**
+  - a greeting, then stat tiles linking to their pages
+  - a "Get started" checklist (add a client, add a website, invite your team), built from the real counts and hidden once done
+  - recent activity as plain sentences with relative times; hover for the exact time
+  - "Coming in Phase 2" cards (search performance, traffic, site health, broken links), each marked **Not connected yet** with no numbers
+- The temporary "isn't built yet" placeholder page was removed; no route uses it any more.
 
 ## Known gaps / follow-ups
 
