@@ -1,0 +1,109 @@
+<mk-page-hero [crumbs]="[{ label: 'How we work' }]" eyebrow="How we work"
+  title="A clear process, and nothing hidden."
+  lead="From the first conversation to monthly reporting, you’ll always know what we’re doing, why, and what it’s achieving.">
+  <div class="mk-hero__actions">
+    <a [routerLink]="consultationPath" class="btn btn-primary btn-lg">{{ settings().consultation_cta_label }}</a>
+    <a href="#portal" class="btn btn-outline-dark btn-lg">See the client portal</a>
+  </div>
+</mk-page-hero>
+
+<!-- The process -->
+<section class="mk-section" aria-labelledby="process-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">The process</p>
+      <h2 class="mk-h2" id="process-title">Four steps, from first conversation to monthly results.</h2>
+    </div>
+    <ol class="mk-process">
+      @for (s of steps; track s.title) {
+        <li>
+          <div>
+            <h3>{{ s.title }}</h3>
+            <p>{{ s.text }}</p>
+          </div>
+          <ul class="mk-checks mk-checks--compact">
+            @for (p of s.points; track p) { <li><ol-icon name="check-circle-fill" /> {{ p }}</li> }
+          </ul>
+        </li>
+      }
+    </ol>
+  </div>
+</section>
+
+<!-- Client portal -->
+<section class="mk-section mk-section--muted" id="portal" aria-labelledby="portal-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">Your client portal</p>
+      <h2 class="mk-h2" id="portal-title">See your marketing whenever you like.</h2>
+      <p class="mk-lead">
+        Every client gets a private, secure portal. Sign in any time to see your websites and what
+        we’ve been working on. Here’s what it does today, and what we’re adding.
+      </p>
+    </div>
+    <div class="mk-split mk-split--portal">
+      <ul class="mk-features">
+        @for (f of features(); track f.slug) {
+          <li [class.is-soon]="f.status === 'in_development'">
+            <ol-icon [name]="f.status === 'available' ? 'check2' : 'clock-history'" />
+            <span>
+              <strong>{{ f.name }}</strong> <mk-status-badge [status]="f.status" [showAvailable]="true" />
+              <span class="mk-features__desc">{{ f.summary }}</span>
+            </span>
+          </li>
+        }
+      </ul>
+      <div class="mk-shots">
+        <mk-screenshot name="portal-client" address="app.outlogik.com"
+          alt="The Outlogik client portal, showing a client's websites and contact details"
+          caption="A client’s overview · example data" />
+        <mk-screenshot name="portal-websites" address="app.outlogik.com"
+          alt="The client portal's websites page, listing a client's three websites"
+          caption="A client’s websites · example data" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- What we need from you -->
+<section class="mk-section" aria-labelledby="needs-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">Working together</p>
+      <h2 class="mk-h2" id="needs-title">What we’ll need from you.</h2>
+      <p class="mk-lead">Not much, but it makes a real difference.</p>
+    </div>
+    <ul class="mk-included mk-included--4">
+      @for (n of needs; track n.title) {
+        <li><h3>{{ n.title }}</h3><p>{{ n.text }}</p></li>
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- Tools -->
+<section class="mk-section mk-section--muted mk-section--tight" aria-labelledby="tools-title">
+  <div class="mk-container mk-tools">
+    <div>
+      <p class="mk-eyebrow">Tools we work with</p>
+      <h2 class="mk-h3" id="tools-title">We work in the tools you already have.</h2>
+    </div>
+    <ul class="mk-tiles">
+      @for (t of tools; track t) { <li class="mk-tile">{{ t }}</li> }
+    </ul>
+  </div>
+</section>
+
+<!-- Questions -->
+<section class="mk-section" aria-labelledby="faq-title">
+  <div class="mk-container mk-split mk-split--faq">
+    <div>
+      <p class="mk-eyebrow">Questions</p>
+      <h2 class="mk-h2" id="faq-title">Working with Outlogik</h2>
+      <p><a routerLink="/pricing" class="mk-arrow-link">How pricing works <ol-icon name="arrow-right" /></a></p>
+    </div>
+    <mk-faq [items]="questions" />
+  </div>
+</section>
+
+<mk-cta-band title="Start with a conversation." />

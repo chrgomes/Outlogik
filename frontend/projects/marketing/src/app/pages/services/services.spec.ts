@@ -1,38 +1,12 @@
-import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
-import { RouterTestingHarness } from '@angular/router/testing';
 
-import { provideIcons } from '@brand/icon/icon';
-import { MARKETING_ICONS } from '@brand/icon/icons-marketing';
-import { routes } from '../../app.routes';
 import { serverRoutes } from '../../app.routes.server';
 import { SERVICE_CONTENT } from '../../config/services-content';
-import { DEFAULT_SETTINGS, SERVICES } from '../../config/site';
+import { SERVICES } from '../../config/site';
+import { FORBIDDEN_CLAIMS, visit } from '../../../testing/marketing';
 
 describe('Service pages', () => {
-  async function visit(url: string, features?: object[]) {
-    TestBed.configureTestingModule({
-      providers: [
-        provideRouter(routes),
-        provideIcons(MARKETING_ICONS),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
-    });
-    const harness = await RouterTestingHarness.create(url);
-    if (features) {
-      TestBed.inject(HttpTestingController).expectOne('/api/public/site').flush({
-        settings: DEFAULT_SETTINGS, portal_features: features, signup_open: false,
-      });
-      await new Promise((r) => setTimeout(r));
-      harness.detectChanges();
-    }
-    return harness.routeNativeElement as HTMLElement;
-  }
-
   it('lists the four services on /services', async () => {
     const el = await visit('/services');
     expect(el.querySelectorAll('h1')).toHaveLength(1);
@@ -65,7 +39,7 @@ describe('Service pages', () => {
 
       it('makes no guarantees', () => {
         const text = JSON.stringify(content).toLowerCase();
-        expect(text).not.toMatch(/we guarantee|guaranteed|#1|number one|first place|top of google/);
+        expect(text).not.toMatch(FORBIDDEN_CLAIMS);
       });
     });
   }

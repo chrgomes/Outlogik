@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Meta } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 
 import { Icon } from '@brand/icon/icon';
@@ -7,6 +6,7 @@ import { SERVICE_CONTENT } from '../../config/services-content';
 import { CONSULTATION_PATH, SERVICES } from '../../config/site';
 import { SiteData } from '../../config/site-data';
 import { CtaBand } from '../../shared/cta-band';
+import { pageDescription } from '../../shared/meta';
 import { PageHero } from '../../shared/page-hero';
 
 /** /services: the four services, each with a few of the things it includes. */
@@ -77,9 +77,6 @@ export class ServicesOverview {
   }
 
   constructor() {
-    inject(Meta).updateTag({
-      name: 'description',
-      content: 'SEO, social media management, website analytics and content marketing from Outlogik, with reporting in your own client portal.',
-    });
+    pageDescription('SEO, social media management, website analytics and content marketing from Outlogik, with reporting in your own client portal.');
   }
 }

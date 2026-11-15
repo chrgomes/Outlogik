@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { Icon } from '@brand/icon/icon';
 import { SERVICE_CONTENT, ServiceContent } from '../../config/services-content';
-import { CONSULTATION_PATH, SERVICES } from '../../config/site';
+import { CONSULTATION_PATH, SERVICES, serviceTopic } from '../../config/site';
 import { SiteData } from '../../config/site-data';
 import { StatusBadge } from '../../layout/status-badge';
 import { CtaBand } from '../../shared/cta-band';
 import { Faq } from '../../shared/faq';
+import { pageDescription } from '../../shared/meta';
 import { PageHero } from '../../shared/page-hero';
 
 /**
@@ -29,8 +29,7 @@ export class ServicePage {
   protected readonly content: ServiceContent =
     SERVICE_CONTENT[inject(ActivatedRoute).snapshot.data['slug'] as string];
   protected readonly service = SERVICES.find((s) => s.slug === this.content.slug)!;
-  /** The service name as it reads mid-sentence ("SEO", "content marketing"). */
-  protected readonly topic = this.service.name === 'SEO' ? 'SEO' : this.service.name.toLowerCase();
+  protected readonly topic = serviceTopic(this.service);
   protected readonly crumbs = [{ label: 'Services', path: '/services' }, { label: this.service.name }];
   protected readonly related = this.content.related.map((slug) => SERVICES.find((s) => s.slug === slug)!);
 
@@ -39,6 +38,6 @@ export class ServicePage {
     this.site.portalFeatures().filter((f) => this.content.portalFeatures.includes(f.slug)));
 
   constructor() {
-    inject(Meta).updateTag({ name: 'description', content: this.content.description });
+    pageDescription(this.content.description);
   }
 }

@@ -13,8 +13,8 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
 | 2 | Staff roles, site settings, statuses, public API | A | ✅ Done |
 | 3 | Agency navigation, invite-only sign-up, portal features, homepage | A | ✅ Done |
 | 4 | Service pages (4) and `/services` | A | ✅ Done |
-| 5 | Who we help, How we work, Pricing (how it works), About | A | ⏳ Next |
-| 6 | Leads: consultation, contact, newsletter; attribution; notifications; old-path redirects | A | ☐ |
+| 5 | Who we help, How we work, Pricing (how it works), About | A | ✅ Done |
+| 6 | Leads: consultation, contact, newsletter; attribution; notifications; old-path redirects | A | ⏳ Next |
 | 7 | Admin area: leads inbox, settings, portal feature statuses | A | ☐ |
 | 8 | CMS backend and media library | B | ☐ |
 | 9 | CMS admin UI | B | ☐ |
@@ -159,3 +159,53 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
   - all five pages render on the server with status 200, one h1 and the right title; `/services/paid-ads` returns 404
   - the cache header is present
   - moving between service pages in the browser works, with no console errors
+
+## Step 5 — Who we help, How we work, Pricing, About
+
+- **Who we help:**
+  - `/who-we-help` and one page for each of the four business types (decision B).
+  - Each page has these sections:
+    - "Sound familiar?": common problems for that kind of business
+    - how each service helps, in the order we'd recommend
+    - our approach (three points)
+    - questions
+    - links to the other business types
+    - a closing call to action
+  - Copy is in `config/audiences-content.ts`.
+- **How we work:**
+  - The four-step process in detail.
+  - The client portal with both real screenshots, labelled "example data".
+  - Every portal feature with its status ("Available" or "In development", set in the admin area).
+  - What we need from clients, the tools we work with, and questions.
+- **Pricing:** how pricing works, with no prices published. It covers:
+  - three steps to a price
+  - what affects the price
+  - what every proposal includes
+  - one-off projects and monthly services
+  - questions, including the optional budget field (decision E)
+- **About:**
+  - why we work this way, four values, and "what we won't do"
+  - no invented team, history, numbers or results (decision C); the team and story are added once provided
+- **For your review (business commitments in the copy):**
+  - one main point of contact per client
+  - the client portal is included at no extra cost
+  - clients own their accounts and work
+  - the plan is reviewed regularly
+  - no fixed minimum budget
+  - agreement terms are set in each proposal
+  - we never write, buy or fake reviews
+  - no bought links
+  - no paid shopping ads today (e-commerce)
+- **Routing:**
+  - Server routes are now generated from the page routes, so every page gets the cache headers automatically.
+  - Unknown addresses, such as `/who-we-help/dentists`, still get a 404 status.
+  - Meta descriptions use a small `pageDescription()` helper.
+- **Tests:**
+  - 19 new marketing tests (51 total), with a shared `visit()` helper that renders pages through the real routes.
+  - The copy checks also cover testimonials, case studies and "trusted by".
+  - The Pricing test checks that no prices appear; the About test checks there's no invented history.
+- **Checked by running it:**
+  - all 8 new pages render on the server with status 200, one h1 and the right title
+  - unknown addresses return 404
+  - no console errors, and no horizontal scrolling at phone width (390 px)
+- **Still to build:** `/contact` and `/book-a-consultation` (step 6). Links to them show the 404 page until then.

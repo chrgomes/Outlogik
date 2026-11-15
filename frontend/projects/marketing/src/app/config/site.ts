@@ -36,22 +36,29 @@ export const SERVICES: Service[] = [
     summary: 'Articles and website copy written for your customers first, and for search engines too.' },
 ];
 
+/** A service's name as it reads mid-sentence: "SEO", "content marketing". */
+export function serviceTopic(s: Service): string {
+  return s.name === 'SEO' ? s.name : s.name.toLowerCase();
+}
+
 export interface Audience {
   slug: string;
   name: string;
   summary: string;
   icon: IconName;
+  /** The page's <title>, before " · Outlogik". */
+  pageTitle: string;
 }
 
 /** Who we help (plan revision 2, decision B). Each has a page under /who-we-help. */
 export const AUDIENCES: Audience[] = [
-  { slug: 'small-businesses', name: 'Small businesses', icon: 'shop',
+  { slug: 'small-businesses', pageTitle: 'Marketing for small businesses', name: 'Small businesses', icon: 'shop',
     summary: 'A marketing team without hiring one.' },
-  { slug: 'local-businesses', name: 'Local and service businesses', icon: 'building',
+  { slug: 'local-businesses', pageTitle: 'Marketing for local and service businesses', name: 'Local and service businesses', icon: 'building',
     summary: 'Clinics, trades and professional services that need local customers.' },
-  { slug: 'ecommerce', name: 'E-commerce', icon: 'window-stack',
+  { slug: 'ecommerce', pageTitle: 'Marketing for e-commerce', name: 'E-commerce', icon: 'window-stack',
     summary: 'Online stores that need more of the right traffic.' },
-  { slug: 'growing-companies', name: 'Growing companies', icon: 'people',
+  { slug: 'growing-companies', pageTitle: 'Marketing support for growing companies', name: 'Growing companies', icon: 'people',
     summary: 'Extra hands for in-house teams with more to do than time.' },
 ];
 

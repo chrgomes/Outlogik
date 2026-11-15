@@ -1,0 +1,88 @@
+<mk-page-hero [crumbs]="[{ label: 'Pricing' }]" eyebrow="Pricing"
+  title="Clear proposals, priced for your business."
+  lead="We don’t sell one-size-fits-all packages. After a free consultation, we send a written proposal with exactly what’s included and what it costs.">
+  <div class="mk-hero__actions">
+    <a [routerLink]="consultationPath" class="btn btn-primary btn-lg">{{ settings().consultation_cta_label }}</a>
+  </div>
+</mk-page-hero>
+
+<!-- How it works -->
+<section class="mk-section" aria-labelledby="how-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">How it works</p>
+      <h2 class="mk-h2" id="how-title">Three steps to a price.</h2>
+    </div>
+    <ol class="mk-steps mk-steps--3">
+      <li><h3>Free consultation</h3><p>We talk about your business, your goals and your budget.</p></li>
+      <li><h3>Written proposal</h3><p>We recommend the work that fits, with a clear price.</p></li>
+      <li><h3>You decide</h3><p>Ask questions, change what’s included, or go ahead. There’s no obligation.</p></li>
+    </ol>
+  </div>
+</section>
+
+<!-- What affects the price -->
+<section class="mk-section mk-section--muted" aria-labelledby="factors-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">What affects the price</p>
+      <h2 class="mk-h2" id="factors-title">Priced on the work you need.</h2>
+    </div>
+    <ul class="mk-included mk-included--5">
+      @for (f of factors; track f.title) {
+        <li><h3>{{ f.title }}</h3><p>{{ f.text }}</p></li>
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- Every proposal includes -->
+<section class="mk-section" aria-labelledby="included-title">
+  <div class="mk-container mk-split mk-split--even">
+    <div>
+      <p class="mk-eyebrow">No surprises</p>
+      <h2 class="mk-h2" id="included-title">What every proposal includes.</h2>
+      <p class="mk-lead">So you know exactly what you’re paying for before you agree to anything.</p>
+    </div>
+    <ul class="mk-checks">
+      @for (i of included; track i) { <li><ol-icon name="check-circle-fill" /> {{ i }}</li> }
+    </ul>
+  </div>
+</section>
+
+<!-- Types of work -->
+<section class="mk-section mk-section--muted" aria-labelledby="types-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">Types of work</p>
+      <h2 class="mk-h2" id="types-title">One-off projects and monthly services.</h2>
+    </div>
+    <div class="mk-cards mk-cards--2">
+      <div class="mk-card mk-card--static">
+        <span class="mk-ico-box"><ol-icon name="lightning-charge" /></span>
+        <h3>One-off projects</h3>
+        <p>A defined piece of work with a fixed scope, such as an SEO audit, an analytics setup, or new website copy.</p>
+      </div>
+      <div class="mk-card mk-card--static">
+        <span class="mk-ico-box"><ol-icon name="arrow-repeat" /></span>
+        <h3>Monthly services</h3>
+        <p>Ongoing work each month, such as SEO, social media management, content and reporting, reviewed and adjusted as we go.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Questions -->
+<section class="mk-section" aria-labelledby="faq-title">
+  <div class="mk-container mk-split mk-split--faq">
+    <div>
+      <p class="mk-eyebrow">Questions</p>
+      <h2 class="mk-h2" id="faq-title">Questions about pricing</h2>
+      <p><a routerLink="/services" class="mk-arrow-link">See our services <ol-icon name="arrow-right" /></a></p>
+    </div>
+    <mk-faq [items]="questions" />
+  </div>
+</section>
+
+<mk-cta-band title="Get a proposal for your business."
+  lead="Book a free consultation. We’ll follow up with a clear, written proposal." />
