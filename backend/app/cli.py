@@ -1,6 +1,8 @@
 """Backend admin commands.
 
     python -m app.cli create-super-admin --email you@example.com --name "Your Name"
+    python -m app.cli grant-staff --email editor@example.com --role content_editor
+    python -m app.cli revoke-staff --email editor@example.com
 
 Super Admins can only be created here, never through the API or UI.
 """
@@ -17,6 +19,7 @@ from app.core.security import hash_password
 from app.models import User
 from app.modules.audit.service import record
 from app.modules.rbac.service import sync_permissions
+from app.modules.users.models import PLATFORM_ROLES
 
 
 def create_super_admin(email: str, name: str) -> int:
@@ -43,6 +46,23 @@ def create_super_admin(email: str, name: str) -> int:
     return 0
 
 
+def set_staff_role(email: str, role: str | None) -> int:
+    """Grant (or with role=None, revoke) Outlogik staff access to the admin area."""
+    email = email.strip().lower()
+    with SessionLocal() as db:
+        user = db.scalar(select(User).where(User.email == email))
+        if user is None:
+            print(f"No account for {email}. They need to sign up first.", file=sys.stderr)
+            return 1
+        before = user.platform_role
+        user.platform_role = role
+        record(db, "admin.staff_role_changed", target_type="user", target_id=user.id,
+               meta={"via": "cli", "from": before, "to": role})
+        db.commit()
+    print(f"{email}: staff role {'removed' if role is None else 'set to ' + role}.")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -50,10 +70,19 @@ def main() -> int:
     p.add_argument("--email", required=True)
     p.add_argument("--name", required=True)
     sub.add_parser("sync-permissions", help="Sync the permission catalogue to the database")
+    g = sub.add_parser("grant-staff", help="Give an existing user access to the admin area")
+    g.add_argument("--email", required=True)
+    g.add_argument("--role", required=True, choices=PLATFORM_ROLES)
+    r = sub.add_parser("revoke-staff", help="Remove a user's access to the Outlogik admin area")
+    r.add_argument("--email", required=True)
     args = parser.parse_args()
 
     if args.command == "create-super-admin":
         return create_super_admin(args.email, args.name)
+    if args.command == "grant-staff":
+        return set_staff_role(args.email, args.role)
+    if args.command == "revoke-staff":
+        return set_staff_role(args.email, None)
     if args.command == "sync-permissions":
         with SessionLocal() as db:
             sync_permissions(db)

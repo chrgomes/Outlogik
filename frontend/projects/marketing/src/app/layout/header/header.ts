@@ -14,7 +14,8 @@ import { filter } from 'rxjs';
 
 import { Icon } from '@brand/icon/icon';
 import { Logo } from '@brand/logo/logo';
-import { AUDIENCES, COMPANY, MODULES, RESOURCES, appLink } from '../../config/site';
+import { AUDIENCES, COMPANY, RESOURCES, appLink } from '../../config/site';
+import { SiteData } from '../../config/site-data';
 import { StatusBadge } from '../status-badge';
 
 type Menu = 'platform' | 'solutions' | 'resources' | 'company';
@@ -42,7 +43,9 @@ export class Header {
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly drawer = viewChild<ElementRef<HTMLDialogElement>>('drawer');
 
-  protected readonly modules = MODULES;
+  private readonly site = inject(SiteData);
+  protected readonly modules = this.site.modules;
+  protected readonly settings = this.site.settings;
   protected readonly audiences = AUDIENCES;
   protected readonly resources = RESOURCES;
   protected readonly company = COMPANY;

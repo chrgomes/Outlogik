@@ -15,6 +15,9 @@ from app.modules.dashboard.router import router as dashboard_router
 from app.modules.organizations.router import router as organizations_router
 from app.modules.rbac.router import router as rbac_router
 from app.modules.rbac.service import sync_permissions
+from app.modules.site import service as site_service
+from app.modules.site.router import admin as site_admin_router
+from app.modules.site.router import public as site_public_router
 from app.modules.websites.router import router as websites_router
 
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +27,7 @@ logging.basicConfig(level=logging.INFO)
 async def lifespan(_: FastAPI):
     with SessionLocal() as db:
         sync_permissions(db)
+        site_service.ensure_defaults(db)
     yield
 
 
@@ -49,6 +53,8 @@ def create_app() -> FastAPI:
     api.include_router(clients_router)
     api.include_router(websites_router)
     api.include_router(dashboard_router)
+    api.include_router(site_public_router)
+    api.include_router(site_admin_router)
     app.include_router(api)
     return app
 

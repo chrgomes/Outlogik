@@ -42,6 +42,8 @@ class UserOut(BaseModel):
     email: str
     full_name: str
     is_super_admin: bool
+    # "content_editor" or "site_admin" for Outlogik staff (Super Admins report "site_admin")
+    platform_role: str | None = None
     email_verified_at: datetime | None
     created_at: datetime
 

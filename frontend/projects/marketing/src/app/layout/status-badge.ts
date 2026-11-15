@@ -7,7 +7,7 @@ import { ModuleStatus } from '../config/site';
   selector: 'mk-status-badge',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if (status() === 'in-development') {
+    @if (status() === 'in_development') {
       <span class="mk-badge">In development</span>
     } @else if (showAvailable()) {
       <span class="mk-badge mk-badge--available">Available</span>

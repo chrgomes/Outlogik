@@ -53,6 +53,13 @@ deployment must add. Each item is covered by backend or frontend tests unless no
   Internal notes and team information are never sent to them.
 - **Audit log:** sensitive actions are recorded with actor, target, details and IP.
 
+## Outlogik staff and the public API
+
+- **Staff roles** (`content_editor`, `site_admin`) give access to the admin area for the marketing website. They're separate from organization roles, granted only by CLI, and audited. Super Admins count as site admins.
+- **Admin endpoints** (`/api/v1/admin/…`) return 404 to anyone without a staff role, so their existence isn't revealed. A test fails the build if an admin route lacks the staff check.
+- **Public endpoints** (`/api/v1/public/…`) need no sign-in and return only data meant to be public. Form submissions arrive with the forms (Phase 1.5 step 6), with origin checks, honeypot, timing and rate limits.
+- **The marketing site's server** sends `nosniff`, `X-Frame-Options: DENY`, a referrer policy and a permissions policy, and doesn't announce Express. Its Content-Security-Policy is added in Phase 1.5 step 12.
+
 ## Website addresses
 
 Website URLs are normalised. IP addresses, `localhost`, single-label hosts, internal suffixes

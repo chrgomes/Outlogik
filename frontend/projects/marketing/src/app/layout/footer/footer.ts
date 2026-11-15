@@ -1,17 +1,9 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { Logo } from '@brand/logo/logo';
-import {
-  AUDIENCES,
-  COMPANY,
-  DESCRIPTION,
-  LEGAL,
-  MODULES,
-  RESOURCES,
-  TAGLINE,
-  appLink,
-} from '../../config/site';
+import { AUDIENCES, COMPANY, LEGAL, RESOURCES, SOCIAL_LABELS, appLink } from '../../config/site';
+import { SiteData } from '../../config/site-data';
 
 @Component({
   selector: 'mk-footer',
@@ -23,15 +15,25 @@ import {
       <div class="mk-footer__top">
         <div class="mk-footer__brand">
           <a routerLink="/" aria-label="Outlogik home" class="mk-footer__logo"><ol-logo /></a>
-          <p class="mk-footer__tagline">{{ tagline }}</p>
-          <p class="mk-footer__desc">{{ description }}</p>
+          <p class="mk-footer__tagline">{{ settings().tagline }}</p>
+          <p class="mk-footer__desc">{{ settings().company_description }}</p>
+          @if (settings().contact_email; as email) {
+            <p class="mk-footer__contact"><a [href]="'mailto:' + email">{{ email }}</a></p>
+          }
+          @if (settings().social_links.length) {
+            <ul class="mk-footer__social" aria-label="Outlogik on social media">
+              @for (s of settings().social_links; track s.url) {
+                <li><a [href]="s.url" rel="noopener me" target="_blank">{{ socialLabels[s.network] ?? s.network }}</a></li>
+              }
+            </ul>
+          }
         </div>
         <nav class="mk-footer__cols" aria-label="Footer">
           <div>
             <h2 class="mk-footer__heading">Platform</h2>
             <ul>
               <li><a routerLink="/platform">Overview</a></li>
-              @for (m of modules; track m.slug) {
+              @for (m of modules(); track m.slug) {
                 <li><a [routerLink]="['/platform', m.slug]">{{ m.name }}</a></li>
               }
             </ul>
@@ -75,13 +77,14 @@ import {
   `,
 })
 export class Footer {
-  protected readonly modules = MODULES;
+  private readonly site = inject(SiteData);
+  protected readonly modules = this.site.modules;
+  protected readonly settings = this.site.settings;
+  protected readonly socialLabels = SOCIAL_LABELS;
   protected readonly audiences = AUDIENCES;
   protected readonly resources = RESOURCES;
   protected readonly company = COMPANY;
   protected readonly legal = LEGAL;
-  protected readonly tagline = TAGLINE;
-  protected readonly description = DESCRIPTION;
   protected readonly loginUrl = appLink('/login');
   protected readonly registerUrl = appLink('/register');
   protected readonly year = new Date().getFullYear();

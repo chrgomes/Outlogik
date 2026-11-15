@@ -20,12 +20,15 @@ from app.modules.auth.schemas import (
     UserOut,
 )
 from app.modules.organizations import invitations
+from app.platform import staff_role
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def _me(db, user) -> MeOut:
-    return MeOut(user=UserOut.model_validate(user), memberships=service.memberships_for(db, user))
+    out = UserOut.model_validate(user)
+    out.platform_role = staff_role(user)
+    return MeOut(user=out, memberships=service.memberships_for(db, user))
 
 
 @router.get("/csrf", status_code=status.HTTP_204_NO_CONTENT,

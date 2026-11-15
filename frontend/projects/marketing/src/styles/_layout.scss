@@ -350,6 +350,15 @@
   max-width: 22rem;
 }
 
+.mk-footer__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
 .mk-footer__cols {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));

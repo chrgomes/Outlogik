@@ -1,11 +1,15 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
 
 /**
- * How each route is rendered on the server.
- * - Prerender: turned into static HTML at build time (marketing pages).
- * - Server: rendered per request (CMS content in milestone B, and the 404 page).
+ * Pages are rendered on the server for each request, then cached briefly by the browser and
+ * any cache in front of the site. Content managed in the admin area (module statuses, settings)
+ * therefore shows up within about a minute, without rebuilding the site.
  */
+const CACHED = {
+  'Cache-Control': 'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
+};
+
 export const serverRoutes: ServerRoute[] = [
-  { path: '', renderMode: RenderMode.Prerender },
-  { path: '**', renderMode: RenderMode.Server, status: 404 },
+  { path: '', renderMode: RenderMode.Server, headers: CACHED },
+  { path: '**', renderMode: RenderMode.Server, status: 404, headers: { 'Cache-Control': 'no-store' } },
 ];

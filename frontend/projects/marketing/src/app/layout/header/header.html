@@ -19,7 +19,7 @@
               <a routerLink="/platform" class="mk-arrow-link">Platform overview <ol-icon name="arrow-right" /></a>
             </div>
             <ul class="mk-mega__grid">
-              @for (m of modules; track m.slug) {
+              @for (m of modules(); track m.slug) {
                 <li>
                   <a [routerLink]="['/platform', m.slug]" class="mk-mega__link">
                     <ol-icon [name]="m.icon" size="1.125rem" />
@@ -107,7 +107,7 @@
 
   <div class="mk-header__actions">
     <a [href]="loginUrl" class="mk-header__login">Log in</a>
-    <a [href]="registerUrl" class="btn btn-primary mk-header__cta">Get started</a>
+    <a [href]="registerUrl" class="btn btn-primary mk-header__cta">{{ settings().primary_cta_label }}</a>
     <button type="button" class="mk-header__menu-btn" (click)="openDrawer()" aria-label="Open menu"
       aria-haspopup="dialog">
       <ol-icon name="list" size="1.375rem" />
@@ -128,7 +128,7 @@
       <details>
         <summary>Platform <ol-icon name="chevron-down" size="0.75rem" /></summary>
         <a routerLink="/platform">Platform overview</a>
-        @for (m of modules; track m.slug) {
+        @for (m of modules(); track m.slug) {
           <a [routerLink]="['/platform', m.slug]">{{ m.name }} <mk-status-badge [status]="m.status" /></a>
         }
       </details>
@@ -152,7 +152,7 @@
       </details>
     </nav>
     <div class="mk-drawer__actions">
-      <a [href]="registerUrl" class="btn btn-primary btn-lg">Get started</a>
+      <a [href]="registerUrl" class="btn btn-primary btn-lg">{{ settings().primary_cta_label }}</a>
       <a [href]="loginUrl" class="btn btn-outline-dark btn-lg">Log in</a>
     </div>
   </div>

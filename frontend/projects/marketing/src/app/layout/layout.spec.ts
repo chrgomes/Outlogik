@@ -1,17 +1,26 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { provideIcons } from '@brand/icon/icon';
 import { MARKETING_ICONS } from '@brand/icon/icons-marketing';
-import { APP_URL, MODULES } from '../config/site';
+import { APP_URL, DEFAULT_MODULES as MODULES, DEFAULT_SETTINGS } from '../config/site';
 import { Footer } from './footer/footer';
 import { Header } from './header/header';
 
 function setup() {
   TestBed.configureTestingModule({
-    providers: [provideRouter([{ path: '**', children: [] }]), provideIcons(MARKETING_ICONS)],
+    providers: [
+      provideRouter([{ path: '**', children: [] }]),
+      provideIcons(MARKETING_ICONS),
+      provideHttpClient(),
+      provideHttpClientTesting(),
+    ],
   });
 }
+
+const settle = () => new Promise((r) => setTimeout(r));
 
 describe('Header', () => {
   function render() {
@@ -78,8 +87,36 @@ describe('Header', () => {
     expect(items).toHaveLength(MODULES.length);
     for (const [i, m] of MODULES.entries()) {
       expect(items[i].getAttribute('href')).toBe(`/platform/${m.slug}`);
-      expect(items[i].textContent!.includes('In development')).toBe(m.status === 'in-development');
+      expect(items[i].textContent!.includes('In development')).toBe(m.status === 'in_development');
     }
+  });
+
+  it('uses the module statuses and labels managed in the admin area', async () => {
+    const { fixture, el } = render();
+    await settle();
+    TestBed.inject(HttpTestingController).expectOne('/api/public/site').flush({
+      settings: { ...DEFAULT_SETTINGS, primary_cta_label: 'Start free' },
+      modules: [
+        { slug: 'client-management', name: 'Client Management', summary: 'x', status: 'available', sort_order: 1 },
+        { slug: 'seo-management', name: 'SEO Management', summary: 'y', status: 'available', sort_order: 2 },
+      ],
+    });
+    await settle();
+    fixture.detectChanges();
+    const items = [...el.querySelectorAll('#menu-platform .mk-mega__link')];
+    expect(items.map((a) => a.getAttribute('href'))).toEqual(['/platform/client-management', '/platform/seo-management']);
+    expect(el.querySelector('#menu-platform')!.textContent).not.toContain('In development');
+    expect(el.querySelector('.mk-header__cta')!.textContent!.trim()).toBe('Start free');
+  });
+
+  it('falls back to the built-in defaults if the API is unavailable', async () => {
+    const { fixture, el } = render();
+    await settle();
+    TestBed.inject(HttpTestingController).expectOne('/api/public/site')
+      .flush(null, { status: 502, statusText: 'Bad Gateway' });
+    await settle();
+    fixture.detectChanges();
+    expect(el.querySelectorAll('#menu-platform .mk-mega__link')).toHaveLength(MODULES.length);
   });
 
   it('hides Resources until there is published content', () => {
@@ -101,5 +138,26 @@ describe('Footer', () => {
     expect(hrefs).toContain(`${APP_URL}/register`);
     expect(el.querySelector('.mk-footer__legal')).toBeNull();
     expect(el.textContent).toContain(`© ${new Date().getFullYear()} Outlogik`);
+  });
+
+  it('shows contact details and social links only once they are set', async () => {
+    setup();
+    const fixture = TestBed.createComponent(Footer);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.mk-footer__social')).toBeNull();
+    expect(el.textContent).not.toContain('@');
+    await settle();
+    TestBed.inject(HttpTestingController).expectOne('/api/public/site').flush({
+      settings: { ...DEFAULT_SETTINGS, contact_email: 'hello@outlogik.example.com',
+        social_links: [{ network: 'linkedin', url: 'https://www.linkedin.com/company/outlogik' }] },
+      modules: [],
+    });
+    await settle();
+    fixture.detectChanges();
+    expect(el.querySelector('a[href="mailto:hello@outlogik.example.com"]')).not.toBeNull();
+    const social = el.querySelector('.mk-footer__social a')!;
+    expect(social.textContent).toBe('LinkedIn');
+    expect(social.getAttribute('rel')).toContain('noopener');
   });
 });

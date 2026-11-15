@@ -8,8 +8,8 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md). Spec: [`specs/MARKETING_WEBSITE_SP
 | # | Step | Milestone | Status | Notes |
 |---|---|---|---|---|
 | 1 | Shared brand, palette in the app, marketing SSR app, header / menus / drawer / footer, CI | A | ✅ Done | See below |
-| 2 | Platform roles, site settings, module statuses, public API surface | A | ⏳ Next | |
-| 3 | Homepage, platform overview, module pages | A | ☐ | |
+| 2 | Platform roles, site settings, module statuses, public API surface | A | ✅ Done | Migration `0003`; see below |
+| 3 | Homepage, platform overview, module pages | A | ⏳ Next | |
 | 4 | Solutions pages, About | A | ☐ | |
 | 5 | Pricing configuration and page | A | ☐ | |
 | 6 | Leads: forms, attribution, notifications; `/get-started`, `/login` | A | ☐ | |
@@ -58,3 +58,27 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md). Spec: [`specs/MARKETING_WEBSITE_SP
   - in Chromium: keyboard menu behaviour, the drawer focus trap, no horizontal scroll at 390 and 820 px, no console errors
   - the app checked in light and dark with the new palette
 - **CI:** the frontend job now tests and builds both projects, starts the marketing server, and checks for server-rendered HTML and a 404.
+
+## Step 2 — staff roles, site settings, module statuses, public API
+
+- **Staff roles** (`users.platform_role`, migration `0003`): `content_editor` (website content, milestone B) and `site_admin` (the whole admin area). Super Admins count as site admins. Granted and removed only from the command line, and audited:
+  `python -m app.cli grant-staff --email … --role site_admin` and `python -m app.cli revoke-staff --email …`.
+  `/auth/me` returns `platform_role`, so the app can show the admin area in step 7. Staff roles are separate from organization roles; agencies never get one.
+- **Admin API** (`/api/v1/admin/…`): every route requires a staff role. Anyone else gets **404**, so the API doesn't reveal itself (401 if signed out). A test checks every admin route for this, like the organization permission matrix.
+  - `GET/PUT /admin/site/settings` (site admins)
+  - `GET /admin/site/modules`, `PATCH /admin/site/modules/{slug}`
+  - Changes are audited as `site.settings_update` (with changed fields) and `site.module_update` (with from/to).
+- **Site settings** (`site_settings`, one row): company description, tagline, contact and sales email, phone, address, social links (fixed list of networks, http(s) URLs only), call-to-action labels, the early-access flag, and SEO defaults. Validated strictly (unknown keys rejected); empty values mean "not shown".
+- **Product modules** (`product_modules`): name, summary, status (`available`, `in_development` or `hidden`) and order. They're seeded with Phase 1 reality, where only Client Management is available. Startup restores any missing defaults without overwriting admin changes (needed because the test suite empties tables).
+- **Public API** (`/api/v1/public/site`): settings and non-hidden modules. No sign-in, nothing private, and `Cache-Control: public, max-age=60`.
+- **Marketing site:**
+  - `SiteData` (an `httpResource`) loads `/api/public/site`. The header, menus, drawer and footer use it: module statuses, the CTA label, and the tagline, description, contact email and social links once set.
+  - If the API is down, the built-in defaults are used and the page still renders.
+- **Change from the plan:** marketing pages are now **server-rendered on request and cached for 60 seconds** (`s-maxage=60, stale-while-revalidate=300`) instead of prerendered at build. Admin changes (statuses, settings) show up within a minute without rebuilding the site. Unknown paths still return 404 with `no-store`.
+- **Marketing server** (`server.ts`):
+  - forwards `GET /api/public/*` to the API (`API_INTERNAL_URL`, default `http://localhost:8000`) with a 5-second timeout, returning 502 if the API is down; POST comes with the forms in step 6
+  - adds security headers (`nosniff`, `DENY` framing, a referrer policy, a permissions policy) and stops announcing Express
+  - in development, `ng serve marketing` forwards `/api/public` through `proxy.conf.json`
+- **No double fetching:** during rendering, the site requests the same relative URL the browser uses, so the response is embedded in the page and the browser reuses it. A first attempt rewrote the URL on the server; the embedded copy was then never matched, and the browser fetched again. Checked: no API calls from the browser on page load.
+- **Tests:** 16 new backend tests (190 total) and 3 new marketing tests (10 total).
+- **Checked end to end:** the page showed the database statuses; marking SEO Management available and hiding Reporting appeared on the next render; the proxy returned the data; with the API stopped the page still rendered (proxy 502); unknown paths returned 404.

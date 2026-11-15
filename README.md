@@ -65,20 +65,28 @@ backend, so the browser sees a single site and the session and CSRF cookies just
 > `http://localhost`. If your browser doesn't, set `COOKIE_SECURE=false` in `backend/.env`
 > for local development only.
 
-### Super Admin
+### Super Admin and staff access
 
-Super Admins can only be created from the command line, never through the app:
+Super Admins, and Outlogik staff who manage the marketing website, are set up from the command
+line only, never through the app:
 
 ```bash
 cd backend
 uv run python -m app.cli create-super-admin --email you@example.com --name "Your Name"
 ```
 
+```bash
+uv run python -m app.cli grant-staff --email colleague@example.com --role content_editor
+```
+
+Roles are `content_editor` (website content) and `site_admin` (everything in the admin area).
+Remove access with `revoke-staff --email …`.
+
 ## Tests and checks
 
 ```bash
 cd backend
-uv run pytest            # 174 tests; rebuilds the outlogik_test schema from the migrations
+uv run pytest            # 190 tests; rebuilds the outlogik_test schema from the migrations
 uv run ruff check .      # lint
 uv run alembic check     # migrations match the models
 ```
