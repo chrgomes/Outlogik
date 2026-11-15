@@ -12,6 +12,9 @@ import {
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 
+import { provideIcons } from '@brand/icon/icon';
+import { APP_ICONS } from '@brand/icon/icons-app';
+
 import { routes } from './app.routes';
 import { AuthService } from './core/auth.service';
 import { sessionInterceptor } from './core/session.interceptor';
@@ -20,6 +23,7 @@ import { ThemeService } from './core/theme.service';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    provideIcons(APP_ICONS),
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(
       withFetch(),

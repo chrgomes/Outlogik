@@ -1,0 +1,159 @@
+<div class="mk-container mk-header__bar">
+  <a routerLink="/" class="mk-header__brand" aria-label="Outlogik home">
+    <ol-logo />
+  </a>
+
+  <nav class="mk-nav" aria-label="Main">
+    <ul class="mk-nav__list">
+      <li class="mk-nav__item" (focusout)="onFocusOut($event, 'platform')">
+        <button type="button" id="menu-button-platform" class="mk-nav__trigger"
+          [attr.aria-expanded]="open() === 'platform'" aria-controls="menu-platform"
+          (click)="toggle('platform')">
+          Platform <ol-icon name="chevron-down" size="0.75rem" />
+        </button>
+        <div id="menu-platform" class="mk-mega" [hidden]="open() !== 'platform'">
+          <div class="mk-container mk-mega__inner">
+            <div class="mk-mega__intro">
+              <p class="mk-eyebrow">Platform</p>
+              <p>One workspace for clients, websites and marketing performance.</p>
+              <a routerLink="/platform" class="mk-arrow-link">Platform overview <ol-icon name="arrow-right" /></a>
+            </div>
+            <ul class="mk-mega__grid">
+              @for (m of modules; track m.slug) {
+                <li>
+                  <a [routerLink]="['/platform', m.slug]" class="mk-mega__link">
+                    <ol-icon [name]="m.icon" size="1.125rem" />
+                    <span>
+                      <span class="mk-mega__title">{{ m.name }} <mk-status-badge [status]="m.status" /></span>
+                      <span class="mk-mega__desc">{{ m.summary }}</span>
+                    </span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      </li>
+
+      <li class="mk-nav__item" (focusout)="onFocusOut($event, 'solutions')">
+        <button type="button" id="menu-button-solutions" class="mk-nav__trigger"
+          [attr.aria-expanded]="open() === 'solutions'" aria-controls="menu-solutions"
+          (click)="toggle('solutions')">
+          Solutions <ol-icon name="chevron-down" size="0.75rem" />
+        </button>
+        <div id="menu-solutions" class="mk-mega" [hidden]="open() !== 'solutions'">
+          <div class="mk-container mk-mega__inner">
+            <div class="mk-mega__intro">
+              <p class="mk-eyebrow">Solutions</p>
+              <p>How Outlogik fits the way you work.</p>
+              <a routerLink="/solutions" class="mk-arrow-link">All solutions <ol-icon name="arrow-right" /></a>
+            </div>
+            <ul class="mk-mega__grid">
+              @for (a of audiences; track a.slug) {
+                <li>
+                  <a [routerLink]="['/solutions', a.slug]" class="mk-mega__link">
+                    <ol-icon [name]="a.icon" size="1.125rem" />
+                    <span>
+                      <span class="mk-mega__title">{{ a.name }}</span>
+                      <span class="mk-mega__desc">{{ a.summary }}</span>
+                    </span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      </li>
+
+      @if (resources.length) {
+        <li class="mk-nav__item" (focusout)="onFocusOut($event, 'resources')">
+          <button type="button" id="menu-button-resources" class="mk-nav__trigger"
+            [attr.aria-expanded]="open() === 'resources'" aria-controls="menu-resources"
+            (click)="toggle('resources')">
+            Resources <ol-icon name="chevron-down" size="0.75rem" />
+          </button>
+          <div id="menu-resources" class="mk-dropdown" [hidden]="open() !== 'resources'">
+            @for (r of resources; track r.path) {
+              <a [routerLink]="r.path" class="mk-dropdown__link">
+                <span class="mk-mega__title">{{ r.label }}</span>
+                @if (r.description) { <span class="mk-mega__desc">{{ r.description }}</span> }
+              </a>
+            }
+          </div>
+        </li>
+      }
+
+      <li class="mk-nav__item">
+        <a routerLink="/pricing" routerLinkActive="is-active" ariaCurrentWhenActive="page" class="mk-nav__link">Pricing</a>
+      </li>
+
+      <li class="mk-nav__item" (focusout)="onFocusOut($event, 'company')">
+        <button type="button" id="menu-button-company" class="mk-nav__trigger"
+          [attr.aria-expanded]="open() === 'company'" aria-controls="menu-company"
+          (click)="toggle('company')">
+          Company <ol-icon name="chevron-down" size="0.75rem" />
+        </button>
+        <div id="menu-company" class="mk-dropdown" [hidden]="open() !== 'company'">
+          @for (c of company; track c.path) {
+            <a [routerLink]="c.path" class="mk-dropdown__link">
+              <span class="mk-mega__title">{{ c.label }}</span>
+              @if (c.description) { <span class="mk-mega__desc">{{ c.description }}</span> }
+            </a>
+          }
+        </div>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="mk-header__actions">
+    <a [href]="loginUrl" class="mk-header__login">Log in</a>
+    <a [href]="registerUrl" class="btn btn-primary mk-header__cta">Get started</a>
+    <button type="button" class="mk-header__menu-btn" (click)="openDrawer()" aria-label="Open menu"
+      aria-haspopup="dialog">
+      <ol-icon name="list" size="1.375rem" />
+    </button>
+  </div>
+</div>
+
+<!-- Small screens: navigation drawer -->
+<dialog #drawer class="mk-drawer" aria-label="Menu" (click)="onDrawerClick($event)">
+  <div class="mk-drawer__panel">
+    <div class="mk-drawer__head">
+      <a routerLink="/" aria-label="Outlogik home" class="mk-header__brand"><ol-logo /></a>
+      <button type="button" class="mk-header__menu-btn" (click)="closeDrawer()" aria-label="Close menu">
+        <ol-icon name="x-lg" size="1.125rem" />
+      </button>
+    </div>
+    <nav aria-label="Main" class="mk-drawer__nav">
+      <details>
+        <summary>Platform <ol-icon name="chevron-down" size="0.75rem" /></summary>
+        <a routerLink="/platform">Platform overview</a>
+        @for (m of modules; track m.slug) {
+          <a [routerLink]="['/platform', m.slug]">{{ m.name }} <mk-status-badge [status]="m.status" /></a>
+        }
+      </details>
+      <details>
+        <summary>Solutions <ol-icon name="chevron-down" size="0.75rem" /></summary>
+        <a routerLink="/solutions">All solutions</a>
+        @for (a of audiences; track a.slug) {
+          <a [routerLink]="['/solutions', a.slug]">{{ a.name }}</a>
+        }
+      </details>
+      @if (resources.length) {
+        <details>
+          <summary>Resources <ol-icon name="chevron-down" size="0.75rem" /></summary>
+          @for (r of resources; track r.path) { <a [routerLink]="r.path">{{ r.label }}</a> }
+        </details>
+      }
+      <a routerLink="/pricing" class="mk-drawer__top-link">Pricing</a>
+      <details>
+        <summary>Company <ol-icon name="chevron-down" size="0.75rem" /></summary>
+        @for (c of company; track c.path) { <a [routerLink]="c.path">{{ c.label }}</a> }
+      </details>
+    </nav>
+    <div class="mk-drawer__actions">
+      <a [href]="registerUrl" class="btn btn-primary btn-lg">Get started</a>
+      <a [href]="loginUrl" class="btn btn-outline-dark btn-lg">Log in</a>
+    </div>
+  </div>
+</dialog>

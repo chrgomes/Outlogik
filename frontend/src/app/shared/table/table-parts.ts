@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 
 import { CurrentOrgService } from '../../core/current-org.service';
-import { Icon } from '../icon/icon';
+import { Icon } from '@brand/icon/icon';
 
 /** "1–25 of 80" with previous / next. Hidden when everything fits on one page. */
 @Component({

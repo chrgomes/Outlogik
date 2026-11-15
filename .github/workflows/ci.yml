@@ -65,7 +65,17 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
-      - name: Unit tests
-        run: npx ng test --watch=false
-      - name: Production build (fails over the bundle budget)
-        run: npx ng build
+      - name: App unit tests
+        run: npx ng test frontend --watch=false
+      - name: Marketing site unit tests
+        run: npx ng test marketing --watch=false
+      - name: App production build (fails over the bundle budget)
+        run: npx ng build frontend
+      - name: Marketing site production build (prerenders static pages)
+        run: npx ng build marketing
+      - name: Marketing site serves server-rendered HTML
+        run: |
+          PORT=4310 node dist/marketing/server/server.mjs &
+          for i in $(seq 1 20); do curl -sf localhost:4310/ -o home.html && break; sleep 1; done
+          grep -q '<h1' home.html
+          test "$(curl -s -o /dev/null -w '%{http_code}' localhost:4310/does-not-exist)" = 404

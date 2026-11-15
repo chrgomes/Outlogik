@@ -1,0 +1,399 @@
+// ---------------------------------------------------------------------------------------------
+// Header
+// ---------------------------------------------------------------------------------------------
+.mk-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: block;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(1.6) blur(12px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+
+  &.is-scrolled {
+    border-bottom-color: var(--mk-border);
+  }
+}
+
+.mk-header__bar {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  height: var(--mk-header-h);
+}
+
+.mk-header__brand {
+  display: flex;
+  color: var(--mk-black);
+  --ol-logo-height: 1.75rem;
+}
+
+.mk-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-left: auto;
+}
+
+.mk-header__login {
+  font-weight: 500;
+  color: var(--mk-text);
+
+  &:hover {
+    color: var(--mk-black);
+  }
+}
+
+.mk-header__menu-btn {
+  display: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-right: -0.5rem;
+  border: 0;
+  border-radius: var(--bs-border-radius);
+  background: none;
+  color: var(--mk-black);
+
+  &:hover {
+    background: var(--mk-hover);
+  }
+}
+
+.mk-nav__list {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-nav__trigger,
+.mk-nav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: var(--bs-border-radius);
+  background: none;
+  color: var(--mk-text);
+  font-size: 0.9375rem;
+  font-weight: 500;
+
+  &:hover,
+  &[aria-expanded='true'],
+  &.is-active {
+    background: var(--mk-hover);
+    color: var(--mk-black);
+  }
+
+  ol-icon {
+    transition: transform 0.15s ease;
+  }
+
+  &[aria-expanded='true'] ol-icon {
+    transform: rotate(180deg);
+  }
+}
+
+.mk-nav__item {
+  position: relative;
+}
+
+// Full-width mega-menu under the header
+.mk-mega {
+  position: fixed;
+  top: var(--mk-header-h);
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--mk-border);
+  border-bottom: 1px solid var(--mk-border);
+  background: #fff;
+  box-shadow: var(--mk-shadow);
+}
+
+.mk-mega__inner {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) 3fr;
+  gap: 3rem;
+  padding-block: 2rem 2.25rem;
+}
+
+.mk-mega__intro p:not(.mk-eyebrow) {
+  color: var(--mk-text-2);
+  margin-bottom: 1rem;
+}
+
+.mk-mega__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-mega__link,
+.mk-dropdown__link {
+  display: flex;
+  gap: 0.875rem;
+  padding: 0.75rem;
+  border-radius: var(--bs-border-radius);
+  color: var(--mk-text);
+
+  &:hover {
+    background: var(--mk-hover);
+    color: var(--mk-text);
+  }
+
+  > ol-icon {
+    margin-top: 0.125rem;
+    color: var(--mk-black);
+  }
+}
+
+.mk-mega__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--mk-black);
+}
+
+.mk-mega__desc {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--mk-muted);
+}
+
+// Small dropdown (Company, Resources)
+.mk-dropdown {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  left: 0;
+  width: 19rem;
+  padding: 0.5rem;
+  border: 1px solid var(--mk-border);
+  border-radius: var(--bs-border-radius-lg);
+  background: #fff;
+  box-shadow: var(--mk-shadow);
+}
+
+.mk-dropdown__link {
+  flex-direction: column;
+  gap: 0;
+}
+
+// Small screens: nav moves into the drawer
+@media (max-width: 1079.98px) {
+  .mk-nav,
+  .mk-header__login {
+    display: none;
+  }
+
+  .mk-header__menu-btn {
+    display: grid;
+  }
+}
+
+@media (max-width: 479.98px) {
+  .mk-header__cta {
+    display: none !important;
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Drawer (native <dialog>)
+// ---------------------------------------------------------------------------------------------
+.mk-drawer {
+  width: min(24rem, 100vw);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: #fff;
+  color: var(--mk-text);
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  &[open] {
+    animation: mk-drawer-in 0.22s ease;
+  }
+}
+
+@keyframes mk-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+.mk-drawer__panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 1.25rem 1.5rem;
+}
+
+.mk-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--mk-header-h);
+  flex-shrink: 0;
+}
+
+.mk-drawer__nav {
+  flex: 1;
+  overflow-y: auto;
+
+  details {
+    border-bottom: 1px solid var(--mk-border);
+  }
+
+  summary,
+  .mk-drawer__top-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--mk-black);
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  .mk-drawer__top-link {
+    border-bottom: 1px solid var(--mk-border);
+  }
+
+  details[open] summary ol-icon {
+    transform: rotate(180deg);
+  }
+
+  details a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0 0.5rem 0.75rem;
+    color: var(--mk-text);
+
+    &:last-child {
+      margin-bottom: 0.75rem;
+    }
+  }
+}
+
+.mk-drawer__actions {
+  display: grid;
+  gap: 0.625rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--mk-border);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Footer (black band)
+// ---------------------------------------------------------------------------------------------
+.mk-footer {
+  display: block;
+  padding-block: 4.5rem 2rem;
+  background: var(--mk-black);
+  color: #{$ol-grey-400};
+  font-size: 0.9375rem;
+
+  a {
+    color: #{$ol-grey-400};
+
+    &:hover {
+      color: #fff;
+    }
+  }
+
+}
+
+.mk-footer__top {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1.2fr) 3fr;
+  gap: 3rem;
+
+  @media (max-width: 991.98px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mk-footer__logo {
+  display: inline-flex;
+  color: #fff;
+  --ol-logo-height: 1.75rem;
+}
+
+.mk-footer__tagline {
+  margin: 1.25rem 0 0.5rem;
+  color: #fff;
+  font-weight: 500;
+}
+
+.mk-footer__desc {
+  max-width: 22rem;
+}
+
+.mk-footer__cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 2rem;
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    margin-bottom: 0.625rem;
+  }
+}
+
+.mk-footer__heading {
+  margin-bottom: 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.mk-footer__bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #{$ol-grey-dark};
+  font-size: 0.875rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+.mk-footer__legal {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

@@ -6,8 +6,8 @@ import { AuthService } from '../../core/auth.service';
 import { CurrentOrgService } from '../../core/current-org.service';
 import { LayoutService } from '../../core/layout.service';
 import { ThemePreference, ThemeService } from '../../core/theme.service';
-import { Icon } from '../../shared/icon/icon';
-import { IconName } from '../../shared/icon/icons';
+import { Icon } from '@brand/icon/icon';
+import { IconName } from '@brand/icon/icons';
 
 @Component({
   selector: 'ol-topbar',

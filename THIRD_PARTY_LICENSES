@@ -14,7 +14,8 @@ Backend (Python)
   redis-py ............... MIT
 
 Frontend (npm)
-  Angular, Angular CDK ... MIT
+  Angular, Angular CDK, Angular SSR ... MIT
+  Express ................ MIT (marketing site server)
   Bootstrap .............. MIT
   Bootstrap Icons ........ MIT (selected icons inlined as SVG, see
                            frontend/scripts/build-icons.mjs)

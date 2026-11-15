@@ -26,7 +26,13 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "brand/assets/logo",
+                "output": "brand"
+              },
+              {
+                "glob": "**/*",
+                "input": "brand/assets/icons",
+                "output": "/"
               }
             ],
             "styles": [
@@ -34,7 +40,8 @@
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
-                "src"
+                "src",
+                "."
               ],
               "sass": {
                 "silenceDeprecations": [
@@ -88,6 +95,111 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {}
+        }
+      }
+    },
+    "marketing": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "projects/marketing",
+      "sourceRoot": "projects/marketing/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "projects/marketing/src/main.ts",
+            "tsConfig": "projects/marketing/tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "brand/assets/logo",
+                "output": "brand"
+              },
+              {
+                "glob": "**/*",
+                "input": "brand/assets/icons",
+                "output": "/"
+              }
+            ],
+            "styles": [
+              "projects/marketing/src/styles.scss"
+            ],
+            "server": "projects/marketing/src/main.server.ts",
+            "outputMode": "server",
+            "security": {
+              "allowedHosts": [
+                "localhost"
+              ]
+            },
+            "ssr": {
+              "entry": "projects/marketing/src/server.ts"
+            },
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "projects/marketing/src",
+                "."
+              ],
+              "sass": {
+                "silenceDeprecations": [
+                  "import",
+                  "global-builtin",
+                  "color-functions",
+                  "if-function"
+                ]
+              }
+            },
+            "define": {
+              "OL_APP_URL": "'http://localhost:4200'",
+              "OL_SITE_URL": "'http://localhost:4300'"
+            }
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "400kB",
+                  "maximumError": "600kB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "marketing:build:production"
+            },
+            "development": {
+              "buildTarget": "marketing:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 4300
+          }
+        },
+        "test": {
+          "builder": "@angular/build:unit-test"
         }
       }
     }

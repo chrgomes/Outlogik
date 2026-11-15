@@ -8,7 +8,7 @@ import { Invitation, Member, Page } from '../../core/api.types';
 import { CurrentOrgService } from '../../core/current-org.service';
 import { OrgApi, queryParams } from '../../core/org-api.service';
 import { DialogService } from '../../shared/dialog/dialog';
-import { Icon } from '../../shared/icon/icon';
+import { Icon } from '@brand/icon/icon';
 import { PageHeader } from '../../shared/page-header/page-header';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/states/states';
 import { Can, Pager, Search, Status } from '../../shared/table/table-parts';

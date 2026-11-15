@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Injectable, inject, signal } from '@angular/core';
 
-import { Icon } from '../icon/icon';
+import { Icon } from '@brand/icon/icon';
 
 export interface Toast {
   id: number;

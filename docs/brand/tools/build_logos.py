@@ -25,13 +25,13 @@ def symbol_svg(fill):
             f'<title>Outlogik</title>{symbol(50,50,42,fill)}</svg>\n')
 files={
   'outlogik-logo.svg': lockup('currentColor'),
-  'outlogik-logo-on-light.svg': lockup('#050505'),
-  'outlogik-logo-on-dark.svg': lockup('#E0DFDD'),
+  'outlogik-logo-on-light.svg': lockup('#000000'),
+  'outlogik-logo-on-dark.svg': lockup('#FFFFFF'),
   'outlogik-symbol.svg': symbol_svg('currentColor'),
-  'outlogik-symbol-on-light.svg': symbol_svg('#050505'),
-  'outlogik-symbol-on-dark.svg': symbol_svg('#E0DFDD'),
+  'outlogik-symbol-on-light.svg': symbol_svg('#000000'),
+  'outlogik-symbol-on-dark.svg': symbol_svg('#FFFFFF'),
   'favicon.svg': ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
-    '<style>.i{color:#050505}@media (prefers-color-scheme:dark){.i{color:#E0DFDD}}</style>'
+    '<style>.i{color:#000000}@media (prefers-color-scheme:dark){.i{color:#FFFFFF}}</style>'
     f'<g class="i">{symbol(50,50,42)}</g></svg>\n'),
 }
 for k,v in files.items(): open(k,'w').write(v)
@@ -45,11 +45,11 @@ def symbol_small(cx,cy,r,fill="currentColor"):
             f'<circle cx="{dx:.2f}" cy="{dy:.2f}" r="{0.27*r:.2f}" fill="{fill}"/>')
 small={
   'favicon.svg': ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
-    '<style>.i{color:#050505}@media (prefers-color-scheme:dark){.i{color:#E0DFDD}}</style>'
+    '<style>.i{color:#000000}@media (prefers-color-scheme:dark){.i{color:#FFFFFF}}</style>'
     f'<g class="i">{symbol_small(50,50,38)}</g></svg>\n'),
   'outlogik-symbol-small.svg': ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Outlogik">'
     f'<title>Outlogik</title>{symbol_small(50,50,38)}</svg>\n'),
   'icon-tile.svg': ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
-    f'<rect width="100" height="100" fill="#121212"/>{symbol(50,50,30,"#E0DFDD")}</svg>\n'),
+    f'<rect width="100" height="100" fill="#000000"/>{symbol(50,50,30,"#FFFFFF")}</svg>\n'),
 }
 for k,v in small.items(): open(k,'w').write(v)
