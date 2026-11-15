@@ -3,8 +3,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { CurrentOrgService } from '../../core/current-org.service';
 import { LayoutService } from '../../core/layout.service';
-import { Icon } from '../../shared/icon/icon';
-import { Logo } from '../../shared/logo/logo';
+import { Icon } from '@brand/icon/icon';
+import { Logo } from '@brand/logo/logo';
 import { NAV } from '../nav';
 
 @Component({

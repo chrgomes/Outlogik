@@ -1,6 +1,6 @@
 # Outlogik — Phase 1.5 Plan (Public marketing website)
 
-Status: **Draft for approval.** No code has been written yet.
+Status: **Approved 2026-11-15.** Decisions 12 (legal details), 13 (domain and hosting) and 15 (lead emails) are on hold; everything else as recommended. Progress: [`IMPLEMENTATION_TRACKER_1_5.md`](IMPLEMENTATION_TRACKER_1_5.md).
 Source: [`specs/MARKETING_WEBSITE_SPEC.md`](specs/MARKETING_WEBSITE_SPEC.md) (the spec). Section
 numbers below (§) refer to it.
 
@@ -311,9 +311,9 @@ See decision 16.
 
 ---
 
-## 9. Decisions needed
+## 9. Decisions (approved 2026-11-15)
 
-Each has a recommendation; reply with any you'd change.
+All approved as recommended, except **12, 13 and 15, which are on hold** until you provide the details. Until then: legal pages are drafted with clearly marked gaps and aren't published; domains are environment settings with local defaults; lead notification email is a setting left empty (leads are still stored and shown in the admin area).
 
 1. **Unbuilt modules:** publish their pages labelled "In development", with status managed
    in admin (recommended), or hide them until they're built.

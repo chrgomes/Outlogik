@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import { Icon } from '../icon/icon';
-import { IconName } from '../icon/icons';
+import { Icon } from '@brand/icon/icon';
+import { IconName } from '@brand/icon/icons';
 
 /** Nothing to show yet: icon, title, message and optional actions (projected). */
 @Component({

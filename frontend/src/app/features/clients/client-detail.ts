@@ -9,7 +9,7 @@ import { Client, ClientUser, Invitation, Page, Website } from '../../core/api.ty
 import { CurrentOrgService } from '../../core/current-org.service';
 import { OrgApi, queryParams } from '../../core/org-api.service';
 import { DialogService } from '../../shared/dialog/dialog';
-import { Icon } from '../../shared/icon/icon';
+import { Icon } from '@brand/icon/icon';
 import { PageHeader } from '../../shared/page-header/page-header';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/states/states';
 import { Can, Status } from '../../shared/table/table-parts';

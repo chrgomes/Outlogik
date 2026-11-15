@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 
-import { Logo } from '../../shared/logo/logo';
+import { Logo } from '@brand/logo/logo';
 
 /** Frame for signed-out and system pages: logo above a centred card. */
 @Component({

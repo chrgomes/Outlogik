@@ -59,7 +59,23 @@ Conventions:
    client-portal user where relevant. `test_permission_matrix.py` checks the new route's
    permission automatically.
 
-## Frontend (`frontend/src`)
+## Frontend workspace (`frontend/`)
+
+One Angular workspace with two projects that build and deploy separately:
+
+| Project | Path | What it is |
+|---|---|---|
+| `frontend` | `src/` | The signed-in app (single-page app) |
+| `marketing` | `projects/marketing/src/` | The public website: server-rendered and prerendered with `@angular/ssr`, served by Express (`src/server.ts`) |
+
+Shared brand code lives in `brand/` and is imported as `@brand/...`: the palette
+(`brand/scss/_palette.scss`), logo and icon components, and logo and icon assets. Each site
+provides its own icon set with `provideIcons(...)`.
+
+Commands: `npx ng serve frontend` (port 4200) and `npx ng serve marketing` (port 4300);
+`npx ng test <project>`; `npx ng build <project>`.
+
+## App (`frontend/src`)
 
 | Path | Responsibility |
 |---|---|

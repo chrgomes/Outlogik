@@ -1,0 +1,186 @@
+:root {
+  color-scheme: light;
+  --mk-black: #{$ol-black};
+  --mk-text: #{$ol-charcoal};
+  --mk-text-2: #{$ol-grey-dark};
+  --mk-muted: #{$ol-grey};
+  --mk-border: #{$ol-grey-light};
+  --mk-surface: #{$ol-off-white};
+  --mk-hover: #{$ol-grey-50};
+  --mk-header-h: 4.5rem;
+  --mk-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 24px 48px -24px rgba(0, 0, 0, 0.18);
+}
+
+html {
+  scroll-padding-top: calc(var(--mk-header-h) + 1rem);
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+main:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--mk-black);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.mk-container {
+  width: 100%;
+  max-width: 75rem;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+
+  @media (max-width: 575.98px) {
+    padding-inline: 1rem;
+  }
+}
+
+.mk-narrow {
+  max-width: 46rem;
+}
+
+.mk-skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 2000;
+  padding: 0.625rem 1rem;
+  border-radius: var(--bs-border-radius);
+  background: var(--mk-black);
+  color: #fff;
+
+  &:focus {
+    top: 1rem;
+    color: #fff;
+  }
+}
+
+// Typography scale
+.mk-display {
+  font-size: clamp(2.5rem, 1.55rem + 3.6vw, 4.25rem);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  color: var(--mk-black);
+  max-width: 18ch;
+  margin-bottom: 1.5rem;
+}
+
+.mk-h1 {
+  font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+}
+
+.mk-h2 {
+  font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem);
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+}
+
+.mk-lead {
+  font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+  line-height: 1.6;
+  color: var(--mk-text-2);
+  max-width: 40rem;
+}
+
+.mk-eyebrow {
+  margin-bottom: 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mk-muted);
+}
+
+.mk-arrow-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-weight: 500;
+  color: var(--mk-black);
+  text-decoration: underline;
+  text-decoration-color: var(--mk-border);
+  text-underline-offset: 0.3em;
+
+  &:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+.mk-section {
+  padding-block: clamp(4rem, 3rem + 4vw, 7rem);
+}
+
+// "In development" / "Available" labels
+.mk-badge {
+  display: inline-block;
+  padding: 0.125rem 0.4375rem;
+  border: 1px solid var(--mk-border);
+  border-radius: var(--bs-border-radius-sm);
+  background: var(--mk-surface);
+  color: var(--mk-text-2);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  vertical-align: 0.125em;
+}
+
+.mk-badge--available {
+  border-color: var(--mk-black);
+  background: var(--mk-black);
+  color: #fff;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-outline-dark {
+  --bs-btn-border-color: var(--mk-border);
+  --bs-btn-hover-bg: var(--mk-hover);
+  --bs-btn-hover-color: var(--mk-black);
+  --bs-btn-hover-border-color: #{$ol-grey-400};
+  --bs-btn-active-bg: var(--mk-border);
+  --bs-btn-active-color: var(--mk-black);
+}
+
+.btn-primary {
+  --bs-btn-hover-bg: #{$ol-grey-dark};
+  --bs-btn-hover-border-color: #{$ol-grey-dark};
+  --bs-btn-active-bg: #{$ol-charcoal};
+}
+
+// Homepage hero (step 1; expanded in step 3)
+.mk-hero {
+  padding-block: clamp(4.5rem, 3rem + 6vw, 9rem) clamp(3.5rem, 2.5rem + 4vw, 6rem);
+}
+
+.mk-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2.25rem;
+}

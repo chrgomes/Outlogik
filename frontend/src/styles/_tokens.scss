@@ -1,31 +1,33 @@
 // Outlogik design tokens: Bootstrap variable overrides, applied before Bootstrap is imported.
 // The brand is monochrome. Colour is reserved for status (success, warning, danger).
 
-$ol-ink: #050505;        // logo on light
-$ol-paper: #ffffff;
-$ol-night: #121212;      // dark background
-$ol-mist: #e0dfdd;       // logo on dark (warm off-white)
+@import 'brand/scss/palette';
 
-$font-family-sans-serif: 'Albert Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-$font-family-monospace: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+$ol-ink: $ol-black;
+$ol-paper: $ol-white;
+$ol-night: $ol-black;
+$ol-mist: $ol-grey-light;
+
+$font-family-sans-serif: $ol-font-sans;
+$font-family-monospace: $ol-font-mono;
 $font-size-base: 0.9375rem; // 15px: a calm, dense UI size
 $headings-font-weight: 600;
 $font-weight-semibold: 600;
 
-$body-color: #1a1a19;
+$body-color: $ol-charcoal;
 $body-bg: $ol-paper;
 $primary: $ol-ink;
-$secondary: #6b6b68;
-$success: #2f7d4f;
-$info: #3c6e91;
-$warning: #a86b12;
-$danger: #b42318;
-$light: #f4f4f2;
+$secondary: $ol-grey;
+$success: $ol-success;
+$info: $ol-info;
+$warning: $ol-warning;
+$danger: $ol-danger;
+$light: $ol-off-white;
 $dark: $ol-night;
 $link-color: $ol-ink;
 $link-decoration: underline;
 $link-underline-opacity: 0.35;
-$border-color: #e4e4e1;
+$border-color: $ol-grey-light;
 
 $border-radius: 0.5rem;
 $border-radius-sm: 0.375rem;
@@ -44,9 +46,9 @@ $enable-negative-margins: true;
 // Dark mode (Bootstrap 5.3 colour modes, data-bs-theme="dark")
 $body-color-dark: $ol-mist;
 $body-bg-dark: $ol-night;
-$border-color-dark: #2c2c2b;
+$border-color-dark: $ol-grey-dark;
 $link-color-dark: $ol-mist;
-$link-hover-color-dark: #ffffff;
+$link-hover-color-dark: $ol-white;
 $primary-text-emphasis-dark: $ol-mist;
 $secondary-color-dark: rgba($ol-mist, 0.68);
 $body-secondary-color-dark: rgba($ol-mist, 0.68);

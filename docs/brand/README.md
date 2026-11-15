@@ -1,6 +1,6 @@
 # Outlogik brand assets
 
-Everything the app uses is vector, in [`frontend/public/brand/`](../../frontend/public/brand/).
+Everything the app and the marketing site use is vector, in [`frontend/brand/assets/`](../../frontend/brand/assets/) (logos in `logo/`, favicons and home-screen icons in `icons/`). Both sites serve the logos at `/brand/…` and the icons at the site root.
 The first concept artwork (2026-11-14) is kept in [`source/`](source/) for reference only. Its
 wordmark is **not** used: it closely resembled Logitech's.
 
@@ -10,17 +10,24 @@ wordmark is **not** used: it closely resembled Logitech's.
 | `outlogik-logo-on-light.svg` / `-on-dark.svg` | Full logo with fixed colors, for `<img>`, emails and documents |
 | `outlogik-symbol.svg` (+ `-on-light` / `-on-dark`) | Symbol only, e.g. the collapsed sidebar (32 px and up) |
 | `outlogik-symbol-small.svg` | Symbol for 16–24 px: heavier stroke and dot so it stays legible |
-| `outlogik-icon-512.png` | Square app icon (symbol on dark tile) |
-| `../favicon.svg`, `../favicon.ico`, `../apple-touch-icon.png` | Browser and home-screen icons |
+| `icons/favicon.svg`, `icons/favicon.ico`, `icons/apple-touch-icon.png`, `icons/outlogik-icon-512.png` | Browser and home-screen icons |
 
 ## Colors
 
-The logo is monochrome. Colors sampled from the supplied artwork:
+The brand is monochrome. These are the marketing website spec's colours (§2), defined once in
+[`frontend/brand/scss/_palette.scss`](../../frontend/brand/scss/_palette.scss) and used by both sites.
 
-| | Background | Logo |
+| Name | Value | Used for |
 |---|---|---|
-| Light | `#FFFFFF` | `#050505` |
-| Dark | `#121212` | `#E0DFDD` (a warm off-white, not pure white) |
+| Black | `#000000` | Logo on light, primary buttons, headings |
+| White | `#FFFFFF` | Backgrounds, logo on dark |
+| Dark charcoal | `#171717` | Body text; dark-mode surfaces |
+| Dark grey | `#333333` | Secondary text; dark-mode borders |
+| Medium grey | `#737373` | Muted text (4.7:1 on white) |
+| Light grey | `#E5E5E5` | Borders, dividers |
+| Off-white | `#FAFAFA` | Alternate backgrounds, sidebar |
+
+Status colours (success, warning, danger) appear only for status, always with a label or icon.
 
 ## How the vectors were made
 

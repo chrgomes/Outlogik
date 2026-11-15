@@ -1,0 +1,27 @@
+// Outlogik palette (marketing website spec §2). Shared by the app and the marketing site.
+// Monochrome only; colour is reserved for status (success / warning / danger).
+
+// Spec colours
+$ol-black: #000000;
+$ol-white: #ffffff;
+$ol-charcoal: #171717;   // dark charcoal: body text
+$ol-grey-dark: #333333;  // secondary text, dark-mode borders
+$ol-grey: #737373;       // muted text (4.7:1 on white, AA)
+$ol-grey-light: #e5e5e5; // borders, dividers
+$ol-off-white: #fafafa;  // alternate backgrounds
+
+// Neutral in-between steps (same grey scale), for hover states and dark mode
+$ol-grey-50: #f5f5f5;
+$ol-grey-100: #f0f0f0;
+$ol-grey-400: #a3a3a3;   // muted text on dark (7:1 on #171717)
+$ol-grey-800: #262626;
+
+// Status colours (accessible, used with an icon or label, never alone)
+$ol-success: #2f7d4f;
+$ol-warning: #a86b12;
+$ol-danger: #b42318;
+$ol-info: #3c6e91;
+
+// Typography (Albert Sans, self-hosted)
+$ol-font-sans: 'Albert Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+$ol-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;

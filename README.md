@@ -11,7 +11,7 @@ decisions made along the way.
 | Folder | What's in it |
 |---|---|
 | `backend/` | FastAPI modular monolith: Python 3.12, SQLAlchemy 2, Alembic, PostgreSQL 16, Redis 7 |
-| `frontend/` | Angular 22 app: standalone components, signals, Bootstrap 5.3 with Outlogik's tokens |
+| `frontend/` | Angular 22 workspace: the app (`src/`) and the public marketing website (`projects/marketing/`), sharing `brand/` |
 | `docs/` | Plan, tracker, [architecture](docs/ARCHITECTURE.md), [security](docs/SECURITY.md), [brand](docs/brand/README.md) |
 | `docker-compose.yml` | Local PostgreSQL, Redis and Mailpit |
 
@@ -49,7 +49,16 @@ npm ci
 npm start
 ```
 
-Open **http://localhost:4200** and create an account. The dev server forwards `/api` to the
+Open **http://localhost:4200** and create an account.
+
+The public marketing website runs separately:
+
+```bash
+cd frontend
+npx ng serve marketing
+```
+
+It opens on **http://localhost:4300**; its "Log in" and "Get started" buttons go to the app on port 4200. The dev server forwards `/api` to the
 backend, so the browser sees a single site and the session and CSRF cookies just work.
 
 > Session cookies are marked `Secure`. Chrome, Edge and Firefox accept them on
@@ -76,8 +85,10 @@ uv run alembic check     # migrations match the models
 
 ```bash
 cd frontend
-npm test -- --watch=false   # 65 unit tests (Vitest)
-npx ng build                # production build; fails if the bundle budget is exceeded
+npx ng test frontend --watch=false    # app unit tests (Vitest)
+npx ng test marketing --watch=false   # marketing site unit tests
+npx ng build frontend                 # production builds; fail if a bundle budget is exceeded
+npx ng build marketing                # also prerenders the static pages
 ```
 
 The backend tests use the `outlogik_test` database, which Docker Compose creates on first

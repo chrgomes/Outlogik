@@ -1,4 +1,4 @@
-import { IconName } from '../shared/icon/icons';
+import { IconName } from '@brand/icon/icons';
 
 export interface NavItem {
   label: string;

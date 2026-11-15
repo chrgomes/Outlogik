@@ -1,0 +1,22 @@
+// Outlogik marketing site. Fonts are bundled and self-hosted (no third-party CDNs).
+@import '@fontsource/albert-sans/400.css';
+@import '@fontsource/albert-sans/500.css';
+@import '@fontsource/albert-sans/600.css';
+
+@import 'styles/tokens';
+
+// Bootstrap: only what the marketing site uses.
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/maps';
+@import 'bootstrap/scss/mixins';
+@import 'bootstrap/scss/utilities';
+@import 'bootstrap/scss/root';
+@import 'bootstrap/scss/reboot';
+@import 'bootstrap/scss/type';
+@import 'bootstrap/scss/buttons';
+@import 'bootstrap/scss/helpers';
+// No utilities API: the site uses its own small set of classes (keeps the CSS small).
+
+@import 'styles/base';
+@import 'styles/layout';

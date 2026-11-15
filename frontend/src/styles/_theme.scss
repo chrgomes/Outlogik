@@ -3,45 +3,45 @@
 
 :root,
 [data-bs-theme='light'] {
-  --ol-bg: #ffffff;
-  --ol-surface: #f7f7f6;          // sidebar, page wells
-  --ol-surface-raised: #ffffff;   // cards, menus
-  --ol-surface-hover: #efefed;
-  --ol-surface-active: #e6e6e3;
-  --ol-border: #e4e4e1;
-  --ol-text: #1a1a19;
-  --ol-text-strong: #050505;
-  --ol-text-muted: #6b6b68;
-  --ol-accent: #050505;           // primary actions
-  --ol-accent-contrast: #ffffff;
-  --ol-accent-hover: #2a2a29;
-  --ol-focus-ring: rgba(5, 5, 5, 0.22);
+  --ol-bg: #{$ol-white};
+  --ol-surface: #{$ol-off-white};   // sidebar, page wells
+  --ol-surface-raised: #{$ol-white}; // cards, menus
+  --ol-surface-hover: #{$ol-grey-100};
+  --ol-surface-active: #{$ol-grey-light};
+  --ol-border: #{$ol-grey-light};
+  --ol-text: #{$ol-charcoal};
+  --ol-text-strong: #{$ol-black};
+  --ol-text-muted: #{$ol-grey};
+  --ol-accent: #{$ol-black};        // primary actions
+  --ol-accent-contrast: #{$ol-white};
+  --ol-accent-hover: #{$ol-grey-dark};
+  --ol-focus-ring: rgba(0, 0, 0, 0.22);
   --ol-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.08);
   --ol-backdrop: rgba(5, 5, 5, 0.35);
   color-scheme: light;
 }
 
 [data-bs-theme='dark'] {
-  --ol-bg: #121212;
-  --ol-surface: #181818;
-  --ol-surface-raised: #1d1d1c;
-  --ol-surface-hover: #242423;
-  --ol-surface-active: #2c2c2b;
-  --ol-border: #2c2c2b;
-  --ol-text: #e0dfdd;
-  --ol-text-strong: #f2f1ef;
-  --ol-text-muted: #9a9996;
-  --ol-accent: #e0dfdd;
-  --ol-accent-contrast: #121212;
-  --ol-accent-hover: #f2f1ef;
-  --ol-focus-ring: rgba(224, 223, 221, 0.28);
+  --ol-bg: #{$ol-black};
+  --ol-surface: #{$ol-charcoal};
+  --ol-surface-raised: #{$ol-charcoal};
+  --ol-surface-hover: #{$ol-grey-800};
+  --ol-surface-active: #{$ol-grey-dark};
+  --ol-border: #{$ol-grey-dark};
+  --ol-text: #{$ol-grey-light};
+  --ol-text-strong: #{$ol-white};
+  --ol-text-muted: #{$ol-grey-400};
+  --ol-accent: #{$ol-white};
+  --ol-accent-contrast: #{$ol-black};
+  --ol-accent-hover: #{$ol-grey-light};
+  --ol-focus-ring: rgba(255, 255, 255, 0.3);
   --ol-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
   --ol-backdrop: rgba(0, 0, 0, 0.55);
   color-scheme: dark;
 
   // Bootstrap compiles $primary into components at build time; re-point them per mode.
   --bs-primary: var(--ol-accent);
-  --bs-primary-rgb: 224, 223, 221;
+  --bs-primary-rgb: 255, 255, 255;
   --bs-emphasis-color: var(--ol-text-strong);
 }
 
