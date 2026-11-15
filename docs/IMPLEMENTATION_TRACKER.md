@@ -3,7 +3,7 @@
 Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the repo).
 
 **Phase 1 is complete (2026-11-15).** 45 API operations across 32 paths; 2 migrations;
-171 backend tests and 65 frontend tests, all passing; every flow checked in a browser.
+174 backend tests and 65 frontend tests, all passing; every flow checked in a browser.
 See also [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`SECURITY.md`](SECURITY.md).
 
 | # | Step | Status | Notes |
@@ -145,7 +145,11 @@ Small additions made while building. None change an approved decision.
 - **Security headers** on every API response (`nosniff`, `DENY` framing, `no-referrer`, a deny-all CSP, `no-store`); the interactive API docs page is exempt from the CSP so it still loads.
 - **CI:** `.github/workflows/ci.yml` runs backend lint, tests and `alembic check` against PostgreSQL 16 and Redis 7 services, and the frontend unit tests and production build, on every push and pull request.
 - **Docs:** the README is rewritten for setup, tests and common tasks. `ARCHITECTURE.md` covers module layout, conventions and checklists for adding endpoints and pages. `SECURITY.md` covers the security model and a production checklist.
-- **Fresh-clone check:** the branch was cloned into an empty folder and set up exactly as the README describes, with new databases (see the step 11 commit message for results).
+- **Fresh-clone check:** the branch was cloned from GitHub into an empty folder and set up exactly as the README describes, against brand-new databases. Results:
+  - backend: `uv sync --frozen`, both migrations applied, 171 tests passing, ruff and `alembic check` clean
+  - server: `/health/ready` ok; a CLI-created Super Admin signed in
+  - frontend: `npm ci` (0 vulnerabilities), 65 tests passing, production build within budget
+- **CLI tests added.** Promoting an existing user no longer asks for a password it then ignores; new Super Admins are created email-verified.
 
 ## Known gaps / follow-ups
 

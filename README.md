@@ -69,7 +69,7 @@ uv run python -m app.cli create-super-admin --email you@example.com --name "Your
 
 ```bash
 cd backend
-uv run pytest            # 171 tests; rebuilds the outlogik_test schema from the migrations
+uv run pytest            # 174 tests; rebuilds the outlogik_test schema from the migrations
 uv run ruff check .      # lint
 uv run alembic check     # migrations match the models
 ```
