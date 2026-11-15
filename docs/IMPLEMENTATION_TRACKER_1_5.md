@@ -1,6 +1,8 @@
 # Implementation tracker — Phase 1.5 (public marketing website)
 
-Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md). Spec: [`specs/MARKETING_WEBSITE_SPEC.md`](specs/MARKETING_WEBSITE_SPEC.md).
+Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, awaiting approval**). Spec: [`specs/MARKETING_WEBSITE_SPEC.md`](specs/MARKETING_WEBSITE_SPEC.md).
+
+> **2026-11-15: direction change.** Outlogik is a digital marketing agency; the website sells its services and the app is the client portal. Steps 1–2 carry over; steps 3 onward follow plan revision 2 once approved. The table below is from revision 1.
 
 **Milestone A** (launchable site) = steps 1–7, 11, 12, and the release checks in 14.
 **Milestone B** (CMS and resources) = steps 8–10, 13, and the rest of 14.
