@@ -53,6 +53,8 @@ class MembershipOut(BaseModel):
     organization_status: str
     role_id: uuid.UUID
     role_name: str
+    # Stable key of a built-in role ("owner", "admin", "member", "client"); null for custom roles.
+    role_key: str | None
     permissions: list[str]
 
 
@@ -75,6 +77,7 @@ class AcceptInviteIn(BaseModel):
 class InvitePreviewOut(BaseModel):
     email: str
     organization_name: str
+    organization_slug: str
     role_name: str
     client_name: str | None
     invited_by: str | None

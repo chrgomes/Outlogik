@@ -17,8 +17,9 @@ from app.modules.audit.service import record
 from app.modules.clients.models import Client, ClientUser
 from app.modules.organizations.models import Invitation, Organization, OrganizationMember
 from app.modules.organizations.schemas import InvitationOut, RoleRef
-from app.modules.rbac.catalogue import CLIENT, OWNER
+from app.modules.rbac.catalogue import CLIENT
 from app.modules.rbac.models import Role
+from app.modules.rbac.service import ensure_can_grant
 from app.modules.users.models import User
 from app.tenancy.context import OrgContext
 from app.tenancy.scoped import get_scoped
@@ -81,8 +82,7 @@ def _send(org: Organization, inv: Invitation, token: str, inviter: User,
 def create_invitation(db: Session, ctx: OrgContext, *, email: str, role_id: uuid.UUID,
                       client_id: uuid.UUID | None, ip: str | None) -> InvitationOut:
     role = get_scoped(db, Role, role_id, ctx, label="Role")
-    if role.system_key == OWNER and not ctx.is_owner:
-        raise Forbidden("Only an owner can invite another owner.", code="owner_required")
+    ensure_can_grant(db, ctx.permissions, ctx.is_owner, role)
 
     client = None
     if role.system_key == CLIENT:
@@ -131,9 +131,7 @@ def _load_open(db: Session, ctx: OrgContext, invitation_id: uuid.UUID) -> Invita
 def resend_invitation(db: Session, ctx: OrgContext, invitation_id: uuid.UUID,
                       ip: str | None) -> InvitationOut:
     inv = _load_open(db, ctx, invitation_id)
-    role = db.get(Role, inv.role_id)
-    if role.system_key == OWNER and not ctx.is_owner:
-        raise Forbidden("Only an owner can resend an owner invitation.", code="owner_required")
+    ensure_can_grant(db, ctx.permissions, ctx.is_owner, db.get(Role, inv.role_id))
     token = _issue_token(inv)
     record(db, "invitation.resend", actor_user_id=ctx.user.id, organization_id=ctx.org.id,
            target_type="invitation", target_id=inv.id, meta={"email": inv.email}, ip=ip)

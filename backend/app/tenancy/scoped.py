@@ -3,7 +3,7 @@
 import uuid
 from typing import Any
 
-from sqlalchemy import Select, select
+from sqlalchemy import Select, false, select, true
 from sqlalchemy.orm import Session
 
 from app.core.errors import NotFound
@@ -24,4 +24,24 @@ def get_scoped(db: Session, model: Any, obj_id: uuid.UUID, ctx: OrgContext,
     obj = db.scalar(stmt)
     if obj is None:
         raise NotFound(f"{label or model.__name__} not found.")
+    return obj
+
+
+def client_visibility(client_id_column: Any, ctx: OrgContext) -> Any:
+    """A WHERE clause limiting rows to the clients the caller may see (true for team members)."""
+    if ctx.client_ids is None:
+        return true()
+    return client_id_column.in_(ctx.client_ids) if ctx.client_ids else false()
+
+
+def get_visible(db: Session, model: Any, obj_id: uuid.UUID, ctx: OrgContext, *,
+                client_id_column: Any, label: str, for_update: bool = False) -> Any:
+    """get_scoped(), plus the client-portal restriction. Hidden rows are a plain 404."""
+    stmt = select(model).where(model.id == obj_id, model.organization_id == ctx.org.id,
+                               client_visibility(client_id_column, ctx))
+    if for_update:
+        stmt = stmt.with_for_update()
+    obj = db.scalar(stmt)
+    if obj is None:
+        raise NotFound(f"{label} not found.")
     return obj

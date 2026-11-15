@@ -12,6 +12,7 @@ import sys
 from sqlalchemy import select
 
 from app.core.db import SessionLocal
+from app.core.models import utcnow
 from app.core.security import hash_password
 from app.models import User
 from app.modules.audit.service import record
@@ -20,18 +21,19 @@ from app.modules.rbac.service import sync_permissions
 
 def create_super_admin(email: str, name: str) -> int:
     email = email.strip().lower()
-    password = getpass.getpass("Password (min 10 characters): ")
-    if len(password) < 10 or password != getpass.getpass("Repeat password: "):
-        print("Passwords must match and be at least 10 characters.", file=sys.stderr)
-        return 1
     with SessionLocal() as db:
         user = db.scalar(select(User).where(User.email == email))
         if user:
+            # Existing account: promote it and leave its password alone.
             user.is_super_admin = True
             print(f"Promoted existing user {email} to Super Admin.")
         else:
+            password = getpass.getpass("Password (min 10 characters): ")
+            if len(password) < 10 or password != getpass.getpass("Repeat password: "):
+                print("Passwords must match and be at least 10 characters.", file=sys.stderr)
+                return 1
             user = User(email=email, full_name=name, password_hash=hash_password(password),
-                        is_super_admin=True)
+                        is_super_admin=True, email_verified_at=utcnow())
             db.add(user)
             db.flush()
             print(f"Created Super Admin {email}.")

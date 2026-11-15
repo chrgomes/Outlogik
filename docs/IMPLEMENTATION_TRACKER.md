@@ -2,19 +2,32 @@
 
 Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the repo).
 
+**Phase 1 is complete (2026-11-15).** 45 API operations across 32 paths; 2 migrations;
+174 backend tests and 65 frontend tests, all passing; every flow checked in a browser.
+See also [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`SECURITY.md`](SECURITY.md).
+
 | # | Step | Status | Notes |
 |---|---|---|---|
 | 1 | Scaffold, Docker Compose, health endpoint, Angular shell | ✅ Done | Angular 22, FastAPI, Postgres 16, Redis 7, Mailpit |
 | 2 | Database, Alembic, Phase 1 models, first migration | ✅ Done | Migration `0001`; upgrade/downgrade tested; `alembic check` clean |
 | 3 | Authentication backend + tests | ✅ Done | 27 auth tests |
 | 4 | Organizations, members, invitations + tests | ✅ Done | 37 tests, incl. tenant isolation |
-| 5 | Roles and permissions + permission tests | ⏳ Next | Done early: catalogue, default roles, `require(permission)` enforcement. To do: roles API, custom roles, permission tests across every route |
-| 6 | Clients and websites + tenant isolation tests | ☐ | |
-| 7 | Frontend: brand, themes, layout shell | ☐ | Needs logo files |
-| 8 | Frontend: authentication pages | ☐ | |
-| 9 | Frontend: clients, websites, settings pages | ☐ | |
-| 10 | Dashboard (backend + frontend) | ☐ | |
-| 11 | Docs, tracker, final test pass | ☐ | |
+| 5 | Roles and permissions + permission tests | ✅ Done | Roles API, custom roles, escalation guard, system-role sync; 38 tests incl. a permission matrix over every org route |
+| 6 | Clients and websites + tenant isolation tests | ✅ Done | Migration `0002`; 56 tests incl. client-portal scoping and cross-org attempts |
+| 7 | Frontend: brand, themes, layout shell | ✅ Done | Tokens + Bootstrap 5.3, light/dark/system theme, collapsible sidebar, org switcher, user menu; 15 frontend tests |
+| 8 | Frontend: authentication pages | ✅ Done | Sign in/up, forgot/reset, verify email, accept invite, verify banner; 25 new frontend tests; all flows checked in Chromium |
+| 9 | Frontend: clients, websites, settings pages | ✅ Done | Clients (list, detail, portal access), websites, organization, team + invitations, roles editor; 14 frontend tests; full walkthrough in Chromium |
+| 10 | Dashboard (backend + frontend) | ✅ Done | `GET /orgs/{slug}/dashboard`; stat tiles, get-started checklist, recent activity, Phase 2 'Not connected yet' cards; 7 backend + 11 frontend tests |
+| 11 | Docs, tracker, final test pass | ✅ Done | README, architecture and security docs; API security headers; GitHub Actions CI; fresh-clone check |
+
+## Project rules
+
+- **No third-party CDNs in the frontend.** Fonts, scripts, styles and icons are bundled and
+  served by Outlogik itself. In particular, nothing loads from Google Fonts. (Privacy and
+  GDPR: visitors' browsers only talk to Outlogik.)
+- **Brand typeface: Albert Sans** (SIL OFL 1.1), for the wordmark and the UI. The
+  AI-generated concept wordmark was dropped because it resembled Logitech's. See
+  `docs/brand/README.md`.
 
 ## Changes from the plan
 
@@ -56,8 +69,101 @@ Small additions made while building. None change an approved decision.
 - Removing a member also removes their client-portal links in that organization.
 - Audit entries: `organization.update`, `member.update` (with from/to), `member.remove`, `member.leave`, `invitation.create` / `resend` / `revoke` / `accept`.
 
+## Roles and permissions (step 5)
+
+- **Only owners manage roles.** The plan says owners create custom roles, so the Admin role no longer has `roles.manage`. Admins and Team Members can still view roles.
+- **Built-in roles are read-only.** Custom roles are for anything else. Names are unique per organization, ignoring case.
+- **Built-in roles stay in sync.** At startup, every organization's built-in roles are reset to the catalogue's default permission sets (set-based SQL, so cost doesn't grow per organization). New permissions reach existing organizations automatically. Custom roles are never touched.
+- **No privilege escalation.** You can only assign a role, or invite someone with it, if you hold every permission in that role (`role_exceeds_yours`). Owners hold everything; only owners can grant Owner.
+- A role still assigned to members or to open invitations can't be deleted (`role_in_use`, with counts).
+- Permission changes apply on the member's next request; nothing is cached.
+- `GET /orgs/{slug}/permissions` returns the catalogue with a display group for each code, for the role editor.
+- **Custom roles are team roles.** Client-portal access still uses the built-in Client role.
+- **Tests guard every route:** each `/orgs/{slug}/…` endpoint must resolve the organization and declare exactly one permission (only `leave` is exempt). Each built-in role is then run against every endpoint, and must be refused exactly where its permission set says so. Removing a permission check from any route fails the build.
+- Audit entries: `role.create`, `role.update` (with permissions added/removed), `role.delete`.
+
+## Clients and websites (step 6)
+
+- **Client-portal scoping.** Members with the Client role see only the clients they're linked to (`client_users`) and those clients' websites. Anything else is a plain 404, including filtering websites by a hidden client's ID. A portal user with no links sees nothing.
+- **Internal notes stay internal.** Client records sent to portal users have `notes` and `portal_user_count` set to null.
+- **Portal access:** a client invitation links the new user to one client. `POST /clients/{id}/users` gives an existing Client-role member access to another client; only Client-role members can be linked (team members already see everything). Needs `client_users.manage`.
+- **Deleting a client** also deletes its websites, portal links and open client invitations (database cascades). The audit entry records the counts.
+- **Website URLs are normalised:** https is assumed, the host is lower-cased and IDNA-encoded, default ports, query, fragment and trailing slash are dropped. `domain` is the host without `www.`. If no name is given, it defaults to the domain.
+- **One record per URL per organization** (migration `0002`, unique on `organization_id, url`). Different paths on one domain are separate websites, and other organizations can add the same URL.
+- **Non-public addresses are refused:** IP literals, `localhost`, single-label hosts and internal suffixes (`.local`, `.internal`, `.lan`, …), plus URLs with credentials. This is a first line of defence only. The Phase 2 crawler must also check the resolved IP at fetch time (SSRF).
+- Search inputs escape SQL `LIKE` wildcards, so searching for `_` or `%` matches them literally.
+- Audit entries: `client.create` / `update` / `delete`, `client_user.link` / `unlink`, `website.create` / `update` / `delete`.
+
+## Frontend foundation (step 7)
+
+- **Styling:** Bootstrap 5.3.8 SCSS (only the modules used) under Outlogik tokens in `frontend/src/styles/`. Components use semantic CSS variables (`--ol-surface`, `--ol-text-muted`, …), defined for both themes. Colour is reserved for status.
+- **Typeface:** Albert Sans 400/500/600, bundled from `@fontsource/albert-sans`. **Icons:** 28 Bootstrap Icons inlined as SVG via `<ol-icon>`; regenerate with `npm run icons`. Nothing loads from a CDN.
+- **Themes:** Light, Dark or Match system (default), remembered per browser. An inline script in `index.html` applies it before first paint, so there's no flash.
+- **Shell:** the sidebar collapses to icons (remembered) and becomes a slide-over below 992 px. The top bar has the organization switcher, theme menu and account menu (sign out / sign out of all devices). Menus use Angular CDK for keyboard and screen-reader support. There's a skip-to-content link, and navigation sets `aria-current`.
+- **Routing:** `/` goes to your first organization. `/o/:slug/…` requires sign-in and membership; another organization's URL shows "not found". Pages your role can't open show "no access" (the API refuses too). Nav items are hidden by permission. If any API call returns 401, you're sent to sign-in with a link back.
+- **Placeholders:** Dashboard, Clients, Websites and Settings say which step builds them, and show no sample data. `/login` is a placeholder until step 8.
+- **Fixed during browser testing:** opening or reloading an organization URL showed "not found", because route guards run in parallel. The organization guard now waits for the user itself, and a unit test covers a fresh page load.
+- **Bundle budget** raised to 700 kB warning / 1 MB error. Currently 579 kB raw, about 123 kB compressed.
+
+## Authentication pages (step 8)
+
+- **Pages:** `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`, `/accept-invite`. Each loads on demand (1–6 kB) and uses the same centred card.
+- **Return after sign-in** goes only to same-app paths; external, `//` and `/\` URLs fall back to `/` (no open redirect). Unit-tested.
+- **Emailed-link tokens** are read once, then removed from the address bar (`replaceUrl`), so they don't stay in browser history. `<meta name="referrer" content="same-origin">` stops them leaking to other sites.
+- **Accept invitation** covers every case: new account (name + password); existing account signed out ("Sign in to accept", coming back with the token); signed in as someone else ("Sign out and continue"); signed in as the invitee (one click); and invalid, expired or cancelled links.
+- **Errors:** API field errors show on the matching inputs. "Email already registered" offers a sign-in link. Rate limits say how long to wait, and network failures say so. A failed sign-in clears the password field.
+- **Unconfirmed email:** a banner in the app with "Resend link" until the address is confirmed.
+- **Expired or revoked sessions:** the next API call sends the user to sign-in, with a link back and an explanation. Pages that make no API calls (the current placeholders) find out on the next call.
+- Backend: the invitation preview now also returns `organization_slug`, so the page can open the right organization after accepting.
+
+## Clients, websites and settings pages (step 9)
+
+- **Clients:** a list with search, a status filter and pages. The detail page shows internal notes (team only), the client's websites, and client-portal access (list, invite, add an existing client user, remove). Archive and restore; delete asks you to type the client's name.
+- **Websites:** a list with search and client and status filters. Add, edit (including moving to another client, or pausing) and delete from a row menu. URL errors from the API, such as IP addresses or duplicates, show on the address field.
+- **Organization:** rename (the switcher updates straight away; the web address doesn't change), and Leave organization. The nav item now needs `organization.read`, so every member can find Leave; only `organization.update` can rename.
+- **Team:** members with search and a status filter. Row actions are change role, disable or restore access, and remove. There are none on your own row, and owners can only be managed by owners. Pending and expired invitations can be resent or cancelled. The invite dialog asks which client when the Client role is chosen, and only owners see Owner.
+- **Roles:** built-in roles open read-only. Owners create, edit and delete custom roles with grouped permission checkboxes; a role still in use explains how many people and invitations use it.
+- **Shared UI:** CDK dialogs (focus trapped and restored), confirmation dialogs (type-to-confirm for destructive actions), toasts, a pager, debounced search, status badges, and the `*olCan` directive for hiding actions. Lists use Angular `httpResource`, with loading, empty, error-with-retry and no-results states on every page.
+- **Backend:** memberships in `/auth/me` now include `role_key` (the built-in role key, or null), so the UI can tell owners and client users apart without relying on role names.
+- **Bundle:** each page loads on demand; the first download is 625 kB raw, about 135 kB compressed.
+- **Browser walkthrough:** sign up; add three clients and websites (an IP address was refused); invite a team member and a client user and accept both; change a role; create a custom role; rename the organization; delete a client. The client user saw only their client and its website, no notes or edit actions, and "no access" on Team. No console errors, and no horizontal scroll on a phone in dark mode.
+
+## Dashboard (step 10)
+
+- **API:** `GET /orgs/{slug}/dashboard` (`dashboard.read`) returns client counts by status, website counts by status, team counts (active members, active client-portal users, unexpired pending invitations), and the 10 most recent audit entries for the organization.
+- **Every number comes from real records.** Nothing is sampled, estimated or invented, and there are no trends or sparklines until there's history to draw them from.
+- **What each role sees:** client-portal users get counts for their own clients only, with no team section and no activity. Team counts need `members.read`, pending invitations need `members.invite`, and activity needs `audit.read`. With the default roles, only Owners and Admins see activity, because it includes emails and internal names.
+- **Page:**
+  - a greeting, then stat tiles linking to their pages
+  - a "Get started" checklist (add a client, add a website, invite your team), built from the real counts and hidden once done
+  - recent activity as plain sentences with relative times; hover for the exact time
+  - "Coming in Phase 2" cards (search performance, traffic, site health, broken links), each marked **Not connected yet** with no numbers
+- The temporary "isn't built yet" placeholder page was removed; no route uses it any more.
+
+## Final pass (step 11)
+
+- **Security headers** on every API response (`nosniff`, `DENY` framing, `no-referrer`, a deny-all CSP, `no-store`); the interactive API docs page is exempt from the CSP so it still loads.
+- **CI:** `.github/workflows/ci.yml` runs backend lint, tests and `alembic check` against PostgreSQL 16 and Redis 7 services, and the frontend unit tests and production build, on every push and pull request.
+- **Docs:** the README is rewritten for setup, tests and common tasks. `ARCHITECTURE.md` covers module layout, conventions and checklists for adding endpoints and pages. `SECURITY.md` covers the security model and a production checklist.
+- **Fresh-clone check:** the branch was cloned from GitHub into an empty folder and set up exactly as the README describes, against brand-new databases. Results:
+  - backend: `uv sync --frozen`, both migrations applied, 171 tests passing, ruff and `alembic check` clean
+  - server: `/health/ready` ok; a CLI-created Super Admin signed in
+  - frontend: `npm ci` (0 vulnerabilities), 65 tests passing, production build within budget
+- **CLI tests added.** Promoting an existing user no longer asks for a password it then ignores; new Super Admins are created email-verified.
+
 ## Known gaps / follow-ups
 
-- Emails are sent synchronously during the request. A Celery queue with retries comes when the first background job is needed.
-- Behind a reverse proxy, uvicorn must run with `--proxy-headers` so rate limits and audit IPs see the real client address.
-- `docker compose up` was validated (`docker compose config`) but not run in the build environment, which had no Docker daemon. Tests ran against local PostgreSQL 16 and Redis 7.
+Carry these into later phases.
+
+**Before the first deployment**
+- Production checklist in [`SECURITY.md`](SECURITY.md): a single origin behind HTTPS, a CSP for the Angular app, proxy headers for real client IPs, real SMTP, backups and secrets.
+- `docker compose up` has only been validated (`docker compose config`). The build environment had no Docker daemon, so services ran natively (PostgreSQL 16, Redis 7). Run it once on the WSL2 machine.
+
+**Phase 1.5 / 2**
+- `MASTER_SPEC.md` isn't in the repo yet; it's needed to plan Phase 1.5 (public website).
+- **Background jobs:** emails are sent during the request. Add Celery (with retries) when the first background job arrives; crawling in Phase 2 will need it anyway.
+- **SSRF:** the Phase 2 crawler must check resolved IPs at fetch time, not just the hostname check done when a website is added.
+- **Audit log viewer:** entries are recorded and the 10 newest appear on the dashboard, but there's no full audit log page yet (`audit.read` exists for it).
+- **End-to-end tests:** the browser walkthroughs were run with Playwright scripts outside the repo. A committed Playwright suite would protect the main flows.
+- **Super Admin console**, billing and subscriptions (later phases, per the plan). MFA is optional; the `users` table already has columns for it.
+- **PostgreSQL row-level security** as a second isolation layer (decision 4).

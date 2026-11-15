@@ -146,7 +146,8 @@ def test_preview_shows_invitation_details(client, new_client, db, acme):
     res = new_client().post(PREVIEW, json={"token": token})
     assert res.status_code == 200
     assert res.json() | {"expires_at": None} == {
-        "email": "new@example.com", "organization_name": "Acme", "role_name": "Team Member",
+        "email": "new@example.com", "organization_name": "Acme", "organization_slug": acme,
+        "role_name": "Team Member",
         "client_name": None, "invited_by": "Olive Owner", "account_exists": False,
         "expires_at": None,
     }

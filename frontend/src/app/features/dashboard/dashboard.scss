@@ -1,0 +1,142 @@
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1.25rem;
+  border: 1px solid var(--ol-border);
+  border-radius: var(--bs-border-radius-lg);
+  background: var(--ol-surface-raised);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--ol-text-muted);
+  }
+}
+
+.tile-label {
+  font-size: 0.875rem;
+  color: var(--ol-text-muted);
+}
+
+.tile-value {
+  font-size: 2.25rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--ol-text-strong);
+}
+
+.tile-detail {
+  font-size: 0.8125rem;
+  color: var(--ol-text-muted);
+}
+
+.card-block {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--ol-border);
+  border-radius: var(--bs-border-radius-lg);
+  background: var(--ol-surface-raised);
+}
+
+.checklist {
+  margin-bottom: 1.5rem;
+
+  ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  li.done {
+    color: var(--ol-text-muted);
+    text-decoration: line-through;
+  }
+
+  li.done ol-icon {
+    color: var(--bs-success);
+  }
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 991.98px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.activity {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.625rem 0;
+    border-top: 1px solid var(--ol-border);
+
+    &:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+  }
+
+  time {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+.upcoming-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.wide .upcoming-grid {
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.upcoming-item {
+  display: flex;
+  gap: 0.75rem;
+  color: var(--ol-text);
+
+  > ol-icon {
+    margin-top: 0.125rem;
+    color: var(--ol-text-muted);
+  }
+}
+
+.not-connected {
+  background: var(--ol-surface-active);
+  color: var(--ol-text-muted);
+  font-weight: 500;
+}

@@ -28,6 +28,16 @@ OWNER, ADMIN, MEMBER, CLIENT = "owner", "admin", "member", "client"
 
 _ALL = set(PERMISSIONS)
 
+GROUP_LABELS = {
+    "organization": "Organization", "members": "Team", "roles": "Roles",
+    "clients": "Clients", "client_users": "Clients", "websites": "Websites",
+    "dashboard": "Dashboard", "audit": "Audit log",
+}
+
+
+def permission_group(code: str) -> str:
+    return GROUP_LABELS.get(code.split(".", 1)[0], "Other")
+
 DEFAULT_ROLES: dict[str, dict] = {
     OWNER: {
         "name": "Owner",
@@ -36,8 +46,8 @@ DEFAULT_ROLES: dict[str, dict] = {
     },
     ADMIN: {
         "name": "Admin",
-        "description": "Manages the team, clients and websites. Cannot change owners.",
-        "permissions": _ALL,
+        "description": "Manages the team, clients and websites. Cannot change owners or roles.",
+        "permissions": _ALL - {"roles.manage"},
     },
     MEMBER: {
         "name": "Team Member",

@@ -1,0 +1,110 @@
+@if (layout.isMobile()) {
+  <button type="button" class="icon-btn" (click)="layout.openMobile()" aria-label="Open menu">
+    <ol-icon name="list" size="1.25rem" />
+  </button>
+}
+
+<!-- Organization switcher -->
+<button
+  type="button"
+  class="org-switcher"
+  [cdkMenuTriggerFor]="orgMenu"
+  aria-label="Switch organization"
+>
+  <span class="org-badge" aria-hidden="true">{{ org.membership()?.organization_name?.[0] }}</span>
+  <span class="org-text">
+    <span class="org-name">{{ org.membership()?.organization_name }}</span>
+    <span class="org-role">{{ org.membership()?.role_name }}</span>
+  </span>
+  <ol-icon name="chevron-expand" class="text-muted" />
+</button>
+
+<ng-template #orgMenu>
+  <div class="ol-menu" cdkMenu>
+    <div class="ol-menu-label">Your organizations</div>
+    @for (m of auth.memberships(); track m.organization_id) {
+      <button
+        type="button"
+        class="ol-menu-item"
+        cdkMenuItemRadio
+        [cdkMenuItemChecked]="m.organization_slug === org.slug()"
+        (cdkMenuItemTriggered)="switchTo(m.organization_slug)"
+      >
+        <span class="flex-grow-1 text-truncate">
+          {{ m.organization_name }}
+          <small class="d-block text-muted">{{ m.role_name }}</small>
+        </span>
+        @if (m.organization_slug === org.slug()) {
+          <ol-icon name="check2" class="ol-menu-check" />
+        }
+      </button>
+    }
+  </div>
+</ng-template>
+
+<span class="flex-grow-1"></span>
+
+<!-- Theme -->
+<button
+  type="button"
+  class="icon-btn"
+  [cdkMenuTriggerFor]="themeMenu"
+  aria-label="Theme"
+  title="Theme"
+>
+  <ol-icon [name]="themeIcon()" size="1.0625rem" />
+</button>
+
+<ng-template #themeMenu>
+  <div class="ol-menu" cdkMenu>
+    <div class="ol-menu-label">Theme</div>
+    @for (t of themes; track t.value) {
+      <button
+        type="button"
+        class="ol-menu-item"
+        cdkMenuItemRadio
+        [cdkMenuItemChecked]="theme.preference() === t.value"
+        (cdkMenuItemTriggered)="theme.set(t.value)"
+      >
+        <ol-icon [name]="t.icon" />
+        {{ t.label }}
+        @if (theme.preference() === t.value) {
+          <ol-icon name="check2" class="ol-menu-check" />
+        }
+      </button>
+    }
+  </div>
+</ng-template>
+
+<!-- User -->
+<button
+  type="button"
+  class="avatar-btn"
+  [cdkMenuTriggerFor]="userMenu"
+  [attr.aria-label]="'Account: ' + auth.user()?.full_name"
+>
+  <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+</button>
+
+<ng-template #userMenu>
+  <div class="ol-menu" cdkMenu>
+    <div class="user-card">
+      <strong class="d-block text-truncate">{{ auth.user()?.full_name }}</strong>
+      <span class="text-muted d-block text-truncate">{{ auth.user()?.email }}</span>
+    </div>
+    <div class="ol-menu-divider" role="separator"></div>
+    <button type="button" class="ol-menu-item" cdkMenuItem (cdkMenuItemTriggered)="auth.logout()">
+      <ol-icon name="box-arrow-right" />
+      Sign out
+    </button>
+    <button
+      type="button"
+      class="ol-menu-item"
+      cdkMenuItem
+      (cdkMenuItemTriggered)="auth.logout(true)"
+    >
+      <ol-icon name="shield-x" />
+      Sign out of all devices
+    </button>
+  </div>
+</ng-template>

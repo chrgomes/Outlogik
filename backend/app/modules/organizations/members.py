@@ -6,13 +6,14 @@ from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import Conflict, Forbidden, NotFound
-from app.core.pagination import PageParams, apply_sort, paginate
+from app.core.pagination import PageParams, apply_sort, like_pattern, paginate
 from app.modules.audit.service import record
 from app.modules.clients.models import ClientUser
 from app.modules.organizations.models import OrganizationMember
 from app.modules.organizations.schemas import MemberOut, RoleRef
 from app.modules.rbac.catalogue import CLIENT, OWNER
 from app.modules.rbac.models import Role
+from app.modules.rbac.service import ensure_can_grant
 from app.modules.users.models import User
 from app.tenancy.context import OrgContext
 from app.tenancy.scoped import get_scoped
@@ -39,8 +40,9 @@ def list_members(db: Session, ctx: OrgContext, params: PageParams, *, q: str | N
         .where(OrganizationMember.organization_id == ctx.org.id)
     )
     if q:
-        like = f"%{q.strip().lower()}%"
-        stmt = stmt.where(or_(func.lower(User.full_name).like(like), User.email.like(like)))
+        like = like_pattern(q)
+        stmt = stmt.where(or_(func.lower(User.full_name).like(like, escape="\\"),
+                              User.email.like(like, escape="\\")))
     if status:
         stmt = stmt.where(OrganizationMember.status == status)
     if role_id:
@@ -81,8 +83,7 @@ def update_member(db: Session, ctx: OrgContext, member_id: uuid.UUID, *,
     new_role = role
     if role_id is not None and role_id != role.id:
         new_role = get_scoped(db, Role, role_id, ctx, label="Role")
-        if new_role.system_key == OWNER and not ctx.is_owner:
-            raise Forbidden("Only an owner can make someone an owner.", code="owner_required")
+        ensure_can_grant(db, ctx.permissions, ctx.is_owner, new_role)
         if (role.system_key == CLIENT) != (new_role.system_key == CLIENT):
             raise Conflict(
                 "Client users and team members can't be switched into each other. "
