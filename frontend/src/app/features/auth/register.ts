@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { apiProblem, applyFieldErrors } from '../../core/api-errors';
 import { AuthService } from '../../core/auth.service';
+import { SignupStatus } from '../../core/signup-status';
 import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
 
 @Component({
@@ -11,7 +12,15 @@ import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterLink, FieldError, PasswordInput],
   template: `
-    <h1 class="h4 mb-1">Create your agency account</h1>
+    @if (!signup.open()) {
+      <h1 class="h4 mb-2">Accounts are by invitation</h1>
+      <p class="text-muted">
+        Outlogik sets up a client portal for each client and emails you an invitation. If
+        you're expecting one, check your inbox, or ask your Outlogik contact to send it again.
+      </p>
+      <a routerLink="/login" class="btn btn-primary w-100">Sign in</a>
+    } @else {
+    <h1 class="h4 mb-1">Create your account</h1>
     <p class="text-muted mb-4">You'll be the owner of a new Outlogik workspace.</p>
 
     @if (error()) {
@@ -56,10 +65,12 @@ import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
     <p class="text-center text-muted small mt-4 mb-0">
       Already have an account? <a routerLink="/login">Sign in</a>
     </p>
+    }
   `,
 })
 export class Register {
   private readonly auth = inject(AuthService);
+  protected readonly signup = inject(SignupStatus);
   private readonly router = inject(Router);
   protected readonly form = inject(NonNullableFormBuilder).group({
     full_name: ['', [Validators.required, Validators.maxLength(200)]],

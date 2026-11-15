@@ -14,6 +14,7 @@ export class AuthService {
   private readonly router = inject(Router);
 
   readonly me = signal<Me | null>(null);
+
   readonly user = computed(() => this.me()?.user ?? null);
   readonly memberships = computed(() => this.me()?.memberships ?? []);
   private loading: Promise<Me | null> | null = null;

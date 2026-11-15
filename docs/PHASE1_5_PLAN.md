@@ -1,8 +1,8 @@
 # Outlogik — Phase 1.5 Plan (Public website) — revision 2: agency direction
 
-Status: **Revised 2026-11-15, awaiting approval.** Revision 1 (Outlogik as a software product
-sold to agencies) was approved and steps 1–2 were built under it. Revision 2 changes the
-direction; it's in git history if needed.
+Status: **Revision 2 approved 2026-11-15, with every recommendation in section 6 (A–F).**
+Revision 1 (Outlogik as a software product sold to agencies) was approved and steps 1–2 were
+built under it; it's in git history if needed.
 Source: [`specs/MARKETING_WEBSITE_SPEC.md`](specs/MARKETING_WEBSITE_SPEC.md) (the spec), with the
 deviations listed in section 1. Section numbers (§) refer to the spec.
 Progress: [`IMPLEMENTATION_TRACKER_1_5.md`](IMPLEMENTATION_TRACKER_1_5.md).
@@ -149,7 +149,7 @@ Milestone A = steps 1–7, 11, 12, plus the release checks in 14. Milestone B = 
 
 ---
 
-## 6. Decisions (revision 2)
+## 6. Decisions (revision 2, approved with the recommendations)
 
 Already decided: services, pricing approach, main action, invite-only sign-up (section 1).
 Still on hold from revision 1: legal details (12), domain and hosting (13), lead emails (15).
@@ -159,7 +159,7 @@ opt-in, two milestones.
 
 New ones, each with a recommendation:
 
-- **A. Service area.** Who can hire Outlogik: anywhere online, Canada-wide, or a specific city or region? This affects copy, local SEO and structured data. *Recommendation: tell me; until then the copy is location-neutral.*
+- **A. Service area.** Who can hire Outlogik: anywhere online, Canada-wide, or a specific city or region? This affects copy, local SEO and structured data. *Recommendation (approved): location-neutral copy until you tell me.*
 - **B. Who we help.** Which business types to target? *Recommendation:* **Small businesses**, **Local and service businesses** (clinics, trades, professional services), **E-commerce**, **Growing companies** (in-house teams that need extra hands). Change or add any.
 - **C. About page.** Founding story, team and values come from you; nothing is invented. *Recommendation: I draft a short, honest About page from what you tell me, marked for your review. Until then it focuses on the approach, not the history.*
 - **D. Tools we work with.** List only tools the team really uses. *Recommendation: Google Analytics 4, Google Search Console, Google Business Profile, Bing Webmaster Tools, Meta Business Suite, LinkedIn. Confirm or edit.*

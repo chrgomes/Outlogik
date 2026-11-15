@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { apiProblem, safeReturnUrl } from '../../core/api-errors';
 import { AuthService } from '../../core/auth.service';
+import { SignupStatus } from '../../core/signup-status';
 import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
 
 @Component({
@@ -46,12 +47,17 @@ import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
     </form>
 
     <p class="text-center text-muted small mt-4 mb-0">
-      New to Outlogik? <a routerLink="/register">Create an account</a>
+      @if (signup.open()) {
+        New to Outlogik? <a routerLink="/register">Create an account</a>
+      } @else {
+        Need access? Ask your Outlogik contact for an invitation.
+      }
     </p>
   `,
 })
 export class Login {
   private readonly auth = inject(AuthService);
+  protected readonly signup = inject(SignupStatus);
   private readonly router = inject(Router);
   protected readonly form = inject(NonNullableFormBuilder).group({
     email: ['', [Validators.required, Validators.email]],

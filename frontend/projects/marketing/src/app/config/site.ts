@@ -1,42 +1,37 @@
 import { IconName } from '@brand/icon/icons';
 
 /**
- * Site-wide content that the header, footer and pages share. Module statuses and settings come
- * from the API (`SiteData`, managed in the admin area); the values here are the fallbacks used
- * if the API can't be reached, and match the database defaults.
+ * Site-wide content shared by the header, footer and pages. Outlogik is a digital marketing
+ * agency (Phase 1.5 plan, revision 2). Settings and client-portal feature statuses come from the
+ * API (`SiteData`); the defaults below are used if the API can't be reached.
  */
 
-/** Where "Log In" and "Get Started" go. Set per deployment (see env.d.ts). */
+/** Where "Log in" goes: the client portal (the Outlogik app). Set per deployment (env.d.ts). */
 export const APP_URL = OL_APP_URL.replace(/\/$/, '');
 export const SITE_URL = OL_SITE_URL.replace(/\/$/, '');
-export const appLink = (path: '/login' | '/register') => `${APP_URL}${path}`;
+export const LOGIN_URL = `${APP_URL}/login`;
 
-export type ModuleStatus = 'available' | 'in_development';
+/** The main call to action on every page. */
+export const CONSULTATION_PATH = '/book-a-consultation';
 
-export interface ProductModule {
+export interface Service {
   slug: string;
   name: string;
+  short: string;
   summary: string;
   icon: IconName;
-  status: ModuleStatus;
 }
 
-/** Spec §5. Only Client Management exists today (Phase 1); the rest are honestly labelled. */
-export const DEFAULT_MODULES: ProductModule[] = [
-  { slug: 'client-management', name: 'Client Management', icon: 'briefcase', status: 'available',
-    summary: 'Clients, websites, team roles and client portals in one workspace.' },
-  { slug: 'seo-management', name: 'SEO Management', icon: 'search', status: 'in_development',
-    summary: 'Technical audits, keywords and search visibility for every site.' },
-  { slug: 'website-analytics', name: 'Website Analytics', icon: 'graph-up', status: 'in_development',
-    summary: 'Google Analytics 4 and Search Console, side by side.' },
-  { slug: 'social-media-management', name: 'Social Media Management', icon: 'megaphone', status: 'in_development',
-    summary: 'Plan, schedule and approve posts across your clients’ channels.' },
-  { slug: 'content-marketing', name: 'Content Marketing', icon: 'pencil-square', status: 'in_development',
-    summary: 'Editorial calendars and keyword-to-content planning.' },
-  { slug: 'marketing-analytics', name: 'Marketing Analytics', icon: 'bar-chart-line', status: 'in_development',
-    summary: 'Channels, campaigns and conversions in one view.' },
-  { slug: 'reporting', name: 'Reporting', icon: 'file-earmark-bar-graph', status: 'in_development',
-    summary: 'Clear client reports with PDF and CSV exports.' },
+/** Services Outlogik offers (decided 2026-11-15). Each has a page under /services. */
+export const SERVICES: Service[] = [
+  { slug: 'seo', name: 'SEO', short: 'Search engine optimisation', icon: 'search',
+    summary: 'Get found by the people searching for what you offer: technical fixes, keyword research and on-page optimisation.' },
+  { slug: 'social-media-management', name: 'Social Media Management', short: 'Planned, consistent posting', icon: 'megaphone',
+    summary: 'Consistent, on-brand posts across your channels, planned ahead and approved by you.' },
+  { slug: 'website-analytics-reporting', name: 'Website Analytics & Reporting', short: 'Know what’s working', icon: 'graph-up',
+    summary: 'Analytics set up properly, and a monthly report that explains what changed and why.' },
+  { slug: 'content-marketing', name: 'Content Marketing', short: 'Articles and website copy', icon: 'pencil-square',
+    summary: 'Articles and website copy written for your customers first, and for search engines too.' },
 ];
 
 export interface Audience {
@@ -46,18 +41,22 @@ export interface Audience {
   icon: IconName;
 }
 
-/** Spec §6 */
+/** Who we help (plan revision 2, decision B). Each has a page under /who-we-help. */
 export const AUDIENCES: Audience[] = [
-  { slug: 'marketing-agencies', name: 'Marketing agencies', icon: 'building',
-    summary: 'Run every client from one workspace.' },
-  { slug: 'seo-agencies', name: 'SEO agencies', icon: 'search-heart',
-    summary: 'Audits, rankings and reporting, organised by client.' },
-  { slug: 'freelancers', name: 'Freelancers and consultants', icon: 'person',
-    summary: 'Look established without the overhead.' },
-  { slug: 'in-house-marketing-teams', name: 'In-house marketing teams', icon: 'people',
-    summary: 'One view across channels and colleagues.' },
   { slug: 'small-businesses', name: 'Small businesses', icon: 'shop',
-    summary: 'Understand your website and marketing in plain terms.' },
+    summary: 'A marketing team without hiring one.' },
+  { slug: 'local-businesses', name: 'Local and service businesses', icon: 'building',
+    summary: 'Clinics, trades and professional services that need local customers.' },
+  { slug: 'ecommerce', name: 'E-commerce', icon: 'window-stack',
+    summary: 'Online stores that need more of the right traffic.' },
+  { slug: 'growing-companies', name: 'Growing companies', icon: 'people',
+    summary: 'Extra hands for in-house teams with more to do than time.' },
+];
+
+/** Tools the team works with (decision D). Shown as tools we use, not as product integrations. */
+export const TOOLS = [
+  'Google Analytics 4', 'Google Search Console', 'Google Business Profile',
+  'Bing Webmaster Tools', 'Meta Business Suite', 'LinkedIn',
 ];
 
 export interface NavLink {
@@ -73,13 +72,39 @@ export interface NavLink {
 export const RESOURCES: NavLink[] = [];
 
 export const COMPANY: NavLink[] = [
-  { label: 'About Outlogik', path: '/about', description: 'What we’re building and why.' },
+  { label: 'About Outlogik', path: '/about', description: 'Who we are and how we work.' },
   { label: 'Contact', path: '/contact', description: 'Questions, partnerships and press.' },
-  { label: 'Book a demo', path: '/book-a-demo', description: 'A walkthrough with our team.' },
 ];
 
 /** Legal pages are published once the business details are provided (decision 12). */
 export const LEGAL: NavLink[] = [];
+
+export type FeatureStatus = 'available' | 'in_development';
+
+/** A client-portal capability, with its honest status (managed in the admin area). */
+export interface PortalFeature {
+  slug: string;
+  name: string;
+  summary: string;
+  status: FeatureStatus;
+}
+
+export const DEFAULT_PORTAL_FEATURES: PortalFeature[] = [
+  { slug: 'client-portal', name: 'Your own client portal', status: 'available',
+    summary: 'A private sign-in for your business, separate from every other client.' },
+  { slug: 'websites-overview', name: 'Your websites in one place', status: 'available',
+    summary: 'Every website we look after for you, with its status.' },
+  { slug: 'activity-history', name: 'A record of the work', status: 'available',
+    summary: 'Changes to your account and websites, with who made them and when.' },
+  { slug: 'monthly-reports', name: 'Monthly reports', status: 'in_development',
+    summary: 'Your monthly results, ready to read online or download as PDF.' },
+  { slug: 'analytics-dashboards', name: 'Analytics dashboards', status: 'in_development',
+    summary: 'Traffic and search performance from Google Analytics and Search Console.' },
+  { slug: 'social-approvals', name: 'Social calendar approvals', status: 'in_development',
+    summary: 'Review and approve social posts before they go out.' },
+  { slug: 'seo-health', name: 'SEO health checks', status: 'in_development',
+    summary: 'Technical issues found on your sites, and when they were fixed.' },
+];
 
 /** Mirrors the API's SiteSettingsData. Empty values mean "not shown". */
 export interface SiteSettings {
@@ -90,28 +115,24 @@ export interface SiteSettings {
   phone: string | null;
   address: string | null;
   social_links: { network: string; url: string }[];
-  primary_cta_label: string;
-  demo_cta_label: string;
-  early_access: boolean;
+  consultation_cta_label: string;
   seo_title_suffix: string;
   seo_default_description: string;
 }
 
 export const DEFAULT_SETTINGS: SiteSettings = {
   company_description:
-    'Outlogik brings client management, SEO, analytics and reporting together in one workspace for agencies and marketing teams.',
+    'Outlogik is a digital marketing agency for SEO, social media, content and analytics, with a client portal that shows you exactly what we’re doing.',
   tagline: 'Digital Marketing. Smarter. Together.',
   contact_email: null,
   sales_email: null,
   phone: null,
   address: null,
   social_links: [],
-  primary_cta_label: 'Get started',
-  demo_cta_label: 'Book a demo',
-  early_access: true,
+  consultation_cta_label: 'Book a free consultation',
   seo_title_suffix: ' · Outlogik',
   seo_default_description:
-    'Outlogik brings client management, SEO, analytics and reporting together in one workspace for agencies and marketing teams.',
+    'Outlogik is a digital marketing agency: SEO, social media management, content marketing and analytics, with clear reporting in your own client portal.',
 };
 
 export const SOCIAL_LABELS: Record<string, string> = {

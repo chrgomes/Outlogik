@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import { ModuleStatus } from '../config/site';
+import { FeatureStatus } from '../config/site';
 
-/** "In development" label for modules that aren't built yet. Available modules show nothing. */
+/** Honest status label for a client-portal feature. */
 @Component({
   selector: 'mk-status-badge',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -15,6 +15,6 @@ import { ModuleStatus } from '../config/site';
   `,
 })
 export class StatusBadge {
-  readonly status = input.required<ModuleStatus>();
+  readonly status = input.required<FeatureStatus>();
   readonly showAvailable = input(false);
 }

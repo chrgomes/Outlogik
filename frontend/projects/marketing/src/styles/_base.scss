@@ -73,7 +73,7 @@ main:focus {
 
 // Typography scale
 .mk-display {
-  font-size: clamp(2.5rem, 1.55rem + 3.6vw, 4.25rem);
+  font-size: clamp(2.375rem, 1.5rem + 3.6vw, 4.25rem);
   font-weight: 600;
   line-height: 1.04;
   letter-spacing: -0.035em;
@@ -173,7 +173,7 @@ main:focus {
   --bs-btn-active-bg: #{$ol-charcoal};
 }
 
-// Homepage hero (step 1; expanded in step 3)
+// Homepage hero
 .mk-hero {
   padding-block: clamp(4.5rem, 3rem + 6vw, 9rem) clamp(3.5rem, 2.5rem + 4vw, 6rem);
 }

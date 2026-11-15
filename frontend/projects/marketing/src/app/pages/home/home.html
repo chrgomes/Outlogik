@@ -1,0 +1,178 @@
+<!-- 1. Hero -->
+<section class="mk-hero mk-hero--product">
+  <div class="mk-container">
+    <p class="mk-eyebrow">Digital marketing agency</p>
+    <h1 class="mk-display">Digital marketing, handled. And always in view.</h1>
+    <p class="mk-lead">
+      Outlogik looks after your SEO, social media, content and analytics as one team, and
+      gives you your own client portal so you can see what we’re doing, any time.
+    </p>
+    <div class="mk-hero__actions">
+      <a [routerLink]="consultationPath" class="btn btn-primary btn-lg">{{ settings().consultation_cta_label }}</a>
+      <a routerLink="/services" class="btn btn-outline-dark btn-lg">See our services <ol-icon name="arrow-right" /></a>
+    </div>
+    <p class="mk-hero__meta">Free, no-obligation conversation about your marketing</p>
+    <div class="mk-hero__shot">
+      <mk-screenshot name="portal-client" [priority]="true" address="app.outlogik.com"
+        alt="The Outlogik client portal, showing a client's websites and contact details"
+        caption="" />
+    </div>
+  </div>
+</section>
+
+<!-- 2. Services -->
+<section class="mk-section mk-section--muted" aria-labelledby="services-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">Services</p>
+      <h2 class="mk-h2" id="services-title">One team for your whole digital presence.</h2>
+      <p class="mk-lead">
+        Search, social, content and analytics work best together. We plan them together, do the
+        work, and report on it in one place.
+      </p>
+    </div>
+    <div class="mk-cards mk-cards--4">
+      @for (s of services; track s.slug) {
+        <a class="mk-card" [routerLink]="['/services', s.slug]">
+          <span class="mk-ico-box"><ol-icon [name]="s.icon" /></span>
+          <h3>{{ s.name }}</h3>
+          <p>{{ s.summary }}</p>
+          <span class="mk-arrow-link">Learn more <ol-icon name="arrow-right" /></span>
+        </a>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- 3. Why Outlogik -->
+<section class="mk-section mk-section--dark" aria-labelledby="why-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">Why Outlogik</p>
+      <h2 class="mk-h2" id="why-title">Marketing that doesn’t disappear into a black box.</h2>
+    </div>
+    <div class="mk-points">
+      <div class="mk-point">
+        <h3>One team, every channel</h3>
+        <p>No juggling separate freelancers for search, social and content. One plan, one point of contact.</p>
+      </div>
+      <div class="mk-point">
+        <h3>Your own client portal</h3>
+        <p>Sign in any time to see your websites and what we’ve been working on. Nothing hidden.</p>
+      </div>
+      <div class="mk-point">
+        <h3>Reporting in plain English</h3>
+        <p>What changed, why it matters and what we’ll do next, without the jargon.</p>
+      </div>
+      <div class="mk-point">
+        <h3>Straight answers</h3>
+        <p>No one can guarantee rankings, and we won’t pretend to. We’ll tell you what we think will work, and why.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. How we work -->
+<section class="mk-section" aria-labelledby="process-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">How we work</p>
+      <h2 class="mk-h2" id="process-title">From first conversation to monthly results.</h2>
+    </div>
+    <ol class="mk-steps">
+      <li><h3>Free consultation</h3><p>We learn about your business, your customers and what you want from marketing.</p></li>
+      <li><h3>A clear proposal</h3><p>What we’ll do, what you’ll get and what it costs, in writing.</p></li>
+      <li><h3>Onboarding</h3><p>We set up your client portal, get access to your tools and agree the first priorities.</p></li>
+      <li><h3>Work and reporting</h3><p>We do the work each month and report on it, with time to review together.</p></li>
+    </ol>
+    <p class="mk-more"><a routerLink="/how-we-work" class="mk-arrow-link">More about how we work <ol-icon name="arrow-right" /></a></p>
+  </div>
+</section>
+
+<!-- 5. Client portal -->
+<section class="mk-section mk-section--muted" aria-labelledby="portal-title">
+  <div class="mk-container mk-split">
+    <div>
+      <p class="mk-eyebrow">Your client portal</p>
+      <h2 class="mk-h2" id="portal-title">See your marketing whenever you like.</h2>
+      <p class="mk-lead">Every client gets a private portal. Here’s what’s in it today, and what we’re adding.</p>
+      <ul class="mk-features">
+        @for (f of features(); track f.slug) {
+          <li [class.is-soon]="f.status === 'in_development'">
+            <ol-icon [name]="f.status === 'available' ? 'check2' : 'clock-history'" />
+            <span>
+              <strong>{{ f.name }}</strong> <mk-status-badge [status]="f.status" />
+              <span class="mk-features__desc">{{ f.summary }}</span>
+            </span>
+          </li>
+        }
+      </ul>
+    </div>
+    <mk-screenshot name="portal-websites" address="app.outlogik.com"
+      alt="The client portal's websites page, listing a client's three websites"
+      caption="What a client sees · example data" />
+  </div>
+</section>
+
+<!-- 6. Who we help -->
+<section class="mk-section" aria-labelledby="who-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">Who we help</p>
+      <h2 class="mk-h2" id="who-title">Marketing shaped around your kind of business.</h2>
+    </div>
+    <div class="mk-cards mk-cards--4">
+      @for (a of audiences; track a.slug) {
+        <a class="mk-card" [routerLink]="['/who-we-help', a.slug]">
+          <span class="mk-ico-box"><ol-icon [name]="a.icon" /></span>
+          <h3>{{ a.name }}</h3>
+          <p>{{ a.summary }}</p>
+          <span class="mk-arrow-link">Learn more <ol-icon name="arrow-right" /></span>
+        </a>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- 7. Tools we work with -->
+<section class="mk-section mk-section--muted mk-section--tight" aria-labelledby="tools-title">
+  <div class="mk-container mk-tools">
+    <div>
+      <p class="mk-eyebrow">Tools we work with</p>
+      <h2 class="mk-h3" id="tools-title">We work in the tools you already have.</h2>
+    </div>
+    <ul class="mk-tiles">
+      @for (t of tools; track t) { <li class="mk-tile">{{ t }}</li> }
+    </ul>
+  </div>
+</section>
+
+<!-- 8. Pricing -->
+<section class="mk-section" aria-labelledby="pricing-title">
+  <div class="mk-container mk-head mk-head--center">
+    <p class="mk-eyebrow">Pricing</p>
+    <h2 class="mk-h2" id="pricing-title">Every business is different. So is every proposal.</h2>
+    <p class="mk-lead">
+      We don’t sell one-size-fits-all packages. After a free consultation we send a clear proposal
+      with exactly what’s included and what it costs.
+    </p>
+    <div class="mk-hero__actions mk-center">
+      <a [routerLink]="consultationPath" class="btn btn-primary btn-lg">{{ settings().consultation_cta_label }}</a>
+      <a routerLink="/pricing" class="btn btn-outline-dark btn-lg">How pricing works</a>
+    </div>
+  </div>
+</section>
+
+<!-- 9. Results and testimonials: added once there are real ones to show. -->
+
+<!-- 10. Final call to action -->
+<section class="mk-section mk-section--dark mk-cta" aria-labelledby="cta-title">
+  <div class="mk-container">
+    <h2 class="mk-h2" id="cta-title">Let’s talk about your marketing.</h2>
+    <p class="mk-lead">Tell us where you are and where you want to be. We’ll tell you honestly how we can help.</p>
+    <div class="mk-cta__actions">
+      <a [routerLink]="consultationPath" class="btn btn-lg mk-btn-light">{{ settings().consultation_cta_label }}</a>
+      <a routerLink="/contact" class="btn btn-lg mk-btn-ghost">Contact us</a>
+    </div>
+  </div>
+</section>

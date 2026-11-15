@@ -32,7 +32,8 @@ class Settings(BaseSettings):
     email_verification_token_hours: int = 48
     invitation_token_days: int = 7
 
-    signup_mode: Literal["open", "invite_only"] = "open"
+    # Outlogik is an agency: clients are invited to their portal, nobody signs up themselves.
+    signup_mode: Literal["open", "invite_only"] = "invite_only"
 
     # Rate limits: (max attempts, window seconds)
     rate_limit_enabled: bool = True

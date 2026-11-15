@@ -6,14 +6,15 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
 from app import cli
+from app.core.config import get_settings
 from app.main import app
-from app.models import AuditLog, ProductModule, User
+from app.models import AuditLog, PortalFeature, SiteSettings, User
 from app.modules.site.service import ensure_defaults
 from tests.conftest import login, register
 
 PUBLIC = "/api/v1/public/site"
 SETTINGS = "/api/v1/admin/site/settings"
-MODULES = "/api/v1/admin/site/modules"
+FEATURES = "/api/v1/admin/site/portal-features"
 
 
 def make_staff(db, email: str, role: str | None = None, super_admin: bool = False):
@@ -35,11 +36,27 @@ def test_public_site_needs_no_login_and_is_cacheable(new_client):
     res = new_client().get(PUBLIC)
     assert res.status_code == 200
     body = res.json()
-    assert [m["slug"] for m in body["modules"]][:2] == ["client-management", "seo-management"]
-    assert {m["status"] for m in body["modules"]} == {"available", "in_development"}
+    features = {f["slug"]: f["status"] for f in body["portal_features"]}
+    assert features["client-portal"] == "available"
+    assert features["monthly-reports"] == "in_development"
     assert body["settings"]["tagline"] == "Digital Marketing. Smarter. Together."
+    assert body["settings"]["consultation_cta_label"] == "Book a free consultation"
     assert body["settings"]["contact_email"] is None  # nothing shown until set
+    assert body["signup_open"] is True  # the test suite runs with open sign-up
     assert res.headers["Cache-Control"].startswith("public, max-age=60")
+
+
+def test_public_site_reports_invite_only(new_client, monkeypatch):
+    monkeypatch.setattr(get_settings(), "signup_mode", "invite_only")
+    assert new_client().get(PUBLIC).json()["signup_open"] is False
+
+
+def test_settings_from_older_versions_still_read(db, new_client):
+    ensure_defaults(db)
+    db.get(SiteSettings, 1).data = {"early_access": True, "demo_cta_label": "Book a demo",
+                                    "tagline": "Kept"}
+    db.commit()
+    assert new_client().get(PUBLIC).json()["settings"]["tagline"] == "Kept"
 
 
 # --- who can use the admin API ------------------------------------------------------------------
@@ -48,7 +65,7 @@ def test_admin_api_hidden_from_everyone_but_staff(client, new_client, db):
     assert new_client().get(SETTINGS).status_code == 401  # signed out
     register(client, "owner@agency.example.com")  # an agency owner is not Outlogik staff
     assert client.get(SETTINGS).status_code == 404
-    assert client.get(MODULES).status_code == 404
+    assert client.get(FEATURES).status_code == 404
 
     make_staff(db, "owner@agency.example.com", "content_editor")
     assert client.get(SETTINGS).status_code == 404  # settings are for site admins
@@ -89,7 +106,7 @@ def test_me_reports_staff_role(client, db):
 
 def test_update_settings_shows_on_public_site_and_is_audited(site_admin, new_client, db):
     current = site_admin.get(SETTINGS).json()["data"]
-    current.update(contact_email="Hello@Outlogik.example.com", early_access=True,
+    current.update(contact_email="Hello@Outlogik.example.com",
                    social_links=[{"network": "linkedin", "url": "https://www.linkedin.com/company/x"}])
     res = site_admin.put(SETTINGS, json=current)
     assert res.status_code == 200, res.text
@@ -107,47 +124,49 @@ def test_update_settings_shows_on_public_site_and_is_audited(site_admin, new_cli
     {"unknown_setting": True},
     {"social_links": [{"network": "myspace", "url": "https://myspace.com/x"}]},
     {"social_links": [{"network": "x", "url": "javascript:alert(1)"}]},
-    {"primary_cta_label": ""},
+    {"consultation_cta_label": ""},
+    {"early_access": True},  # removed setting: rejected on write
 ])
 def test_invalid_settings_are_rejected(site_admin, change):
     current = site_admin.get(SETTINGS).json()["data"]
     assert site_admin.put(SETTINGS, json={**current, **change}).status_code == 422
 
 
-# --- product modules ----------------------------------------------------------------------------
+# --- client-portal features ---------------------------------------------------------------------
 
-def test_change_module_status(site_admin, new_client, db):
-    res = site_admin.patch(f"{MODULES}/seo-management", json={"status": "available"})
+def test_change_feature_status(site_admin, new_client, db):
+    res = site_admin.patch(f"{FEATURES}/monthly-reports", json={"status": "available"})
     assert res.status_code == 200
     assert res.json()["status"] == "available"
-    site_admin.patch(f"{MODULES}/reporting", json={"status": "hidden"})
+    site_admin.patch(f"{FEATURES}/seo-health", json={"status": "hidden"})
 
-    public = {m["slug"]: m["status"] for m in new_client().get(PUBLIC).json()["modules"]}
-    assert public["seo-management"] == "available"
-    assert "reporting" not in public
-    # Admins still see hidden modules
-    assert "reporting" in {m["slug"] for m in site_admin.get(MODULES).json()}
+    public = {f["slug"]: f["status"] for f in new_client().get(PUBLIC).json()["portal_features"]}
+    assert public["monthly-reports"] == "available"
+    assert "seo-health" not in public
+    # Admins still see hidden features
+    assert "seo-health" in {f["slug"] for f in site_admin.get(FEATURES).json()}
 
-    entry = db.scalar(select(AuditLog).where(AuditLog.action == "site.module_update")
+    entry = db.scalar(select(AuditLog).where(AuditLog.action == "site.portal_feature_update")
                       .order_by(AuditLog.created_at))
     assert entry.meta == {"status": {"from": "in_development", "to": "available"}}
 
 
-def test_module_validation(site_admin):
-    assert site_admin.patch(f"{MODULES}/nope", json={"status": "available"}).status_code == 404
-    assert site_admin.patch(f"{MODULES}/reporting", json={"status": "launched"}).status_code == 422
+def test_feature_validation(site_admin):
+    assert site_admin.patch(f"{FEATURES}/nope", json={"status": "available"}).status_code == 404
+    res = site_admin.patch(f"{FEATURES}/seo-health", json={"status": "launched"})
+    assert res.status_code == 422
 
 
 def test_defaults_restored_without_overwriting_changes(db):
     ensure_defaults(db)  # this test doesn't start the app, so seed first
-    db.execute(update(ProductModule).where(ProductModule.slug == "reporting")
+    db.execute(update(PortalFeature).where(PortalFeature.slug == "monthly-reports")
                .values(status="available"))
-    db.execute(delete(ProductModule).where(ProductModule.slug == "seo-management"))
+    db.execute(delete(PortalFeature).where(PortalFeature.slug == "seo-health"))
     db.commit()
     ensure_defaults(db)
-    statuses = dict(db.execute(select(ProductModule.slug, ProductModule.status)).all())
-    assert statuses["seo-management"] == "in_development"  # restored
-    assert statuses["reporting"] == "available"  # kept
+    statuses = dict(db.execute(select(PortalFeature.slug, PortalFeature.status)).all())
+    assert statuses["seo-health"] == "in_development"  # restored
+    assert statuses["monthly-reports"] == "available"  # kept
 
 
 # --- CLI ----------------------------------------------------------------------------------------
@@ -181,3 +200,35 @@ def test_role_must_be_valid_at_database_level(client, db):
         db.commit()
     db.rollback()
     assert login(client, "x@example.com").status_code == 200
+
+
+def test_create_organization_via_cli(monkeypatch, new_client, db):
+    import getpass as gp
+
+    from app.models import Organization, OrganizationMember, Role
+    answers = iter(["a long owner password"] * 2)
+    monkeypatch.setattr(gp, "getpass", lambda prompt="": next(answers))
+    assert run_cli(monkeypatch, "create-organization", "--name", "Outlogik",
+                   "--owner-email", "Founder@Outlogik.example.com",
+                   "--owner-name", "Fay Founder") == 0
+    org = db.scalar(select(Organization).where(Organization.slug == "outlogik"))
+    owner = db.scalar(select(User).where(User.email == "founder@outlogik.example.com"))
+    role = db.scalar(select(Role).join(OrganizationMember, OrganizationMember.role_id == Role.id)
+                     .where(OrganizationMember.user_id == owner.id))
+    assert (org.name, role.system_key) == ("Outlogik", "owner")
+    assert owner.email_verified_at is not None
+    res = login(new_client(), "founder@outlogik.example.com", "a long owner password")
+    assert res.status_code == 200
+
+
+def test_create_organization_for_existing_user_needs_no_password(monkeypatch, client, db):
+    register(client, "existing@example.com")
+    assert run_cli(monkeypatch, "create-organization", "--name", "Second Org",
+                   "--owner-email", "existing@example.com") == 0
+    slugs = {m["organization_slug"] for m in client.get("/api/v1/auth/me").json()["memberships"]}
+    assert "second-org" in slugs
+
+
+def test_create_organization_unknown_owner_without_name_fails(monkeypatch, db):
+    assert run_cli(monkeypatch, "create-organization", "--name", "X",
+                   "--owner-email", "nobody@example.com") == 1

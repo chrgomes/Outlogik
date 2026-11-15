@@ -1,0 +1,417 @@
+// Page sections (designed in the Phase 1.5 desktop mockup), with phone and tablet layouts.
+
+.mk-section--muted {
+  background: var(--mk-surface);
+  border-block: 1px solid var(--mk-border);
+}
+
+.mk-section--dark {
+  background: var(--mk-black);
+  color: #{$ol-grey-400};
+
+  h2,
+  h3 {
+    color: #fff;
+  }
+
+  .mk-eyebrow {
+    color: #{$ol-grey-400};
+  }
+}
+
+.mk-section--tight {
+  padding-block: clamp(3rem, 2.5rem + 2vw, 4.5rem);
+}
+
+.mk-head {
+  max-width: 46rem;
+  margin-bottom: clamp(2rem, 1.5rem + 2vw, 3rem);
+}
+
+.mk-head--center {
+  margin-inline: auto;
+  text-align: center;
+
+  .mk-lead {
+    margin-inline: auto;
+  }
+}
+
+.mk-h2 {
+  margin-bottom: 1rem;
+}
+
+.mk-h3 {
+  font-size: clamp(1.375rem, 1.2rem + 0.6vw, 1.75rem);
+  letter-spacing: -0.02em;
+}
+
+.mk-center {
+  justify-content: center;
+}
+
+.mk-more {
+  margin: 2rem 0 0;
+}
+
+.mk-ico-box {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--mk-border);
+  border-radius: var(--bs-border-radius-lg);
+  background: #fff;
+  color: var(--mk-black);
+
+  svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+}
+
+// Hero with product screenshot bleeding into the next section
+.mk-hero--product {
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+.mk-hero__meta {
+  margin: 1.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--mk-muted);
+}
+
+.mk-hero__shot {
+  margin-top: clamp(2.5rem, 2rem + 3vw, 4rem);
+
+  .mk-browser {
+    border-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
+
+// Product screenshot frame
+.mk-shot {
+  margin: 0;
+}
+
+.mk-browser {
+  overflow: hidden;
+  border: 1px solid var(--mk-border);
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 32px 64px -32px rgba(0, 0, 0, 0.25);
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+.mk-browser__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2.25rem;
+  padding: 0 0.875rem;
+  border-bottom: 1px solid var(--mk-border);
+  background: var(--mk-surface);
+
+  i {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+    background: var(--mk-border);
+  }
+}
+
+.mk-browser__url {
+  margin-left: 0.75rem;
+  padding: 0.125rem 0.75rem;
+  border: 1px solid var(--mk-border);
+  border-radius: var(--bs-border-radius-sm);
+  background: #fff;
+  font-size: 0.75rem;
+  color: var(--mk-muted);
+}
+
+.mk-caption {
+  margin-top: 0.875rem;
+  font-size: 0.8125rem;
+  color: var(--mk-muted);
+  text-align: center;
+}
+
+// Cards
+.mk-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.mk-cards--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  @media (max-width: 1099.98px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 575.98px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mk-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid var(--mk-border);
+  border-radius: var(--bs-border-radius-lg);
+  background: #fff;
+  color: var(--mk-text);
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: #{$ol-grey-400};
+    color: var(--mk-text);
+  }
+
+  h3 {
+    margin: 0.25rem 0 0;
+    font-size: 1.0625rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--mk-text-2);
+  }
+
+  .mk-arrow-link {
+    margin-top: auto;
+    font-size: 0.9375rem;
+  }
+}
+
+// "Why Outlogik" points on the dark band
+.mk-points {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid #{$ol-grey-dark};
+
+  @media (max-width: 991.98px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 575.98px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mk-point {
+  padding: 2rem 1.75rem 0 0;
+
+  & + & {
+    padding-left: 1.75rem;
+    border-left: 1px solid #{$ol-grey-dark};
+  }
+
+  @media (max-width: 991.98px) {
+    &:nth-child(odd) {
+      padding-left: 0;
+      border-left: 0;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    & + & {
+      padding-left: 0;
+      border-left: 0;
+    }
+  }
+
+  h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.125rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9375rem;
+  }
+}
+
+// Numbered process steps
+.mk-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+
+  @media (max-width: 991.98px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 575.98px) {
+    grid-template-columns: 1fr;
+  }
+
+  li {
+    padding-top: 1.25rem;
+    border-top: 2px solid var(--mk-black);
+
+    &::before {
+      counter-increment: step;
+      content: '0' counter(step);
+      display: block;
+      margin-bottom: 0.75rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--mk-muted);
+    }
+  }
+
+  h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.0625rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--mk-text-2);
+  }
+}
+
+// Text beside an image
+.mk-split {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: clamp(2.5rem, 2rem + 3vw, 4rem);
+  align-items: center;
+
+  @media (max-width: 991.98px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Client portal features with status
+.mk-features {
+  display: grid;
+  gap: 1rem;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+
+    > ol-icon {
+      margin-top: 0.25rem;
+    }
+  }
+
+  strong {
+    color: var(--mk-black);
+    font-weight: 600;
+  }
+
+  .is-soon {
+    color: var(--mk-muted);
+  }
+}
+
+.mk-features__desc {
+  display: block;
+  font-size: 0.9375rem;
+  color: var(--mk-text-2);
+}
+
+// Tools we work with
+.mk-tools {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) 2fr;
+  gap: 2rem;
+  align-items: center;
+
+  @media (max-width: 991.98px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mk-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-tile {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--mk-border);
+  border-radius: var(--bs-border-radius-lg);
+  background: #fff;
+  font-weight: 500;
+  color: var(--mk-black);
+}
+
+// Closing call to action on the dark band
+.mk-cta {
+  text-align: center;
+
+  .mk-h2 {
+    max-width: 22ch;
+    margin-inline: auto;
+  }
+
+  .mk-lead {
+    margin-inline: auto;
+    color: #{$ol-grey-light};
+  }
+}
+
+.mk-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.mk-btn-light {
+  border: 1px solid #fff;
+  background: #fff;
+  color: var(--mk-black);
+
+  &:hover {
+    background: #{$ol-grey-light};
+    color: var(--mk-black);
+  }
+}
+
+.mk-btn-ghost {
+  border: 1px solid #{$ol-grey-dark};
+  background: transparent;
+  color: #fff;
+
+  &:hover {
+    border-color: #{$ol-grey-400};
+    color: #fff;
+  }
+}
+
+// Keep the closing band and the footer visually separate
+.mk-cta + * {
+  border-top: 1px solid #{$ol-grey-dark};
+}

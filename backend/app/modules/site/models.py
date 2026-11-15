@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.models import Base, Timestamps, utcnow
 
-MODULE_STATUSES = ("available", "in_development", "hidden")
+FEATURE_STATUSES = ("available", "in_development", "hidden")
 
 
 class SiteSettings(Base):
@@ -28,10 +28,11 @@ class SiteSettings(Base):
     )
 
 
-class ProductModule(Timestamps, Base):
-    """A product capability shown on the marketing site, with its honest status (spec §20)."""
+class PortalFeature(Timestamps, Base):
+    """A client-portal capability shown on the website ("How we work"), with its honest status:
+    available, in development, or hidden."""
 
-    __tablename__ = "product_modules"
+    __tablename__ = "portal_features"
     __table_args__ = (
         CheckConstraint("status IN ('available', 'in_development', 'hidden')",
                         name="status_valid"),

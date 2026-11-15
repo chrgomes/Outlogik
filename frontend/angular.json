@@ -118,6 +118,10 @@
             "assets": [
               {
                 "glob": "**/*",
+                "input": "projects/marketing/public"
+              },
+              {
+                "glob": "**/*",
                 "input": "brand/assets/logo",
                 "output": "brand"
               },

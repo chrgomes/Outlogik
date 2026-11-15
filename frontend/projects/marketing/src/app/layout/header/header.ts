@@ -14,11 +14,10 @@ import { filter } from 'rxjs';
 
 import { Icon } from '@brand/icon/icon';
 import { Logo } from '@brand/logo/logo';
-import { AUDIENCES, COMPANY, RESOURCES, appLink } from '../../config/site';
+import { AUDIENCES, COMPANY, CONSULTATION_PATH, LOGIN_URL, RESOURCES, SERVICES } from '../../config/site';
 import { SiteData } from '../../config/site-data';
-import { StatusBadge } from '../status-badge';
 
-type Menu = 'platform' | 'solutions' | 'resources' | 'company';
+type Menu = 'services' | 'who' | 'resources' | 'company';
 
 /**
  * Sticky site header. Desktop: disclosure menus (one open at a time; Escape, outside click,
@@ -28,7 +27,7 @@ type Menu = 'platform' | 'solutions' | 'resources' | 'company';
 @Component({
   selector: 'mk-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, Icon, Logo, StatusBadge],
+  imports: [RouterLink, RouterLinkActive, Icon, Logo],
   templateUrl: './header.html',
   host: {
     class: 'mk-header',
@@ -43,14 +42,13 @@ export class Header {
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly drawer = viewChild<ElementRef<HTMLDialogElement>>('drawer');
 
-  private readonly site = inject(SiteData);
-  protected readonly modules = this.site.modules;
-  protected readonly settings = this.site.settings;
+  protected readonly settings = inject(SiteData).settings;
+  protected readonly services = SERVICES;
   protected readonly audiences = AUDIENCES;
   protected readonly resources = RESOURCES;
   protected readonly company = COMPANY;
-  protected readonly loginUrl = appLink('/login');
-  protected readonly registerUrl = appLink('/register');
+  protected readonly loginUrl = LOGIN_URL;
+  protected readonly consultationPath = CONSULTATION_PATH;
 
   protected readonly open = signal<Menu | null>(null);
   protected readonly scrolled = signal(false);

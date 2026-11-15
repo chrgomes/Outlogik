@@ -23,6 +23,7 @@ deployment must add. Each item is covered by backend or frontend tests unless no
   invitation preview and acceptance, resending confirmation emails. If Redis is down the
   limiter lets requests through and logs a warning, rather than locking everyone out.
 - **Super Admins** can only be created with the CLI.
+- **Sign-up is invite-only by default** (`SIGNUP_MODE=invite_only`): clients and staff join through invitations, and organizations are created with the CLI.
 
 ## Requests
 

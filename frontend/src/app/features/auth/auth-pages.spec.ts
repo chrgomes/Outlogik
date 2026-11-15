@@ -96,11 +96,37 @@ describe('Login page', () => {
   });
 });
 
+describe('Invite-only sign-up', () => {
+  it('sign-in page asks for an invitation instead of offering sign-up', async () => {
+    const http = setup();
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/login');
+    http.expectOne('/api/v1/public/site').flush({ signup_open: false });
+    harness.detectChanges();
+    const el = harness.routeNativeElement!;
+    expect(el.querySelector('a[href="/register"]')).toBeNull();
+    expect(el.textContent).toContain('Ask your Outlogik contact for an invitation');
+  });
+
+  it('register page explains accounts are by invitation', async () => {
+    const http = setup();
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/register');
+    http.expectOne('/api/v1/public/site').flush({ signup_open: false });
+    harness.detectChanges();
+    const el = harness.routeNativeElement!;
+    expect(el.querySelector('form')).toBeNull();
+    expect(el.textContent).toContain('Accounts are by invitation');
+  });
+});
+
 describe('Register page', () => {
   it('shows "email taken" on the email field with a sign-in link', async () => {
     const http = setup();
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/register');
+    http.expectOne('/api/v1/public/site').flush({ signup_open: true });
+    harness.detectChanges();
     const el = harness.routeNativeElement!;
     type(el, '#full_name', 'Olive');
     type(el, '#organization_name', 'Acme');
@@ -121,6 +147,8 @@ describe('Register page', () => {
     const http = setup();
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/register');
+    http.expectOne('/api/v1/public/site').flush({ signup_open: true });
+    harness.detectChanges();
     const el = harness.routeNativeElement!;
     type(el, '#full_name', 'Olive');
     type(el, '#organization_name', 'Acme');
