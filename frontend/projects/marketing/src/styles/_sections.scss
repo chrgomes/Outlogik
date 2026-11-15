@@ -415,3 +415,231 @@
 .mk-cta + * {
   border-top: 1px solid #{$ol-grey-dark};
 }
+
+// Inner page heading
+.mk-page-hero {
+  padding-block: clamp(2rem, 1.5rem + 2vw, 3rem) clamp(3rem, 2rem + 4vw, 5rem);
+  border-bottom: 1px solid var(--mk-border);
+
+  .mk-lead {
+    max-width: 44rem;
+  }
+}
+
+.mk-page-hero__title {
+  max-width: 20ch;
+}
+
+.mk-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 clamp(2rem, 1.5rem + 2vw, 3.5rem);
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+  color: var(--mk-muted);
+
+  li + li::before {
+    content: '/';
+    margin-right: 0.5rem;
+    color: var(--mk-border);
+  }
+
+  a {
+    color: var(--mk-text-2);
+
+    &:hover {
+      color: var(--mk-black);
+      text-decoration: underline;
+    }
+  }
+
+  [aria-current] {
+    color: var(--mk-black);
+  }
+}
+
+// "What we do": heading beside a short text
+.mk-intro {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) 2fr;
+  gap: 2rem;
+
+  @media (max-width: 767.98px) {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  p {
+    font-size: 1.125rem;
+    color: var(--mk-text-2);
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Included items: icon, title, text in a grid
+.mk-included {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.25rem 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (max-width: 991.98px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 575.98px) {
+    grid-template-columns: 1fr;
+  }
+
+  h3 {
+    margin: 1rem 0 0.375rem;
+    font-size: 1.0625rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--mk-text-2);
+  }
+}
+
+.mk-split--even {
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+}
+
+.mk-split--faq {
+  grid-template-columns: 4fr 7fr;
+  align-items: start;
+}
+
+.mk-split--even,
+.mk-split--faq {
+  @media (max-width: 991.98px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Check-mark list
+.mk-checks {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 1.0625rem;
+  color: var(--mk-black);
+
+  li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  ol-icon {
+    flex: none;
+    margin-top: 0.25rem;
+  }
+}
+
+.mk-checks--compact {
+  gap: 0.625rem;
+  font-size: 0.9375rem;
+  color: var(--mk-text);
+}
+
+// FAQ
+.mk-faq {
+  border-top: 1px solid var(--mk-border);
+}
+
+.mk-faq__item {
+  border-bottom: 1px solid var(--mk-border);
+
+  summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 0;
+    font-weight: 600;
+    color: var(--mk-black);
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::after {
+      content: '+';
+      flex: none;
+      font-weight: 400;
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+  }
+
+  &[open] summary::after {
+    content: '−';
+  }
+
+  p {
+    margin: 0;
+    padding-bottom: 1.25rem;
+    max-width: 40rem;
+    color: var(--mk-text-2);
+  }
+}
+
+.mk-cards--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @media (max-width: 575.98px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// /services: one row per service
+.mk-service-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.mk-service-row {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 2rem;
+  padding: 2rem;
+  border: 1px solid var(--mk-border);
+  border-radius: var(--bs-border-radius-lg);
+  background: #fff;
+
+  @media (max-width: 767.98px) {
+    grid-template-columns: 1fr;
+    padding: 1.5rem;
+  }
+
+  h2 {
+    margin: 1rem 0 0.5rem;
+
+    a {
+      color: var(--mk-black);
+    }
+  }
+
+  p {
+    max-width: 34rem;
+    color: var(--mk-text-2);
+  }
+
+  .mk-checks {
+    align-self: center;
+  }
+}

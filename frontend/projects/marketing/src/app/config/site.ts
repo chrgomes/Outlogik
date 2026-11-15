@@ -20,17 +20,19 @@ export interface Service {
   short: string;
   summary: string;
   icon: IconName;
+  /** The page's <title>, before " · Outlogik". */
+  pageTitle: string;
 }
 
 /** Services Outlogik offers (decided 2026-11-15). Each has a page under /services. */
 export const SERVICES: Service[] = [
-  { slug: 'seo', name: 'SEO', short: 'Search engine optimisation', icon: 'search',
+  { slug: 'seo', pageTitle: 'SEO services', name: 'SEO', short: 'Search engine optimisation', icon: 'search',
     summary: 'Get found by the people searching for what you offer: technical fixes, keyword research and on-page optimisation.' },
-  { slug: 'social-media-management', name: 'Social Media Management', short: 'Planned, consistent posting', icon: 'megaphone',
+  { slug: 'social-media-management', pageTitle: 'Social media management', name: 'Social Media Management', short: 'Planned, consistent posting', icon: 'megaphone',
     summary: 'Consistent, on-brand posts across your channels, planned ahead and approved by you.' },
-  { slug: 'website-analytics-reporting', name: 'Website Analytics & Reporting', short: 'Know what’s working', icon: 'graph-up',
+  { slug: 'website-analytics-reporting', pageTitle: 'Website analytics and reporting', name: 'Website Analytics & Reporting', short: 'Know what’s working', icon: 'graph-up',
     summary: 'Analytics set up properly, and a monthly report that explains what changed and why.' },
-  { slug: 'content-marketing', name: 'Content Marketing', short: 'Articles and website copy', icon: 'pencil-square',
+  { slug: 'content-marketing', pageTitle: 'Content marketing', name: 'Content Marketing', short: 'Articles and website copy', icon: 'pencil-square',
     summary: 'Articles and website copy written for your customers first, and for search engines too.' },
 ];
 

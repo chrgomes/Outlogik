@@ -20,7 +20,7 @@ const MARKETING = [
   'building', 'search-heart', 'person', 'people', 'shop',
   // page content
   'globe2', 'shield-check', 'diagram-3', 'window-stack', 'lightning-charge', 'heart-pulse',
-  'link-45deg', 'clock-history', 'envelope',
+  'link-45deg', 'clock-history', 'envelope', 'arrow-repeat', 'check-circle-fill',
 ];
 
 const svg = (name) => readFileSync(

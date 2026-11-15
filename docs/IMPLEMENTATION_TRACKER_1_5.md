@@ -12,8 +12,8 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
 | 1 | Brand, palette, marketing app shell, CI | A | ✅ Done |
 | 2 | Staff roles, site settings, statuses, public API | A | ✅ Done |
 | 3 | Agency navigation, invite-only sign-up, portal features, homepage | A | ✅ Done |
-| 4 | Service pages (4) and `/services` | A | ⏳ Next |
-| 5 | Who we help, How we work, Pricing (how it works), About | A | ☐ |
+| 4 | Service pages (4) and `/services` | A | ✅ Done |
+| 5 | Who we help, How we work, Pricing (how it works), About | A | ⏳ Next |
 | 6 | Leads: consultation, contact, newsletter; attribution; notifications; old-path redirects | A | ☐ |
 | 7 | Admin area: leads inbox, settings, portal feature statuses | A | ☐ |
 | 8 | CMS backend and media library | B | ☐ |
@@ -118,3 +118,44 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
   - the browser makes no API calls after load; screenshots load when scrolled into view
   - no horizontal scroll at phone or tablet width, and no console errors
 - **Links to pages not built yet** (services, who we help, how we work, pricing, about, contact, book a consultation) are built in steps 4–6, before anything is released.
+
+## Step 4 — service pages and `/services`
+
+- **Pages:**
+  - `/services` lists the four services, each with what it includes, then explains how they work together.
+  - `/services/seo`, `/services/social-media-management`, `/services/website-analytics-reporting` and `/services/content-marketing` each have these sections:
+    - a heading with breadcrumbs
+    - what we do
+    - what's included (six items)
+    - what you get
+    - how we work (four steps)
+    - what you'll see in the client portal
+    - questions
+    - related services
+    - a closing call to action
+- **Content** lives in `config/services-content.ts`, one entry per service, separate from the layout so it's easy to review and edit. It loads only with the service pages, not with the homepage. Page titles are in `SERVICES` in `config/site.ts`.
+- **Honest claims:**
+  - The SEO questions state plainly that no one can guarantee rankings. A test checks every service's copy for guarantee phrases.
+  - The client-portal section shows only the features relevant to each service, with the statuses staff set in the admin area. "In development" features are labelled. The section disappears if none is shown.
+  - Where today's process differs from the portal's future features, the answers say so: approvals happen by email or a shared document, and reports are sent each month until portal reports are ready.
+- **For your review (business commitments in the copy):**
+  - nothing is published without the client's approval (social media, content)
+  - clients own their social accounts
+  - paid ads are not part of the social media service
+  - an optional monthly review call (analytics)
+  - consent-aware tracking
+- **Shared building blocks** for the remaining pages:
+  - `<mk-page-hero>`: breadcrumbs, the single h1, lead, actions
+  - `<mk-faq>`: native `<details>`, so it works before JavaScript loads
+  - `<mk-cta-band>`: the closing call to action
+- **Routing:**
+  - Each page loads on demand.
+  - Server routes are listed per service, so an unknown address such as `/services/paid-ads` shows the 404 page with a 404 status.
+  - Pages are cached like the homepage (`s-maxage=60`).
+- **Meta descriptions** are set per page. Canonical URLs, Open Graph and structured data come in step 11. The default description in `index.html`, and the homepage title, now describe the agency, replacing the old software-product wording.
+- **Budget:** the marketing site's initial-bundle warning went from 400 kB to 450 kB (the error limit stays 600 kB). It is now 403 kB, or 106 kB compressed. Shared page styles and the router's on-demand loading added about 9 kB.
+- **Tests:** 16 new marketing tests (32 total); the app's 67 still pass.
+- **Checked by running it:**
+  - all five pages render on the server with status 200, one h1 and the right title; `/services/paid-ads` returns 404
+  - the cache header is present
+  - moving between service pages in the browser works, with no console errors

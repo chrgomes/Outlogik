@@ -1,0 +1,125 @@
+<mk-page-hero [crumbs]="crumbs" [eyebrow]="service.name" [title]="content.headline" [lead]="content.lead">
+  <div class="mk-hero__actions">
+    <a [routerLink]="consultationPath" class="btn btn-primary btn-lg">{{ settings().consultation_cta_label }}</a>
+    <a href="#included" class="btn btn-outline-dark btn-lg">What’s included</a>
+  </div>
+</mk-page-hero>
+
+<!-- What we do -->
+<section class="mk-section mk-section--tight" aria-labelledby="what-title">
+  <div class="mk-container mk-intro">
+    <h2 class="mk-h3" id="what-title">What we do</h2>
+    <div>
+      @for (p of content.intro; track $index) { <p>{{ p }}</p> }
+    </div>
+  </div>
+</section>
+
+<!-- What's included -->
+<section class="mk-section mk-section--muted" id="included" aria-labelledby="included-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">What’s included</p>
+      <h2 class="mk-h2" id="included-title">Everything you need from {{ topic }}.</h2>
+      <p class="mk-lead">Your proposal sets out exactly which of these we’ll do for you, and how often.</p>
+    </div>
+    <ul class="mk-included">
+      @for (i of content.included; track i.title) {
+        <li>
+          <span class="mk-ico-box"><ol-icon [name]="i.icon" /></span>
+          <h3>{{ i.title }}</h3>
+          <p>{{ i.text }}</p>
+        </li>
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- What you get -->
+<section class="mk-section" aria-labelledby="outcomes-title">
+  <div class="mk-container mk-split mk-split--even">
+    <div>
+      <p class="mk-eyebrow">What you get</p>
+      <h2 class="mk-h2" id="outcomes-title">Work you can see, and results you can follow.</h2>
+    </div>
+    <ul class="mk-checks">
+      @for (o of content.outcomes; track o) {
+        <li><ol-icon name="check-circle-fill" /> {{ o }}</li>
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- How we work -->
+<section class="mk-section mk-section--muted" aria-labelledby="process-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">How we work</p>
+      <h2 class="mk-h2" id="process-title">A clear process, every month.</h2>
+    </div>
+    <ol class="mk-steps">
+      @for (s of content.steps; track s.title) {
+        <li><h3>{{ s.title }}</h3><p>{{ s.text }}</p></li>
+      }
+    </ol>
+  </div>
+</section>
+
+<!-- In your client portal -->
+@if (features().length) {
+  <section class="mk-section" aria-labelledby="portal-title">
+    <div class="mk-container mk-split mk-split--even">
+      <div>
+        <p class="mk-eyebrow">In your client portal</p>
+        <h2 class="mk-h2" id="portal-title">Follow the work in your own portal.</h2>
+        <p class="mk-lead">Every client gets a private portal. Here’s what it shows for {{ topic }} today, and what we’re adding.</p>
+        <p><a routerLink="/how-we-work" class="mk-arrow-link">See how the portal works <ol-icon name="arrow-right" /></a></p>
+      </div>
+      <ul class="mk-features">
+        @for (f of features(); track f.slug) {
+          <li [class.is-soon]="f.status === 'in_development'">
+            <ol-icon [name]="f.status === 'available' ? 'check2' : 'clock-history'" />
+            <span>
+              <strong>{{ f.name }}</strong> <mk-status-badge [status]="f.status" />
+              <span class="mk-features__desc">{{ f.summary }}</span>
+            </span>
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+}
+
+<!-- Questions -->
+<section class="mk-section mk-section--muted" aria-labelledby="faq-title">
+  <div class="mk-container mk-split mk-split--faq">
+    <div>
+      <p class="mk-eyebrow">Questions</p>
+      <h2 class="mk-h2" id="faq-title">Questions about {{ topic }}</h2>
+      <p>Something else? <a routerLink="/contact" class="mk-arrow-link">Ask us <ol-icon name="arrow-right" /></a></p>
+    </div>
+    <mk-faq [items]="content.questions" />
+  </div>
+</section>
+
+<!-- Related services -->
+<section class="mk-section" aria-labelledby="related-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">Works well with</p>
+      <h2 class="mk-h2" id="related-title">Related services</h2>
+    </div>
+    <div class="mk-cards mk-cards--2">
+      @for (s of related; track s.slug) {
+        <a class="mk-card" [routerLink]="['/services', s.slug]">
+          <span class="mk-ico-box"><ol-icon [name]="s.icon" /></span>
+          <h3>{{ s.name }}</h3>
+          <p>{{ s.summary }}</p>
+          <span class="mk-arrow-link">Learn more <ol-icon name="arrow-right" /></span>
+        </a>
+      }
+    </div>
+  </div>
+</section>
+
+<mk-cta-band [title]="'Talk to us about ' + topic + '.'" />
