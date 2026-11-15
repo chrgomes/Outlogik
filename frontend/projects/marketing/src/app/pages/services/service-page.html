@@ -1,6 +1,6 @@
 <mk-page-hero [crumbs]="crumbs" [eyebrow]="service.name" [title]="content.headline" [lead]="content.lead">
   <div class="mk-hero__actions">
-    <a [routerLink]="consultationPath" class="btn btn-primary btn-lg">{{ settings().consultation_cta_label }}</a>
+    <a [routerLink]="consultationPath" [queryParams]="{ service: service.slug }" class="btn btn-primary btn-lg">{{ settings().consultation_cta_label }}</a>
     <a href="#included" class="btn btn-outline-dark btn-lg">What’s included</a>
   </div>
 </mk-page-hero>

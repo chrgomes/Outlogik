@@ -14,8 +14,8 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
 | 3 | Agency navigation, invite-only sign-up, portal features, homepage | A | ✅ Done |
 | 4 | Service pages (4) and `/services` | A | ✅ Done |
 | 5 | Who we help, How we work, Pricing (how it works), About | A | ✅ Done |
-| 6 | Leads: consultation, contact, newsletter; attribution; notifications; old-path redirects | A | ⏳ Next |
-| 7 | Admin area: leads inbox, settings, portal feature statuses | A | ☐ |
+| 6 | Leads: consultation, contact, newsletter; attribution; notifications; old-path redirects | A | ✅ Done |
+| 7 | Admin area: leads inbox, settings, portal feature statuses | A | ⏳ Next |
 | 8 | CMS backend and media library | B | ☐ |
 | 9 | CMS admin UI | B | ☐ |
 | 10 | Resources: blog, guides, glossary | B | ☐ |
@@ -209,3 +209,60 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
   - unknown addresses return 404
   - no console errors, and no horizontal scrolling at phone width (390 px)
 - **Still to build:** `/contact` and `/book-a-consultation` (step 6). Links to them show the 404 page until then.
+
+## Step 6 — leads: forms, attribution, notifications, redirects
+
+- **Backend (`app/modules/leads`, migration `0005`):**
+  - `leads` holds consultation requests and contact messages. Statuses are new, contacted, qualified, closed and spam; the admin inbox comes in step 7.
+  - `newsletter_subscribers` holds each subscriber's consent record.
+  - Public endpoints:
+    - `POST /api/v1/public/leads/consultation`
+    - `POST /api/v1/public/leads/contact`
+    - `POST /api/v1/public/newsletter`
+    - `POST /api/v1/public/newsletter/confirm`
+    - `POST /api/v1/public/newsletter/unsubscribe`
+- **Protection** (details in [`SECURITY.md`](SECURITY.md#website-forms)):
+  - an Origin check instead of CSRF (public endpoints only)
+  - a honeypot and a minimum fill time; spam is kept for review but never emailed
+  - rate limits per IP address and per email
+  - strict validation
+- **Newsletter (CASL):** an unticked consent box, the exact wording stored, double opt-in, and an unsubscribe link. Confirming or unsubscribing needs a button click on the website, so email link scanners can't do it.
+- **Notifications:**
+  - Each new lead is emailed to `LEAD_NOTIFICATION_EMAILS`. This is **empty until decision 15**, so nothing is sent yet; leads are still stored.
+  - The person who sent the form gets a short confirmation email.
+- **Attribution:**
+  - The first page of each visit, its referrer and UTM tags are kept in `sessionStorage`. There are no cookies.
+  - They're sent with any form, along with the page it was sent from.
+  - The team notification lists them.
+- **Website:**
+  - `/book-a-consultation` has:
+    - name, email, company, website, phone, best time to reach you
+    - the services, at least one ("Not sure yet" counts)
+    - an optional budget range (decision E)
+    - a message
+    - "What happens next"
+  - Service pages pre-select their service (`?service=seo`).
+  - `/contact` has a topic and a message, plus contact details from the site settings once they're set.
+  - The footer newsletter form loads when the footer scrolls into view, so it adds nothing to the first page load.
+  - `/newsletter/confirm` and `/newsletter/unsubscribe` are hidden from search engines.
+  - The form options live in `config/forms.ts`. A backend test checks they match what the API accepts, and that the consent wording is identical.
+- **Redirects** (website server):
+  - `/platform*` → `/services`
+  - `/solutions*` → `/who-we-help`
+  - `/book-a-demo` and `/get-started` → `/book-a-consultation` (301, keeping query strings)
+  - `/login` → the client portal's login (302)
+- **Proxy:** forwards GET and POST to the API, with the browser's Origin and user agent, a 32 kB body limit and `Retry-After`. `TRUST_PROXY` passes visitors' real IP addresses through a reverse proxy.
+- **For your review:**
+  - The budget ranges are in dollars per month: under $1,000; $1,000–2,500; $2,500–5,000; over $5,000; not sure. Change them if they don't fit your pricing.
+  - The newsletter wording
+  - The confirmation emails' text
+- **Tests:**
+  - backend: 27 new (223 total)
+  - website: 12 new (63 total)
+  - app: 67, unchanged
+- **Checked by running it** (API, server-rendered site, real browser):
+  - A visit arriving from a LinkedIn campaign link went from homepage to SEO page to "Book a free consultation" (SEO pre-ticked). The request was stored with the services, budget, landing page and UTM tags, and the acknowledgement email was sent.
+  - Newsletter sign-up from the footer sent a confirmation email; its link confirmed the subscription.
+  - Without the website's Origin, the API refused the form (403).
+  - Old addresses redirected, `/login` went to the app, PUT to the proxy was refused (405), and there were no console errors.
+- **Size:** initial load 427 kB (114 kB compressed), under the 450 kB warning.

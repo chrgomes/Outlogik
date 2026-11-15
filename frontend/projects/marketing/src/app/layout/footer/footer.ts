@@ -13,11 +13,12 @@ import {
   SOCIAL_LABELS,
 } from '../../config/site';
 import { SiteData } from '../../config/site-data';
+import { Newsletter } from './newsletter';
 
 @Component({
   selector: 'mk-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Logo],
+  imports: [RouterLink, Logo, Newsletter],
   host: { class: 'mk-footer' },
   template: `
     <div class="mk-container">
@@ -76,6 +77,14 @@ import { SiteData } from '../../config/site-data';
             </ul>
           </div>
         </nav>
+      </div>
+      <div class="mk-footer__newsletter">
+        <!-- Loaded when the footer comes into view, so its code isn't part of every page load. -->
+        @defer (on viewport) {
+          <mk-newsletter />
+        } @placeholder {
+          <div class="mk-newsletter__placeholder"><h2 class="mk-footer__heading">Newsletter</h2></div>
+        }
       </div>
       <div class="mk-footer__bottom">
         <p>© {{ year }} Outlogik. All rights reserved.</p>

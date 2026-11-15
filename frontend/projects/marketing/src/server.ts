@@ -12,6 +12,9 @@ import { join } from 'node:path';
  * and renders pages. Settings come from the environment:
  *   PORT               port to listen on (default 4000)
  *   API_INTERNAL_URL   where the API is reachable from this server (default http://localhost:8000)
+ *   TRUST_PROXY        set when a reverse proxy (e.g. Caddy or nginx) sits in front of this
+ *                      server, so visitors' real IP addresses reach the API's rate limits. Takes
+ *                      Express's "trust proxy" values: a hop count ("1"), or addresses.
  */
 const browserDistFolder = join(import.meta.dirname, '../browser');
 const API_INTERNAL_URL = (process.env['API_INTERNAL_URL'] ?? 'http://localhost:8000').replace(/\/$/, '');
@@ -19,6 +22,8 @@ const API_INTERNAL_URL = (process.env['API_INTERNAL_URL'] ?? 'http://localhost:8
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 app.disable('x-powered-by');
+const trustProxy = process.env['TRUST_PROXY'];
+if (trustProxy) app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
 
 // Security headers for every response. The Content-Security-Policy is added with analytics and
 // consent in step 12, once the full list of allowed sources is known.
@@ -31,18 +36,49 @@ app.use((_req, res, next) => {
 });
 
 /**
- * Same-origin proxy to the public API, so the browser never talks to the API host directly.
- * Read-only for now; form submissions (POST) are added with the forms in step 6.
+ * Addresses from the earlier, software-product version of the plan, and /login, which takes
+ * people to the client portal. Permanent redirects keep any old links and search results working.
  */
-app.get('/api/public/{*path}', async (req, res) => {
+const REDIRECTS: [RegExp, string][] = [
+  [/^\/platform(\/.*)?$/, '/services'],
+  [/^\/solutions(\/.*)?$/, '/who-we-help'],
+  [/^\/(book-a-demo|get-started)\/?$/, '/book-a-consultation'],
+];
+app.get('/{*path}', (req, res, next) => {
+  if (req.path === '/login' || req.path === '/login/') {
+    return res.redirect(302, `${OL_APP_URL.replace(/\/$/, '')}/login`);
+  }
+  const match = REDIRECTS.find(([pattern]) => pattern.test(req.path));
+  if (!match) return next();
+  const query = req.originalUrl.slice(req.path.length);
+  res.redirect(301, match[1] + query);
+});
+
+/**
+ * Same-origin proxy to the public API, so the browser never talks to the API host directly:
+ * reads (settings) and the website's forms. The browser's Origin is passed on, because the API
+ * only accepts form posts from this site.
+ */
+app.all('/api/public/{*path}', express.raw({ type: 'application/json', limit: '32kb' }), async (req, res) => {
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    res.status(405).json({ error: { code: 'method_not_allowed', message: 'Method not allowed.', details: null } });
+    return;
+  }
   const upstream = API_INTERNAL_URL + req.originalUrl.replace('/api/public/', '/api/v1/public/');
+  const headers: Record<string, string> = { accept: 'application/json', 'x-forwarded-for': req.ip ?? '' };
+  for (const name of ['origin', 'user-agent', 'content-type']) {
+    const value = req.headers[name];
+    if (typeof value === 'string') headers[name] = value;
+  }
   try {
     const response = await fetch(upstream, {
-      headers: { accept: 'application/json', 'x-forwarded-for': req.ip ?? '' },
-      signal: AbortSignal.timeout(5000),
+      method: req.method,
+      headers,
+      body: req.method === 'POST' && Buffer.isBuffer(req.body) ? new Uint8Array(req.body) : undefined,
+      signal: AbortSignal.timeout(10000),
     });
     res.status(response.status);
-    for (const header of ['content-type', 'cache-control']) {
+    for (const header of ['content-type', 'cache-control', 'retry-after']) {
       const value = response.headers.get(header);
       if (value) res.setHeader(header, value);
     }

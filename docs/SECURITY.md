@@ -68,6 +68,42 @@ Website URLs are normalised. IP addresses, `localhost`, single-label hosts, inte
 enough on its own:** the Phase 2 crawler must also resolve each hostname and refuse private,
 loopback and link-local addresses at fetch time (SSRF).
 
+## Website forms
+
+The consultation, contact and newsletter forms post to `/api/v1/public/*` through the website's
+own server, so the browser never talks to the API host.
+
+- **No CSRF token:** these endpoints never read the session cookie, so CSRF doesn't apply.
+  Everything else under `/api/` still requires the token.
+- **Origin check:** requests must carry the website's `Origin` (`SITE_URL`, plus
+  `PUBLIC_FORM_EXTRA_ORIGINS`); anything else gets 403.
+- **Spam checks, with no third-party CAPTCHA:**
+  - a hidden honeypot field
+  - a minimum time the form must be open (`FORM_MIN_SECONDS`, 3 seconds)
+  - Spam is stored with status `spam` for review, never emailed, and the sender sees the usual
+    success message.
+- **Rate limits:** 10 submissions per IP address per 10 minutes, and 3 per email address per
+  hour.
+- **Strict validation:**
+  - unknown fields are rejected
+  - choices must be from fixed lists
+  - lengths are capped
+  - the proxy refuses bodies over 32 kB
+- **Newsletter (CASL):**
+  - an unticked consent box
+  - the exact wording is stored with the date
+  - double opt-in by email
+  - an unsubscribe link in every email
+  - Only token hashes are stored.
+  - Confirm and unsubscribe need a button click, so link scanners can't trigger them.
+  - The form responds identically whether or not an address is already subscribed.
+- **Visit attribution:**
+  - UTM tags, referrer and landing page are kept in the visitor's `sessionStorage`
+  - no cookies are set
+  - nothing is sent until a form is submitted
+- **What's stored with a lead:** the form fields, the attribution, the IP address and the
+  browser's user agent (for spam review). The privacy policy (step 12) must say so.
+
 ## Production checklist (not yet done)
 
 These depend on how Outlogik is hosted, which hasn't been decided:
@@ -78,6 +114,10 @@ These depend on how Outlogik is hosted, which hasn't been decided:
       paint, so allow it by hash).
 - [ ] Run uvicorn with `--proxy-headers` and a trusted `--forwarded-allow-ips` so rate limits
       and audit entries see real client IPs.
+- [ ] Website server: set `TRUST_PROXY` when it sits behind a reverse proxy, so visitors' real
+      IP addresses reach the API's rate limits; set `API_INTERNAL_URL`; build with the real
+      `OL_APP_URL` and `OL_SITE_URL`. API: set `SITE_URL` to the website's public origin.
+- [ ] Set `LEAD_NOTIFICATION_EMAILS` once the addresses are decided (decision 15).
 - [ ] Keep `COOKIE_SECURE=true`; set `FRONTEND_URL` to the public URL (used in email links).
 - [ ] A real SMTP provider with SPF, DKIM and DMARC for the sending domain.
 - [ ] Database backups, and secrets supplied by the host rather than `.env` files.

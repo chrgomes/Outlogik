@@ -25,7 +25,9 @@ describe('Service pages', () => {
         expect(el.querySelector('h1')!.textContent!.trim()).toBe(content.headline);
         expect(el.querySelectorAll('.mk-included li')).toHaveLength(content.included.length);
         expect(el.querySelectorAll('.mk-faq summary')).toHaveLength(content.questions.length);
-        expect(el.querySelectorAll('a[href="/book-a-consultation"]').length).toBeGreaterThanOrEqual(2);
+        expect(el.querySelectorAll('a[href^="/book-a-consultation"]').length).toBeGreaterThanOrEqual(2);
+        // The main button preselects this service on the consultation form.
+        expect(el.querySelector(`a[href="/book-a-consultation?service=${s.slug}"]`)).not.toBeNull();
         expect(el.querySelector('[aria-current="page"]')!.textContent).toBe(s.name);
         expect(TestBed.inject(Title).getTitle()).toBe(`${s.pageTitle} · Outlogik`);
       });

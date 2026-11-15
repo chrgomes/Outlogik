@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, afterNextRender, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { Footer } from './layout/footer/footer';
 import { Header } from './layout/header/header';
+import { VisitAttribution } from './shared/attribution';
 
 @Component({
   selector: 'mk-root',
@@ -17,4 +18,9 @@ import { Header } from './layout/header/header';
     <mk-footer />
   `,
 })
-export class App {}
+export class App {
+  constructor() {
+    const attribution = inject(VisitAttribution);
+    afterNextRender(() => attribution.record());
+  }
+}

@@ -48,5 +48,22 @@ export const routes: Routes = [
     title: 'About · Outlogik',
     loadComponent: () => import('./pages/about/about').then((m) => m.About),
   },
+  {
+    path: 'book-a-consultation',
+    title: 'Book a free consultation · Outlogik',
+    loadComponent: () => import('./pages/book-a-consultation/book-a-consultation').then((m) => m.BookAConsultation),
+  },
+  {
+    path: 'contact',
+    title: 'Contact · Outlogik',
+    loadComponent: () => import('./pages/contact/contact').then((m) => m.Contact),
+  },
+  // Linked from newsletter emails only; not indexed.
+  ...(['confirm', 'unsubscribe'] as const).map((action) => ({
+    path: `newsletter/${action}`,
+    title: `${action === 'confirm' ? 'Confirm your subscription' : 'Unsubscribe'} · Outlogik`,
+    data: { action },
+    loadComponent: () => import('./pages/newsletter/newsletter-link').then((m) => m.NewsletterLink),
+  })),
   { path: '**', component: NotFound, title: 'Page not found · Outlogik' },
 ];
