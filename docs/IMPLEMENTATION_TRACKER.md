@@ -2,6 +2,10 @@
 
 Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the repo).
 
+**Phase 1 is complete (2026-11-15).** 45 API operations across 32 paths; 2 migrations;
+171 backend tests and 65 frontend tests, all passing; every flow checked in a browser.
+See also [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`SECURITY.md`](SECURITY.md).
+
 | # | Step | Status | Notes |
 |---|---|---|---|
 | 1 | Scaffold, Docker Compose, health endpoint, Angular shell | ✅ Done | Angular 22, FastAPI, Postgres 16, Redis 7, Mailpit |
@@ -12,9 +16,9 @@ Plan: [`PHASE1_PLAN.md`](PHASE1_PLAN.md). Spec: `MASTER_SPEC.md` (not yet in the
 | 6 | Clients and websites + tenant isolation tests | ✅ Done | Migration `0002`; 56 tests incl. client-portal scoping and cross-org attempts |
 | 7 | Frontend: brand, themes, layout shell | ✅ Done | Tokens + Bootstrap 5.3, light/dark/system theme, collapsible sidebar, org switcher, user menu; 15 frontend tests |
 | 8 | Frontend: authentication pages | ✅ Done | Sign in/up, forgot/reset, verify email, accept invite, verify banner; 25 new frontend tests; all flows checked in Chromium |
-| 9 | Frontend: clients, websites, settings pages | ☐ | |
+| 9 | Frontend: clients, websites, settings pages | ✅ Done | Clients (list, detail, portal access), websites, organization, team + invitations, roles editor; 14 frontend tests; full walkthrough in Chromium |
 | 10 | Dashboard (backend + frontend) | ✅ Done | `GET /orgs/{slug}/dashboard`; stat tiles, get-started checklist, recent activity, Phase 2 'Not connected yet' cards; 7 backend + 11 frontend tests |
-| 11 | Docs, tracker, final test pass | ☐ | |
+| 11 | Docs, tracker, final test pass | ✅ Done | README, architecture and security docs; API security headers; GitHub Actions CI; fresh-clone check |
 
 ## Project rules
 
@@ -136,8 +140,26 @@ Small additions made while building. None change an approved decision.
   - "Coming in Phase 2" cards (search performance, traffic, site health, broken links), each marked **Not connected yet** with no numbers
 - The temporary "isn't built yet" placeholder page was removed; no route uses it any more.
 
+## Final pass (step 11)
+
+- **Security headers** on every API response (`nosniff`, `DENY` framing, `no-referrer`, a deny-all CSP, `no-store`); the interactive API docs page is exempt from the CSP so it still loads.
+- **CI:** `.github/workflows/ci.yml` runs backend lint, tests and `alembic check` against PostgreSQL 16 and Redis 7 services, and the frontend unit tests and production build, on every push and pull request.
+- **Docs:** the README is rewritten for setup, tests and common tasks. `ARCHITECTURE.md` covers module layout, conventions and checklists for adding endpoints and pages. `SECURITY.md` covers the security model and a production checklist.
+- **Fresh-clone check:** the branch was cloned into an empty folder and set up exactly as the README describes, with new databases (see the step 11 commit message for results).
+
 ## Known gaps / follow-ups
 
-- Emails are sent synchronously during the request. A Celery queue with retries comes when the first background job is needed.
-- Behind a reverse proxy, uvicorn must run with `--proxy-headers` so rate limits and audit IPs see the real client address.
-- `docker compose up` was validated (`docker compose config`) but not run in the build environment, which had no Docker daemon. Tests ran against local PostgreSQL 16 and Redis 7.
+Carry these into later phases.
+
+**Before the first deployment**
+- Production checklist in [`SECURITY.md`](SECURITY.md): a single origin behind HTTPS, a CSP for the Angular app, proxy headers for real client IPs, real SMTP, backups and secrets.
+- `docker compose up` has only been validated (`docker compose config`). The build environment had no Docker daemon, so services ran natively (PostgreSQL 16, Redis 7). Run it once on the WSL2 machine.
+
+**Phase 1.5 / 2**
+- `MASTER_SPEC.md` isn't in the repo yet; it's needed to plan Phase 1.5 (public website).
+- **Background jobs:** emails are sent during the request. Add Celery (with retries) when the first background job arrives; crawling in Phase 2 will need it anyway.
+- **SSRF:** the Phase 2 crawler must check resolved IPs at fetch time, not just the hostname check done when a website is added.
+- **Audit log viewer:** entries are recorded and the 10 newest appear on the dashboard, but there's no full audit log page yet (`audit.read` exists for it).
+- **End-to-end tests:** the browser walkthroughs were run with Playwright scripts outside the repo. A committed Playwright suite would protect the main flows.
+- **Super Admin console**, billing and subscriptions (later phases, per the plan). MFA is optional; the `users` table already has columns for it.
+- **PostgreSQL row-level security** as a second isolation layer (decision 4).

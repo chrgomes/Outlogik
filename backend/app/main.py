@@ -7,6 +7,7 @@ from app.core.config import get_settings
 from app.core.csrf import install_csrf
 from app.core.db import SessionLocal
 from app.core.errors import install_error_handlers
+from app.core.headers import install_security_headers
 from app.modules import health
 from app.modules.auth.router import router as auth_router
 from app.modules.clients.router import router as clients_router
@@ -38,6 +39,7 @@ def create_app() -> FastAPI:
     )
     install_error_handlers(app)
     install_csrf(app)
+    install_security_headers(app)
 
     api = APIRouter(prefix="/api/v1")
     api.include_router(health.router)
