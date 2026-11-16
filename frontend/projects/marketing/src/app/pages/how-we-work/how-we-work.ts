@@ -8,7 +8,7 @@ import { SiteData } from '../../config/site-data';
 import { StatusBadge } from '../../layout/status-badge';
 import { CtaBand } from '../../shared/cta-band';
 import { Faq } from '../../shared/faq';
-import { pageDescription } from '../../shared/meta';
+import { pageDescription } from '../../seo/seo';
 import { PageHero } from '../../shared/page-hero';
 import { Screenshot } from '../../shared/screenshot';
 

@@ -5,7 +5,7 @@ import { Icon } from '@brand/icon/icon';
 import { CONSULTATION_PATH, SERVICES } from '../../config/site';
 import { SiteData } from '../../config/site-data';
 import { CtaBand } from '../../shared/cta-band';
-import { pageDescription } from '../../shared/meta';
+import { pageDescription } from '../../seo/seo';
 import { PageHero } from '../../shared/page-hero';
 
 /**

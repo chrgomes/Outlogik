@@ -3,12 +3,12 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { Icon } from '@brand/icon/icon';
 import { SERVICE_CONTENT, ServiceContent } from '../../config/services-content';
-import { CONSULTATION_PATH, SERVICES, serviceTopic } from '../../config/site';
+import { CONSULTATION_PATH, SERVICES, SITE_URL, serviceTopic } from '../../config/site';
 import { SiteData } from '../../config/site-data';
 import { StatusBadge } from '../../layout/status-badge';
 import { CtaBand } from '../../shared/cta-band';
 import { Faq } from '../../shared/faq';
-import { pageDescription } from '../../shared/meta';
+import { ORGANIZATION_ID, pageDescription, structuredData } from '../../seo/seo';
 import { PageHero } from '../../shared/page-hero';
 
 /**
@@ -39,5 +39,13 @@ export class ServicePage {
 
   constructor() {
     pageDescription(this.content.description);
+    structuredData('service', {
+      '@type': 'Service',
+      name: this.service.name,
+      serviceType: this.service.short,
+      description: this.content.description,
+      url: `${SITE_URL}/services/${this.service.slug}`,
+      provider: { '@id': ORGANIZATION_ID },
+    });
   }
 }

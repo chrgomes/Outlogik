@@ -9,7 +9,7 @@ import { BUDGET_OPTIONS, SERVICE_OPTIONS } from '../../config/forms';
 import { SiteData } from '../../config/site-data';
 import { FormError, Honeypot } from '../../shared/form-status';
 import { LeadApi } from '../../shared/lead-api';
-import { pageDescription } from '../../shared/meta';
+import { pageDescription } from '../../seo/seo';
 import { PageHero } from '../../shared/page-hero';
 
 /**

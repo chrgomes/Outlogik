@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
-import { Meta } from '@angular/platform-browser';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -28,7 +27,7 @@ const TEXT: Record<Action, { title: string; lead: string; button: string; done: 
 /**
  * The pages linked from newsletter emails (/newsletter/confirm and /newsletter/unsubscribe).
  * Nothing happens until the visitor clicks the button, so email security scanners that open
- * links can't confirm or unsubscribe anyone. Hidden from search engines.
+ * links can't confirm or unsubscribe anyone. Hidden from search engines (route data noindex).
  */
 @Component({
   selector: 'mk-newsletter-link',
@@ -67,12 +66,6 @@ export class NewsletterLink {
   protected readonly token = this.route.snapshot.queryParamMap.get('token');
   protected readonly state = signal<'ready' | 'sending' | 'done'>('ready');
   protected readonly error = signal<string | null>(null);
-
-  constructor() {
-    const meta = inject(Meta);
-    meta.updateTag({ name: 'robots', content: 'noindex' });
-    inject(DestroyRef).onDestroy(() => meta.removeTag('name="robots"'));
-  }
 
   protected async go(): Promise<void> {
     this.state.set('sending');

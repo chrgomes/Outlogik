@@ -1,12 +1,13 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { TitleStrategy, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { provideIcons } from '@brand/icon/icon';
 import { MARKETING_ICONS } from '@brand/icon/icons-marketing';
 import { routes } from '../app/app.routes';
+import { SeoTitleStrategy } from '../app/seo/seo';
 import { DEFAULT_SETTINGS } from '../app/config/site';
 
 /** TestBed for marketing components: router, icons and mocked HTTP. */
@@ -40,12 +41,14 @@ export async function visit(url: string, features?: object[]): Promise<HTMLEleme
   TestBed.configureTestingModule({
     providers: [
       provideRouter(routes),
+      { provide: TitleStrategy, useClass: SeoTitleStrategy },
       provideIcons(MARKETING_ICONS),
       provideHttpClient(),
       provideHttpClientTesting(),
     ],
   });
   const harness = await RouterTestingHarness.create(url);
+  TestBed.tick(); // let the SEO effect write the page's tags
   if (features) {
     answerSite({ portal_features: features });
     await settle();

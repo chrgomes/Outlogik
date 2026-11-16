@@ -7,17 +7,25 @@ import {
 import express from 'express';
 import { join } from 'node:path';
 
+import { routes } from './app/app.routes';
+import { robotsTxt, sitemapPaths, sitemapXml } from './app/seo/sitemap';
+
 /**
  * The marketing site's Node server: serves static files, proxies /api/public/* to the API,
  * and renders pages. Settings come from the environment:
  *   PORT               port to listen on (default 4000)
  *   API_INTERNAL_URL   where the API is reachable from this server (default http://localhost:8000)
+ *   SITE_NOINDEX       set to "true" on staging sites: robots.txt blocks everything and every
+ *                      response says noindex, so staging never appears in search results.
  *   TRUST_PROXY        set when a reverse proxy (e.g. Caddy or nginx) sits in front of this
  *                      server, so visitors' real IP addresses reach the API's rate limits. Takes
  *                      Express's "trust proxy" values: a hop count ("1"), or addresses.
  */
 const browserDistFolder = join(import.meta.dirname, '../browser');
 const API_INTERNAL_URL = (process.env['API_INTERNAL_URL'] ?? 'http://localhost:8000').replace(/\/$/, '');
+
+const SITE_URL = OL_SITE_URL.replace(/\/$/, '');
+const NOINDEX = process.env['SITE_NOINDEX'] === 'true';
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
@@ -32,7 +40,19 @@ app.use((_req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+  if (NOINDEX) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   next();
+});
+
+/** Search engines: robots.txt and a sitemap built from the page routes (spec §13). */
+app.get('/robots.txt', (_req, res) => {
+  res.type('text/plain').setHeader('Cache-Control', 'public, max-age=3600');
+  res.send(robotsTxt(SITE_URL, NOINDEX));
+});
+const sitemap = sitemapXml(SITE_URL, sitemapPaths(routes));
+app.get('/sitemap.xml', (_req, res) => {
+  res.type('application/xml').setHeader('Cache-Control', 'public, max-age=3600');
+  res.send(sitemap);
 });
 
 /**

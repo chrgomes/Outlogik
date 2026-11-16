@@ -7,7 +7,7 @@ import { AUDIENCES, CONSULTATION_PATH, SERVICES } from '../../config/site';
 import { SiteData } from '../../config/site-data';
 import { CtaBand } from '../../shared/cta-band';
 import { Faq } from '../../shared/faq';
-import { pageDescription } from '../../shared/meta';
+import { pageDescription } from '../../seo/seo';
 import { PageHero } from '../../shared/page-hero';
 
 /** One page per business type (/who-we-help/<slug>), built from AUDIENCE_CONTENT. */

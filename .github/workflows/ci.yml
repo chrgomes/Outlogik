@@ -71,7 +71,7 @@ jobs:
         run: npx ng test marketing --watch=false
       - name: App production build (fails over the bundle budget)
         run: npx ng build frontend
-      - name: Marketing site production build (prerenders static pages)
+      - name: Marketing site production build (server-rendered pages)
         run: npx ng build marketing
       - name: Marketing site serves server-rendered HTML
         run: |
@@ -79,3 +79,10 @@ jobs:
           for i in $(seq 1 20); do curl -sf localhost:4310/ -o home.html && break; sleep 1; done
           grep -q '<h1' home.html
           test "$(curl -s -o /dev/null -w '%{http_code}' localhost:4310/does-not-exist)" = 404
+          # Search metadata is in the HTML before any JavaScript runs (no API in CI: defaults).
+          curl -sf localhost:4310/services/seo -o seo.html
+          grep -q '<link rel="canonical" href="http://localhost:4300/services/seo">' seo.html
+          grep -q 'property="og:image"' seo.html
+          grep -q '"@type":"Service"' seo.html
+          curl -sf localhost:4310/robots.txt | grep -q 'Sitemap:'
+          test "$(curl -sf localhost:4310/sitemap.xml | grep -c '<loc>')" -ge 16

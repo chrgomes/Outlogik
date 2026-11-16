@@ -19,7 +19,7 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
 | 8 | CMS backend and media library | B | ☐ |
 | 9 | CMS admin UI | B | ☐ |
 | 10 | Resources: blog, guides, glossary | B | ☐ |
-| 11 | SEO (adds `ProfessionalService` schema once business details are known) | A | ☐ |
+| 11 | SEO (adds `ProfessionalService` schema once business details are known) | A | ✅ Done |
 | 12 | Analytics and consent; legal pages | A | ☐ |
 | 13 | Content pass | B | ☐ |
 | 14 | QA and release | A + B | ☐ |
@@ -315,3 +315,38 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
   - on Marco's consultation: marked Contacted, added a note, and checked his campaign source (Google, paid)
   - saved a contact email, which the website's public settings returned straight away
   - Portal features and Newsletter pages loaded with no errors
+
+## Step 11 — search engines and link previews
+
+- **Every page, rendered on the server** (search engines and link previews see it without running JavaScript):
+  - **title:** the page name plus the ending from the site settings (" · Outlogik", editable in the admin area); the homepage has its own full title
+  - **description:** the page's own, or the default from the site settings
+  - **canonical URL** (the page's main address, without query strings such as `?service=seo` or campaign tags)
+  - **link previews:** Open Graph and Twitter card tags, with a share image
+  - Error pages and newsletter links get `noindex` and no canonical URL.
+- **Structured data (JSON-LD):**
+  - **Organization** on every page: name, logo, description, tagline, and the contact email, phone and social links once they're set in the admin area
+  - **WebSite** on the homepage
+  - **BreadcrumbList** on every inner page, from the visible breadcrumbs
+  - **Service** on each service page
+  - `ProfessionalService` with an address and service area is added once those are decided (decisions 12 and A).
+  - The data is escaped so visitor-editable text can never break out of its script tag.
+- **`/robots.txt` and `/sitemap.xml`** are served by the website's server. The sitemap is built from the page routes: 16 pages now, and new pages are added automatically. The robots file points to the sitemap and blocks `/api/` and `/newsletter/`.
+- **Staging:** `SITE_NOINDEX=true` blocks everything in robots.txt and adds `X-Robots-Tag: noindex` to every response, so a staging site never appears in search results.
+- **Share image and logo:**
+  - `og-default.png` (1200×630, black, with the logo and "Digital marketing, handled. And always in view.")
+  - `outlogik-logo-512.png` for search engines
+  - Both are rendered from the brand files and the bundled font by `scripts/build-share-images.mjs`. No third-party services.
+- **How it works:** `seo/seo.ts` holds one `Seo` service. The router's title strategy passes in the route's title and path; pages add a description (`pageDescription()`) and structured data (`structuredData()`) while they're open. One effect writes all the tags whenever these or the site settings change, so moving between pages never leaves stale tags.
+- **Removed:** `og:locale`, which would have signalled Canada before the service area is decided.
+- **Tests:**
+  - website: 9 new (72 total), covering titles, descriptions, canonical URLs, structured data, clean-up between pages, noindex, settings-driven titles, escaping, the sitemap and robots.txt
+  - CI's server-rendering check now also confirms the canonical URL, the share image, the Service data, robots.txt and the sitemap.
+- **Checked by running it:**
+  - the server-rendered SEO page has every tag, with one description tag (no duplicates)
+  - after loading in a browser and moving between pages, the title, canonical URL and structured data update and stay single
+  - the staging switch blocks robots and adds the header
+  - no console errors
+- **To do at launch (step 14):**
+  - build with the real domain (`OL_SITE_URL`), so canonical URLs, the sitemap and share links use it
+  - submit the sitemap to Google Search Console and Bing Webmaster Tools

@@ -124,6 +124,8 @@ These depend on how Outlogik is hosted, which hasn't been decided:
 - [ ] Website server: set `TRUST_PROXY` when it sits behind a reverse proxy, so visitors' real
       IP addresses reach the API's rate limits; set `API_INTERNAL_URL`; build with the real
       `OL_APP_URL` and `OL_SITE_URL`. API: set `SITE_URL` to the website's public origin.
+- [ ] Run any staging copy of the website with `SITE_NOINDEX=true`, so it stays out of search
+      results.
 - [ ] Set `LEAD_NOTIFICATION_EMAILS` once the addresses are decided (decision 15).
 - [ ] Keep `COOKIE_SECURE=true`; set `FRONTEND_URL` to the public URL (used in email links).
 - [ ] A real SMTP provider with SPF, DKIM and DMARC for the sending domain.

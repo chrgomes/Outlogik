@@ -10,7 +10,7 @@ import { CONSULTATION_PATH, LOGIN_URL } from '../../config/site';
 import { SiteData } from '../../config/site-data';
 import { FormError, Honeypot } from '../../shared/form-status';
 import { LeadApi } from '../../shared/lead-api';
-import { pageDescription } from '../../shared/meta';
+import { pageDescription } from '../../seo/seo';
 import { PageHero } from '../../shared/page-hero';
 
 /** /contact: a message form, plus contact details once they're set in the admin area. */

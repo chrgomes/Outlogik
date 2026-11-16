@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+
+import { Seo, breadcrumbData } from '../seo/seo';
 
 export interface Crumb {
   label: string;
@@ -43,4 +45,15 @@ export class PageHero {
   readonly lead = input('');
   readonly eyebrow = input('');
   readonly crumbs = input<Crumb[]>([]);
+
+  constructor() {
+    // The same trail, as structured data for search results.
+    const seo = inject(Seo);
+    const route = inject(ActivatedRoute);
+    effect(() => {
+      const path = '/' + route.snapshot.pathFromRoot.flatMap((r) => r.url.map((u) => u.path)).join('/');
+      if (this.crumbs().length) seo.add('breadcrumbs', breadcrumbData(this.crumbs(), path));
+    });
+    inject(DestroyRef).onDestroy(() => seo.remove('breadcrumbs'));
+  }
 }
