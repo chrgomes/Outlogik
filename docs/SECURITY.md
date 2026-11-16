@@ -104,6 +104,13 @@ own server, so the browser never talks to the API host.
 - **What's stored with a lead:** the form fields, the attribution, the IP address and the
   browser's user agent (for spam review). The privacy policy (step 12) must say so.
 
+## Website admin area
+
+- `/api/v1/admin/*` needs a signed-in **site admin** (or super admin); everyone else gets 404. A test checks every admin route for a staff dependency.
+- **Audited:** lead status changes, lead deletion, both CSV exports (with the number of rows), subscriber deletion, settings and portal feature changes. Audit entries for deletions hold no personal details.
+- **CSV exports** neutralise cells starting with `=`, `+`, `-` or `@`, so spreadsheets don't run them as formulas, and are sent with `Cache-Control: no-store`.
+- **Visitor input** is shown as text, never HTML. A visitor's website address becomes a link only as `http(s)`, and opens with `rel="noopener noreferrer"`.
+
 ## Production checklist (not yet done)
 
 These depend on how Outlogik is hosted, which hasn't been decided:

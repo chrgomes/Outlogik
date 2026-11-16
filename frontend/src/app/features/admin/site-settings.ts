@@ -1,0 +1,240 @@
+import { DatePipe } from '@angular/common';
+import { httpResource } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+
+import { Icon } from '@brand/icon/icon';
+import { apiProblem, applyFieldErrors } from '../../core/api-errors';
+import { FieldError, showError } from '../../shared/forms/forms';
+import { PageHeader } from '../../shared/page-header/page-header';
+import { ErrorState, LoadingState } from '../../shared/states/states';
+import { ToastService } from '../../shared/toast/toast';
+import { ADMIN_API, AdminApi, SiteSettings } from './admin-api';
+
+const NETWORKS = [
+  { value: 'linkedin', label: 'LinkedIn' }, { value: 'facebook', label: 'Facebook' },
+  { value: 'instagram', label: 'Instagram' }, { value: 'x', label: 'X' },
+  { value: 'youtube', label: 'YouTube' }, { value: 'tiktok', label: 'TikTok' },
+  { value: 'github', label: 'GitHub' },
+];
+
+const text = (max: number, required = false) => new FormControl('', {
+  nonNullable: true, validators: [Validators.maxLength(max), ...(required ? [Validators.required] : [])],
+});
+
+function socialLink(network = 'linkedin', url = '') {
+  return new FormGroup({
+    network: new FormControl(network, { nonNullable: true }),
+    url: new FormControl(url, { nonNullable: true, validators: [Validators.required, Validators.pattern(/^https?:\/\/\S+$/)] }),
+  });
+}
+
+/**
+ * /admin/settings: what the website shows without a release (contact details, social links,
+ * the main button's wording, search defaults). Empty fields are simply not shown on the site.
+ */
+@Component({
+  selector: 'ol-site-settings',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DatePipe, ReactiveFormsModule, Icon, PageHeader, FieldError, ErrorState, LoadingState],
+  template: `
+    <ol-page-header title="Website settings"
+      description="Contact details, social links and wording used across the website. Changes appear within about a minute." />
+
+    @if (settings.error()) {
+      <ol-error-state message="We couldn't load the settings." (retry)="settings.reload()" />
+    } @else if (settings.hasValue()) {
+      <form [formGroup]="form" (ngSubmit)="save()" novalidate class="settings">
+        <section class="settings-card">
+          <h2 class="h6">About Outlogik</h2>
+          <div class="mb-3">
+            <label for="s-tagline" class="form-label">Tagline</label>
+            <input id="s-tagline" class="form-control" formControlName="tagline" [class.is-invalid]="bad('tagline')" />
+            <ol-field-error [control]="form.controls.tagline" />
+          </div>
+          <div>
+            <label for="s-desc" class="form-label">Short description</label>
+            <textarea id="s-desc" class="form-control" rows="3" formControlName="company_description"
+              [class.is-invalid]="bad('company_description')" aria-describedby="s-desc-hint"></textarea>
+            <div id="s-desc-hint" class="form-text">Shown in the footer of every page.</div>
+            <ol-field-error [control]="form.controls.company_description" />
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <h2 class="h6">Contact details</h2>
+          <p class="text-muted small">Leave a field empty to hide it on the website.</p>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="s-email" class="form-label">Contact email</label>
+              <input id="s-email" type="email" class="form-control" formControlName="contact_email" [class.is-invalid]="bad('contact_email')" />
+              <ol-field-error [control]="form.controls.contact_email" />
+            </div>
+            <div class="col-md-6">
+              <label for="s-sales" class="form-label">Sales email</label>
+              <input id="s-sales" type="email" class="form-control" formControlName="sales_email" [class.is-invalid]="bad('sales_email')"
+                aria-describedby="s-sales-hint" />
+              <div id="s-sales-hint" class="form-text">Offered on the consultation page.</div>
+              <ol-field-error [control]="form.controls.sales_email" />
+            </div>
+            <div class="col-md-6">
+              <label for="s-phone" class="form-label">Phone</label>
+              <input id="s-phone" type="tel" class="form-control" formControlName="phone" [class.is-invalid]="bad('phone')" />
+              <ol-field-error [control]="form.controls.phone" />
+            </div>
+            <div class="col-12">
+              <label for="s-address" class="form-label">Address</label>
+              <textarea id="s-address" class="form-control" rows="2" formControlName="address" [class.is-invalid]="bad('address')"></textarea>
+              <ol-field-error [control]="form.controls.address" />
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <h2 class="h6">Social links</h2>
+          <p class="text-muted small">Shown in the footer.</p>
+          <div formArrayName="social_links">
+            @for (link of form.controls.social_links.controls; track link; let i = $index) {
+              <div class="social-row" [formGroupName]="i">
+                <select class="form-select" formControlName="network" [attr.aria-label]="'Network ' + (i + 1)">
+                  @for (n of networks; track n.value) { <option [value]="n.value">{{ n.label }}</option> }
+                </select>
+                <div class="flex-grow-1">
+                  <input class="form-control" formControlName="url" placeholder="https://"
+                    [attr.aria-label]="'Link ' + (i + 1)" [class.is-invalid]="badLink(i)" />
+                  @if (badLink(i)) { <div class="invalid-feedback d-block">Enter a full address starting with https://</div> }
+                </div>
+                <button type="button" class="icon-action" (click)="removeLink(i)" [attr.aria-label]="'Remove link ' + (i + 1)">
+                  <ol-icon name="trash" />
+                </button>
+              </div>
+            }
+          </div>
+          @if (form.controls.social_links.length < 10) {
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="addLink()">
+              <ol-icon name="plus-lg" /> Add a link
+            </button>
+          }
+        </section>
+
+        <section class="settings-card">
+          <h2 class="h6">Wording and search</h2>
+          <div class="mb-3">
+            <label for="s-cta" class="form-label">Main button</label>
+            <input id="s-cta" class="form-control" formControlName="consultation_cta_label" [class.is-invalid]="bad('consultation_cta_label')"
+              aria-describedby="s-cta-hint" />
+            <div id="s-cta-hint" class="form-text">The call to action in the header and on every page.</div>
+            <ol-field-error [control]="form.controls.consultation_cta_label" />
+          </div>
+          <div class="mb-3">
+            <label for="s-suffix" class="form-label">Page title ending</label>
+            <input id="s-suffix" class="form-control" formControlName="seo_title_suffix" [class.is-invalid]="bad('seo_title_suffix')" />
+            <ol-field-error [control]="form.controls.seo_title_suffix" />
+          </div>
+          <div>
+            <label for="s-seo" class="form-label">Default search description</label>
+            <textarea id="s-seo" class="form-control" rows="2" formControlName="seo_default_description"
+              [class.is-invalid]="bad('seo_default_description')" aria-describedby="s-seo-hint"></textarea>
+            <div id="s-seo-hint" class="form-text">Used by search engines for pages without their own description.</div>
+            <ol-field-error [control]="form.controls.seo_default_description" />
+          </div>
+        </section>
+
+        <div class="save-bar">
+          <span class="text-muted small">Last saved {{ settings.value().updated_at | date: 'MMM d, y, h:mm a' }}</span>
+          <button type="submit" class="btn btn-primary" [disabled]="busy() || form.pristine">Save changes</button>
+        </div>
+      </form>
+    } @else {
+      <ol-loading-state label="Loading settings…" />
+    }
+  `,
+  styles: `
+    .settings { display: grid; gap: 1.25rem; max-width: 44rem; }
+    .settings-card { padding: 1.5rem; border: 1px solid var(--ol-border);
+      border-radius: var(--bs-border-radius-lg); background: var(--ol-surface-raised); }
+    .social-row { display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 0.75rem; }
+    .social-row select { width: 9.5rem; flex: none; }
+    .save-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+  `,
+})
+export class SiteSettingsPage {
+  private readonly api = inject(AdminApi);
+  private readonly toast = inject(ToastService);
+  protected readonly networks = NETWORKS;
+  protected readonly busy = signal(false);
+  protected readonly settings = httpResource<{ data: SiteSettings; updated_at: string }>(
+    () => `${ADMIN_API}/site/settings`);
+
+  protected readonly form = new FormGroup({
+    tagline: text(300, true),
+    company_description: text(300, true),
+    contact_email: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
+    sales_email: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
+    phone: text(40),
+    address: text(300),
+    social_links: new FormArray<ReturnType<typeof socialLink>>([]),
+    consultation_cta_label: text(40, true),
+    seo_title_suffix: text(60),
+    seo_default_description: text(200),
+  });
+
+  constructor() {
+    effect(() => {
+      if (this.settings.hasValue() && this.form.pristine) this.load(this.settings.value().data);
+    });
+  }
+
+  private load(d: SiteSettings): void {
+    const links = this.form.controls.social_links;
+    links.clear();
+    for (const l of d.social_links) links.push(socialLink(l.network, l.url));
+    this.form.reset({
+      ...d, contact_email: d.contact_email ?? '', sales_email: d.sales_email ?? '',
+      phone: d.phone ?? '', address: d.address ?? '',
+      social_links: d.social_links,
+    });
+  }
+
+  protected bad(name: keyof typeof this.form.controls): boolean {
+    return showError(this.form.controls[name]);
+  }
+
+  protected badLink(i: number): boolean {
+    return showError(this.form.controls.social_links.at(i).controls.url);
+  }
+
+  protected addLink(): void {
+    this.form.controls.social_links.push(socialLink());
+    this.form.markAsDirty();
+  }
+
+  protected removeLink(i: number): void {
+    this.form.controls.social_links.removeAt(i);
+    this.form.markAsDirty();
+  }
+
+  protected async save(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    const v = this.form.getRawValue();
+    const orNull = (s: string) => s.trim() || null;
+    this.busy.set(true);
+    try {
+      const saved = await this.api.saveSettings({
+        ...v, contact_email: orNull(v.contact_email), sales_email: orNull(v.sales_email),
+        phone: orNull(v.phone), address: orNull(v.address),
+      });
+      this.settings.set(saved);
+      this.load(saved.data);
+      this.toast.success('Website settings saved.');
+    } catch (e) {
+      const problem = apiProblem(e);
+      if (!applyFieldErrors(this.form, problem.fields)) this.toast.error(problem.message);
+    } finally {
+      this.busy.set(false);
+    }
+  }
+}

@@ -9,6 +9,8 @@ const APP = [
   'three-dots', 'arrow-left', 'exclamation-triangle', 'inbox', 'shield-x', 'plug',
   'person-circle', 'arrow-repeat', 'graph-up', 'heart-pulse', 'link-45deg', 'check-circle-fill',
   'circle', 'clock-history', 'envelope', 'arrow-right',
+  // website admin
+  'window-stack', 'sliders', 'download', 'trash', 'box-arrow-up-right', 'megaphone',
 ];
 
 const MARKETING = [

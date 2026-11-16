@@ -23,9 +23,8 @@ export const homeRedirect: CanActivateFn = async () => {
   const me = await inject(AuthService).ensureLoaded();
   if (!me) return router.createUrlTree(['/login']);
   const first = me.memberships[0];
-  return first
-    ? router.createUrlTree(['/o', first.organization_slug])
-    : router.createUrlTree(['/no-organization']);
+  if (first) return router.createUrlTree(['/o', first.organization_slug]);
+  return router.createUrlTree([me.user.platform_role === 'site_admin' ? '/admin' : '/no-organization']);
 };
 
 /**
@@ -42,6 +41,21 @@ export const orgGuard: CanActivateFn = async (route) => {
     return router.createUrlTree(['/not-found']);
   }
   currentOrg.slug.set(slug);
+  currentOrg.area.set('org');
+  return true;
+};
+
+/**
+ * /admin: Outlogik site admins only. Everyone else sees "not found", matching the API, which
+ * answers 404 so the admin area doesn't reveal itself.
+ */
+export const siteAdminGuard: CanActivateFn = async (_route, state) => {
+  const router = inject(Router);
+  const currentOrg = inject(CurrentOrgService); // before any await: inject() needs the guard's context
+  const me = await inject(AuthService).ensureLoaded();
+  if (!me) return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+  if (me.user.platform_role !== 'site_admin') return router.createUrlTree(['/not-found']);
+  currentOrg.area.set('admin');
   return true;
 };
 

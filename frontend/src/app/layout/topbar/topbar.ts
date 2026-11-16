@@ -40,4 +40,8 @@ export class Topbar {
   protected switchTo(slug: string): void {
     void this.router.navigate(['/o', slug]);
   }
+
+  protected openAdmin(): void {
+    void this.router.navigate(['/admin']);
+  }
 }

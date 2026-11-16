@@ -1,11 +1,12 @@
+import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import CheckConstraint, DateTime, Index, String, Text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, Text, Uuid, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.models import Base, Timestamps, UUIDPrimaryKey
+from app.core.models import Base, Timestamps, UUIDPrimaryKey, utcnow
 
 LEAD_KINDS = ("consultation", "contact")
 LEAD_STATUSES = ("new", "contacted", "qualified", "closed", "spam")
@@ -69,3 +70,20 @@ class NewsletterSubscriber(UUIDPrimaryKey, Timestamps, Base):
     attribution: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default="{}")
     ip: Mapped[str | None] = mapped_column(String(64))
 
+
+
+class LeadNote(UUIDPrimaryKey, Base):
+    """A staff note on a lead (calls made, what was agreed). Deleted with the lead."""
+
+    __tablename__ = "lead_notes"
+
+    lead_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("leads.id", ondelete="CASCADE"), index=True
+    )
+    author_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="SET NULL")
+    )
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), default=utcnow
+    )

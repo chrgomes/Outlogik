@@ -76,6 +76,12 @@ const STATUS_STYLES: Record<string, string> = {
   active: 'text-bg-success-subtle', pending: 'text-bg-secondary-subtle',
   paused: 'text-bg-warning-subtle', expired: 'text-bg-warning-subtle',
   archived: 'text-bg-secondary-subtle', disabled: 'text-bg-danger-subtle',
+  // Website leads, newsletter subscribers and portal features (admin area)
+  new: 'text-bg-warning-subtle', contacted: 'text-bg-secondary-subtle',
+  qualified: 'text-bg-success-subtle', closed: 'text-bg-secondary-subtle',
+  spam: 'text-bg-danger-subtle', confirmed: 'text-bg-success-subtle',
+  unsubscribed: 'text-bg-secondary-subtle', available: 'text-bg-success-subtle',
+  in_development: 'text-bg-warning-subtle', hidden: 'text-bg-secondary-subtle',
 };
 
 /** A small status label: Active, Archived, Paused, Disabled, Pending, Expired. */
@@ -93,7 +99,10 @@ const STATUS_STYLES: Record<string, string> = {
 })
 export class Status {
   readonly value = input.required<string>();
-  protected readonly label = computed(() => this.value()[0].toUpperCase() + this.value().slice(1));
+  protected readonly label = computed(() => {
+    const text = this.value().replaceAll('_', ' ');
+    return text[0].toUpperCase() + text.slice(1);
+  });
   protected readonly cls = computed(() => `badge rounded-pill fw-medium ${STATUS_STYLES[this.value()] ?? ''}`);
 }
 

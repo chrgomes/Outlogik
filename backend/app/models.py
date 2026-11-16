@@ -4,7 +4,7 @@ from app.core.models import Base
 from app.modules.audit.models import AuditLog
 from app.modules.auth.models import EmailVerificationToken, PasswordResetToken, UserSession
 from app.modules.clients.models import Client, ClientUser
-from app.modules.leads.models import Lead, NewsletterSubscriber
+from app.modules.leads.models import Lead, LeadNote, NewsletterSubscriber
 from app.modules.organizations.models import Invitation, Organization, OrganizationMember
 from app.modules.rbac.models import Permission, Role, RolePermission
 from app.modules.site.models import PortalFeature, SiteSettings
@@ -18,7 +18,7 @@ __all__ = [
     "ClientUser",
     "EmailVerificationToken",
     "Invitation",
-    "Lead",
+    "Lead", "LeadNote",
     "NewsletterSubscriber",
     "Organization",
     "OrganizationMember",

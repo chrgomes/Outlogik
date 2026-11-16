@@ -1,5 +1,5 @@
 <div class="brand">
-  <a [routerLink]="['/o', org.slug()]" class="brand-link" aria-label="Outlogik home">
+  <a [routerLink]="home()" class="brand-link" aria-label="Outlogik home">
     @if (collapsed()) {
       <ol-logo variant="symbol" />
     } @else {
@@ -13,7 +13,10 @@
   }
 </div>
 
-<nav aria-label="Main">
+<nav [attr.aria-label]="admin() ? 'Website admin' : 'Main'">
+  @if (admin() && !collapsed()) {
+    <div class="area-label">Website admin</div>
+  }
   @for (section of sections(); track $index) {
     @if (section.label) {
       @if (collapsed()) {
@@ -26,7 +29,7 @@
       @for (item of section.items; track item.path) {
         <li>
           <a
-            [routerLink]="['/o', org.slug(), item.path]"
+            [routerLink]="item.link"
             routerLinkActive="active"
             ariaCurrentWhenActive="page"
             [attr.title]="collapsed() ? item.label : null"

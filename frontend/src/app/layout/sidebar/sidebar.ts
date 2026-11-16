@@ -5,7 +5,7 @@ import { CurrentOrgService } from '../../core/current-org.service';
 import { LayoutService } from '../../core/layout.service';
 import { Icon } from '@brand/icon/icon';
 import { Logo } from '@brand/logo/logo';
-import { NAV } from '../nav';
+import { ADMIN_NAV, NAV } from '../nav';
 
 @Component({
   selector: 'ol-sidebar',
@@ -29,8 +29,19 @@ export class Sidebar {
   protected readonly collapsed = computed(
     () => this.layout.collapsed() && !this.layout.isMobile(),
   );
-  protected readonly sections = computed(() =>
-    NAV.map((s) => ({ ...s, items: s.items.filter((i) => this.org.permissions().has(i.permission)) }))
-      .filter((s) => s.items.length > 0),
-  );
+  protected readonly admin = computed(() => this.org.area() === 'admin');
+  protected readonly home = computed(() => (this.admin() ? ['/admin'] : ['/o', this.org.slug()]));
+  /** Each link as router commands, so the template doesn't care which area is open. */
+  protected readonly sections = computed(() => {
+    if (this.admin()) {
+      return ADMIN_NAV.map((s) => ({
+        label: s.label, items: s.items.map((i) => ({ ...i, link: ['/admin', i.path] })),
+      }));
+    }
+    return NAV.map((s) => ({
+      label: s.label,
+      items: s.items.filter((i) => this.org.permissions().has(i.permission))
+        .map((i) => ({ ...i, link: ['/o', this.org.slug(), i.path] })),
+    })).filter((s) => s.items.length > 0);
+  });
 }

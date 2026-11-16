@@ -1,7 +1,9 @@
 import { Routes } from '@angular/router';
 
 import { NoAccess, NoOrganization, NotFound } from './features/system/system-pages';
-import { authGuard, guestGuard, homeRedirect, orgGuard, permissionGuard } from './core/guards';
+import {
+  authGuard, guestGuard, homeRedirect, orgGuard, permissionGuard, siteAdminGuard,
+} from './core/guards';
 import { CenteredLayout } from './layout/centered/centered';
 import { Shell } from './layout/shell/shell';
 
@@ -111,6 +113,40 @@ export const routes: Routes = [
         loadComponent: () => import('./features/settings/roles').then((m) => m.Roles),
       },
       { path: 'no-access', component: NoAccess, title: 'No access · Outlogik' },
+    ],
+  },
+  {
+    // Outlogik's website admin: leads, newsletter, website settings (site admins only).
+    path: 'admin',
+    component: Shell,
+    canActivate: [siteAdminGuard],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'leads' },
+      {
+        path: 'leads',
+        title: 'Leads · Website admin · Outlogik',
+        loadComponent: () => import('./features/admin/leads-list').then((m) => m.LeadsList),
+      },
+      {
+        path: 'leads/:leadId',
+        title: 'Lead · Website admin · Outlogik',
+        loadComponent: () => import('./features/admin/lead-detail').then((m) => m.LeadDetail),
+      },
+      {
+        path: 'newsletter',
+        title: 'Newsletter · Website admin · Outlogik',
+        loadComponent: () => import('./features/admin/subscribers').then((m) => m.Subscribers),
+      },
+      {
+        path: 'settings',
+        title: 'Website settings · Website admin · Outlogik',
+        loadComponent: () => import('./features/admin/site-settings').then((m) => m.SiteSettingsPage),
+      },
+      {
+        path: 'portal-features',
+        title: 'Portal features · Website admin · Outlogik',
+        loadComponent: () => import('./features/admin/portal-features').then((m) => m.PortalFeatures),
+      },
     ],
   },
   { path: '**', redirectTo: 'not-found' },

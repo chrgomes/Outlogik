@@ -17,6 +17,8 @@ export class AuthService {
 
   readonly user = computed(() => this.me()?.user ?? null);
   readonly memberships = computed(() => this.me()?.memberships ?? []);
+  /** Outlogik staff who can use the website admin area (/admin). */
+  readonly isSiteAdmin = computed(() => this.user()?.platform_role === 'site_admin');
   private loading: Promise<Me | null> | null = null;
   private loaded = false;
 

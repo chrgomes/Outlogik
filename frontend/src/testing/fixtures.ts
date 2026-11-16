@@ -1,4 +1,4 @@
-import { Me, Membership } from '../app/core/api.types';
+import { Me, Membership, User } from '../app/core/api.types';
 
 export function membership(over: Partial<Membership> = {}): Membership {
   return {
@@ -14,15 +14,17 @@ export function membership(over: Partial<Membership> = {}): Membership {
   };
 }
 
-export function me(memberships: Membership[] = [membership()]): Me {
+export function me(memberships: Membership[] = [membership()], user: Partial<User> = {}): Me {
   return {
     user: {
       id: 'user-1',
       email: 'olive@acme.example.com',
       full_name: 'Olive van Owner',
       is_super_admin: false,
+      platform_role: null,
       email_verified_at: null,
       created_at: '2026-11-14T00:00:00Z',
+      ...user,
     },
     memberships,
   };

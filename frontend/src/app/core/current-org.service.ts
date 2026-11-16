@@ -8,6 +8,11 @@ export class CurrentOrgService {
   private readonly auth = inject(AuthService);
 
   readonly slug = signal<string | null>(null);
+  /**
+   * Which part of the app is open: an organization (/o/:orgSlug) or Outlogik's website admin
+   * (/admin, staff only). The sidebar and top bar adapt to it.
+   */
+  readonly area = signal<'org' | 'admin'>('org');
   readonly membership = computed(
     () => this.auth.memberships().find((m) => m.organization_slug === this.slug()) ?? null,
   );

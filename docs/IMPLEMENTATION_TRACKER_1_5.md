@@ -15,7 +15,7 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
 | 4 | Service pages (4) and `/services` | A | ✅ Done |
 | 5 | Who we help, How we work, Pricing (how it works), About | A | ✅ Done |
 | 6 | Leads: consultation, contact, newsletter; attribution; notifications; old-path redirects | A | ✅ Done |
-| 7 | Admin area: leads inbox, settings, portal feature statuses | A | ⏳ Next |
+| 7 | Admin area: leads inbox, settings, portal feature statuses | A | ✅ Done |
 | 8 | CMS backend and media library | B | ☐ |
 | 9 | CMS admin UI | B | ☐ |
 | 10 | Resources: blog, guides, glossary | B | ☐ |
@@ -266,3 +266,52 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
   - Without the website's Origin, the API refused the form (403).
   - Old addresses redirected, `/login` went to the app, PUT to the proxy was refused (405), and there were no console errors.
 - **Size:** initial load 427 kB (114 kB compressed), under the 450 kB warning.
+
+## Step 7 — website admin area (in the app)
+
+- **Where:** `/admin` in the Outlogik app, for **site admins** only.
+  - Staff open it from the workspace menu (top left), under "Outlogik staff", and go back to an organization the same way.
+  - It uses the same sidebar and top bar as the app, with a "Website admin" label and its own menu: Inbox, Newsletter, Settings, Portal features.
+  - Everyone else gets "not found", matching the API, which answers 404 to non-staff.
+  - Staff with no organization go straight to `/admin` after signing in.
+  - Content editors get no admin pages until the CMS (milestone B).
+- **Leads inbox** (`/admin/leads`):
+  - newest first, with the services asked about, the campaign source and the note count
+  - filters by status (with counts) and type, and search by name, email or company
+  - Spam stays out of view unless the Spam filter is chosen.
+  - **Export CSV** uses the current filters. Cells a spreadsheet would run as formulas are neutralised, and each export is audited.
+- **Lead detail:**
+  - the request (services, budget, best time, topic, message) and contact details; the website link opens safely in a new tab
+  - "Where they came from": the page the form was sent from, the first page of the visit, the referrer and the campaign
+  - a status menu (new, contacted, qualified, closed, spam), audited
+  - notes with author and time
+  - **Reply** opens an email to the person
+  - **Delete**, for privacy requests or junk. It asks first, and the audit entry holds no personal details.
+  - If a lead was caught as spam, the page says why.
+- **Newsletter** (`/admin/newsletter`):
+  - subscribers with their status and the dates of consent and confirmation
+  - **Export confirmed** downloads the email addresses with their consent wording, for an email service; audited
+  - Delete, for privacy requests
+  - The page notes that sending newsletters isn't built into Outlogik.
+- **Website settings** (`/admin/settings`): tagline, short description, contact and sales email, phone, address, social links, the main button's wording, and search defaults. Empty fields are hidden on the website. Changes reach the website within about a minute.
+- **Portal features** (`/admin/portal-features`): set each feature to Available, In development or Hidden.
+- **API:**
+  - `GET /admin/leads` (filters, search, paging)
+  - `GET /admin/leads/counts`
+  - `GET /admin/leads/export.csv`
+  - `GET`, `PATCH` and `DELETE /admin/leads/{id}`
+  - `POST /admin/leads/{id}/notes`
+  - `GET /admin/newsletter/subscribers`, `…/export.csv`, `DELETE …/{id}`
+  - Migration `0006` adds `lead_notes`.
+- **Fixed along the way:** the new admin guard asked Angular for a service after waiting for the user, which Angular doesn't allow. A test caught it, and it's fixed.
+- **Tests:**
+  - backend: 10 new (233 total), including that every admin route requires a staff role
+  - app: 12 new (79)
+  - website: 63, unchanged
+- **Checked in a real browser** with the development API and example enquiries sent through the website form endpoint:
+  - signed in as a site admin and switched to Website admin from the workspace menu
+  - the inbox showed 4 enquiries; the bot message was hidden and appeared under the Spam filter
+  - the CSV export had 4 rows
+  - on Marco's consultation: marked Contacted, added a note, and checked his campaign source (Google, paid)
+  - saved a contact email, which the website's public settings returned straight away
+  - Portal features and Newsletter pages loaded with no errors

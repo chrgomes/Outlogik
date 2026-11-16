@@ -1,3 +1,5 @@
+import uuid
+from datetime import datetime
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
@@ -85,3 +87,90 @@ class TokenIn(BaseModel):
 
 class Received(BaseModel):
     received: bool = True
+
+
+# --- admin ------------------------------------------------------------------------------------
+
+LeadStatus = Literal["new", "contacted", "qualified", "closed", "spam"]
+LeadKind = Literal["consultation", "contact"]
+
+
+class LeadListItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    kind: LeadKind
+    status: LeadStatus
+    name: str
+    email: str
+    company: str | None
+    services: list[str] = []
+    utm_source: str | None = None
+    note_count: int = 0
+    created_at: datetime
+
+
+class LeadNoteOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    body: str
+    author_name: str | None
+    created_at: datetime
+
+
+class LeadOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    kind: LeadKind
+    status: LeadStatus
+    name: str
+    email: str
+    company: str | None
+    website: str | None
+    phone: str | None
+    message: str | None
+    details: dict
+    attribution: dict
+    spam_reason: str | None
+    created_at: datetime
+    updated_at: datetime
+    notes: list[LeadNoteOut]
+
+
+class LeadUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: LeadStatus
+
+
+class LeadNoteIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    body: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=5000)]
+
+
+class LeadCounts(BaseModel):
+    """Leads per status, for the inbox's filters (spam is counted separately)."""
+
+    new: int = 0
+    contacted: int = 0
+    qualified: int = 0
+    closed: int = 0
+    spam: int = 0
+
+
+SubscriberStatus = Literal["pending", "confirmed", "unsubscribed"]
+
+
+class SubscriberOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    email: str
+    status: SubscriberStatus
+    consent_at: datetime
+    confirmed_at: datetime | None
+    unsubscribed_at: datetime | None
+    source_page: str | None = None
