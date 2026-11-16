@@ -446,3 +446,19 @@ Legal pages (privacy, terms, cookies) are the second part. They wait for the bus
 - If the website's server can't reach the API, the sitemap uses the same built-in settings as the pages, so the two always agree.
 - **Domain:** the privacy email uses **outlogik.com**. That's likely the website's domain (decision 13); to be confirmed with hosting in step 14.
 - **Still open:** lead notification emails (decision 15), and domain and hosting (decision 13).
+
+## Decision 13 (part) — domain confirmed (2026-11-16)
+
+- **Domain:** **outlogik.com**, registered at GoDaddy. Hosting is still to be decided (step 14).
+- **Production build addresses** (`ng build marketing`, the default configuration):
+  - website: `https://outlogik.com`
+  - client portal: `https://app.outlogik.com` (the app subdomain from spec §11)
+  - Canonical URLs, the sitemap, robots.txt, share images and the "Log in" and `/login` links all use them.
+  - `ng build marketing -c development` and `ng serve marketing` keep using localhost.
+  - A staging build can override both with `--define` (see `env.d.ts`).
+- **Backend** `.env.example` shows the production values: `SITE_URL=https://outlogik.com`, `FRONTEND_URL=https://app.outlogik.com`, and an `EMAIL_FROM` on outlogik.com, with SPF, DKIM and DMARC set in GoDaddy DNS.
+- CI's server-rendering check now expects `https://outlogik.com` canonical URLs.
+- **At launch (step 14), in GoDaddy DNS:**
+  - point `outlogik.com` (and `www`) and `app.outlogik.com` at the chosen host
+  - add the email provider's SPF, DKIM and DMARC records
+  - verify the domain in Google Search Console and Bing Webmaster Tools, then submit `https://outlogik.com/sitemap.xml`

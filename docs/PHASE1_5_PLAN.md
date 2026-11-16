@@ -152,7 +152,7 @@ Milestone A = steps 1–7, 11, 12, plus the release checks in 14. Milestone B = 
 ## 6. Decisions (revision 2, approved with the recommendations)
 
 Already decided: services, pricing approach, main action, invite-only sign-up (section 1).
-Legal details (12) provided 2026-11-16: Outlogik, Toronto, Ontario, privacy@outlogik.com. Still on hold: domain and hosting (13), lead emails (15).
+Legal details (12) provided 2026-11-16: Outlogik, Toronto, Ontario, privacy@outlogik.com. Domain (13) confirmed 2026-11-16: outlogik.com at GoDaddy, with the app at app.outlogik.com; hosting still to decide. Still on hold: lead emails (15).
 All other revision-1 decisions still apply: palette, light theme, architecture, admin
 location, Markdown editing, analytics with consent, spam protection, newsletter double
 opt-in, two milestones.

@@ -159,8 +159,8 @@
               }
             },
             "define": {
-              "OL_APP_URL": "'http://localhost:4200'",
-              "OL_SITE_URL": "'http://localhost:4300'"
+              "OL_APP_URL": "'https://app.outlogik.com'",
+              "OL_SITE_URL": "'https://outlogik.com'"
             }
           },
           "configurations": {
@@ -182,7 +182,11 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "define": {
+                "OL_APP_URL": "'http://localhost:4200'",
+                "OL_SITE_URL": "'http://localhost:4300'"
+              }
             }
           },
           "defaultConfiguration": "production"

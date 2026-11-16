@@ -83,7 +83,7 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' localhost:4310/does-not-exist)" = 404
           # Search metadata is in the HTML before any JavaScript runs (no API in CI: defaults).
           curl -sf localhost:4310/services/seo -o seo.html
-          grep -q '<link rel="canonical" href="http://localhost:4300/services/seo">' seo.html
+          grep -q '<link rel="canonical" href="https://outlogik.com/services/seo">' seo.html
           grep -q 'property="og:image"' seo.html
           grep -q '"@type":"Service"' seo.html
           curl -sf localhost:4310/robots.txt | grep -q 'Sitemap:'
