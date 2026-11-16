@@ -462,3 +462,21 @@ Legal pages (privacy, terms, cookies) are the second part. They wait for the bus
   - point `outlogik.com` (and `www`) and `app.outlogik.com` at the chosen host
   - add the email provider's SPF, DKIM and DMARC records
   - verify the domain in Google Search Console and Bing Webmaster Tools, then submit `https://outlogik.com/sitemap.xml`
+
+## Decision 13 — hosting decided (2026-11-16)
+
+- **DigitalOcean, Toronto region (TOR1):** data stays in Canada.
+  - **App Platform:** three components built from this repository's Dockerfiles:
+    - the API (FastAPI)
+    - the marketing website (Node, server-rendered) on `outlogik.com` and `www`
+    - the client portal on `app.outlogik.com`, with the API under `/api` on the same address (needed for the sign-in cookies)
+    - Database updates (`alembic upgrade head`) run as a pre-deploy job.
+  - **Managed PostgreSQL 16:** daily backups and 7-day point-in-time restore.
+  - **Managed Valkey** (compatible with Redis): rate limits.
+  - **Staging:** a smaller second app with `SITE_NOINDEX=true`.
+  - Estimated about $55–70/month at launch sizes. To be confirmed against DigitalOcean's current pricing.
+- **Also needed before launch:**
+  - mailboxes for @outlogik.com (at least privacy@, which the privacy policy names)
+  - a sending service for the system's emails (Postmark or Amazon SES)
+  - SPF, DKIM and DMARC records in GoDaddy DNS
+- **Possible wording change:** with data hosted in Toronto, the privacy policy could say personal information is stored in Canada, noting that email and optional analytics providers may process it elsewhere. To be updated in step 14 once the providers are chosen.
