@@ -1,7 +1,7 @@
 <mk-page-hero [crumbs]="crumbs" [eyebrow]="audience.name" [title]="content.headline" [lead]="content.lead">
   <div class="mk-hero__actions">
     <a [routerLink]="consultationPath" class="btn btn-primary btn-lg">{{ settings().consultation_cta_label }}</a>
-    <a href="#how-we-help" class="btn btn-outline-dark btn-lg">How we help</a>
+    <a routerLink="." fragment="how-we-help" class="btn btn-outline-dark btn-lg">How we help</a>
   </div>
 </mk-page-hero>
 

@@ -85,8 +85,17 @@ export const COMPANY: NavLink[] = [
   { label: 'Contact', path: '/contact', description: 'Questions, partnerships and press.' },
 ];
 
-/** Legal pages are published once the business details are provided (decision 12). */
-export const LEGAL: NavLink[] = [];
+/**
+ * Legal pages. Published only once the legal details are set in the admin area (legal name,
+ * province, privacy email and address); until then they answer 404 and aren't linked.
+ */
+export const LEGAL: NavLink[] = [
+  { label: 'Privacy policy', path: '/privacy-policy' },
+  { label: 'Terms and conditions', path: '/terms' },
+];
+
+/** When the legal pages' text was last changed (shown on the pages). Update with any change. */
+export const LEGAL_UPDATED = 'November 16, 2026';
 
 export type FeatureStatus = 'available' | 'in_development';
 
@@ -127,6 +136,10 @@ export interface SiteSettings {
   consultation_cta_label: string;
   seo_title_suffix: string;
   seo_default_description: string;
+  /** Legal details (decision 12): the legal pages are published only once all are set. */
+  legal_name: string | null;
+  province: string | null;
+  privacy_email: string | null;
   /** Optional analytics tools, loaded only after a visitor accepts analytics cookies. */
   ga4_measurement_id: string | null;
   gtm_container_id: string | null;
@@ -146,6 +159,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   seo_title_suffix: ' · Outlogik',
   seo_default_description:
     'Outlogik is a digital marketing agency: SEO, social media management, content marketing and analytics, with clear reporting in your own client portal.',
+  legal_name: null,
+  province: null,
+  privacy_email: null,
   ga4_measurement_id: null,
   gtm_container_id: null,
   clarity_project_id: null,
@@ -155,3 +171,8 @@ export const SOCIAL_LABELS: Record<string, string> = {
   linkedin: 'LinkedIn', x: 'X', facebook: 'Facebook', instagram: 'Instagram',
   youtube: 'YouTube', tiktok: 'TikTok', github: 'GitHub',
 };
+
+/** True when the legal details needed for the privacy policy and terms are all set. */
+export function legalReady(s: SiteSettings): boolean {
+  return !!(s.legal_name && s.province && s.privacy_email && s.address);
+}

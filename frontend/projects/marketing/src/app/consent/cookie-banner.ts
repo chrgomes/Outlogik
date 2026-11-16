@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, ElementRef, effect, inject, viewChild } from '@angular/core';
 
+import { RouterLink } from '@angular/router';
+
+import { SiteData } from '../config/site-data';
 import { Consent } from './consent';
 
 /**
@@ -10,6 +13,7 @@ import { Consent } from './consent';
 @Component({
   selector: 'mk-cookie-banner',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink],
   template: `
     @if (consent.showBanner()) {
       <section class="mk-cookies" role="region" aria-labelledby="cookies-title" #panel tabindex="-1">
@@ -19,6 +23,7 @@ import { Consent } from './consent';
             With your permission, we use {{ toolList() }} to understand how people use this site,
             so we can improve it. These tools set cookies and receive information about your visit.
             We don’t use them unless you accept.
+            @if (site.legalReady()) { <a routerLink="/privacy-policy" fragment="cookies">More about cookies</a>. }
           </p>
           @if (consent.panelOpen() && consent.choice()) {
             <p class="mk-cookies__current">You currently {{ consent.choice() === 'granted' ? 'accept' : 'reject' }} analytics cookies.</p>
@@ -34,6 +39,7 @@ import { Consent } from './consent';
 })
 export class CookieBanner {
   protected readonly consent = inject(Consent);
+  protected readonly site = inject(SiteData);
   private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
 
   constructor() {

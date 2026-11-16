@@ -24,7 +24,8 @@ import { PageHero } from '../../shared/page-hero';
 })
 export class BookAConsultation {
   private readonly api = inject(LeadApi);
-  protected readonly settings = inject(SiteData).settings;
+  protected readonly site = inject(SiteData);
+  protected readonly settings = this.site.settings;
   protected readonly serviceOptions = SERVICE_OPTIONS;
   protected readonly budgetOptions = BUDGET_OPTIONS;
 

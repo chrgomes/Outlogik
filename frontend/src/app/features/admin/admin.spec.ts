@@ -203,6 +203,7 @@ describe('Website settings', () => {
       social_links: [{ network: 'linkedin', url: 'https://linkedin.com/company/x' }],
       consultation_cta_label: 'Book a free consultation', seo_title_suffix: ' · Outlogik',
       seo_default_description: 'Default.',
+      legal_name: null, province: null, privacy_email: null,
       ga4_measurement_id: null, gtm_container_id: null, clarity_project_id: null,
     } });
     await flushPending();
@@ -253,7 +254,8 @@ describe('Website settings: analytics', () => {
     http.expectOne('/api/v1/admin/site/settings').flush({ updated_at: '2026-11-15T00:00:00Z', data: {
       company_description: 'An agency.', tagline: 'Tagline', contact_email: null, sales_email: null,
       phone: null, address: null, social_links: [], consultation_cta_label: 'Book', seo_title_suffix: '',
-      seo_default_description: '', ga4_measurement_id: null, gtm_container_id: null, clarity_project_id: null,
+      seo_default_description: '', legal_name: null, province: null, privacy_email: null,
+      ga4_measurement_id: null, gtm_container_id: null, clarity_project_id: null,
     } });
     await flushPending();
     fixture.detectChanges();
@@ -270,5 +272,41 @@ describe('Website settings: analytics', () => {
     ga4.dispatchEvent(new Event('input'));
     el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
     expect(http.expectOne('/api/v1/admin/site/settings').request.body.ga4_measurement_id).toBe('G-ABC123XYZ');
+  });
+});
+
+describe('Website settings: legal details', () => {
+  it('says whether the legal pages are published, and saves the details', async () => {
+    const http = setup();
+    const fixture = TestBed.createComponent(SiteSettingsPage);
+    fixture.detectChanges();
+    await flushPending();
+    http.expectOne('/api/v1/admin/site/settings').flush({ updated_at: '2026-11-16T00:00:00Z', data: {
+      company_description: 'An agency.', tagline: 'Tagline', contact_email: null, sales_email: null,
+      phone: null, address: '1 Example Street', social_links: [], consultation_cta_label: 'Book',
+      seo_title_suffix: '', seo_default_description: '', legal_name: null, province: null,
+      privacy_email: null, ga4_measurement_id: null, gtm_container_id: null, clarity_project_id: null,
+    } });
+    await flushPending();
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Not complete: the privacy policy and terms are not published yet.');
+    const set = (sel: string, value: string, event = 'input') => {
+      const input = el.querySelector<HTMLInputElement | HTMLSelectElement>(sel)!;
+      input.value = value;
+      input.dispatchEvent(new Event(event));
+    };
+    set('#s-legal-name', 'Outlogik Inc.');
+    set('#s-province', 'Ontario', 'change');
+    set('#s-privacy', 'privacy@outlogik.example.com');
+    el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
+    const put = http.expectOne('/api/v1/admin/site/settings');
+    expect(put.request.body).toMatchObject({
+      legal_name: 'Outlogik Inc.', province: 'Ontario', privacy_email: 'privacy@outlogik.example.com',
+    });
+    put.flush({ updated_at: '2026-11-16T00:01:00Z', data: put.request.body });
+    await flushPending();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Complete: the privacy policy and terms are published.');
   });
 });

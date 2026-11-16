@@ -7,6 +7,12 @@ from app.modules.auth.schemas import Email
 
 Text = Annotated[str, StringConstraints(strip_whitespace=True, max_length=300)]
 Label = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
+# Canadian provinces and territories, for the governing law in the terms (decision 12).
+Province = Literal[
+    "Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador",
+    "Northwest Territories", "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island",
+    "Quebec", "Saskatchewan", "Yukon",
+]
 SocialNetwork = Literal["linkedin", "x", "facebook", "instagram", "youtube", "tiktok", "github"]
 FeatureStatus = Literal["available", "in_development", "hidden"]
 
@@ -40,6 +46,13 @@ class SiteSettingsData(BaseModel):
         "Outlogik is a digital marketing agency: SEO, social media management, content "
         "marketing and analytics, with clear reporting in your own client portal."
     )
+
+    # Legal details (decision 12). The privacy policy and terms are published on the website only
+    # once these and the address are all set; until then those pages answer 404.
+    legal_name: Annotated[str, StringConstraints(
+        strip_whitespace=True, min_length=1, max_length=160)] | None = None
+    province: Province | None = None
+    privacy_email: Email | None = None
 
     # Analytics (all optional, off by default). Loaded on the website only for visitors who accept
     # analytics cookies; with none set, the site uses no tracking cookies and shows no banner.

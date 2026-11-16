@@ -81,7 +81,7 @@
           <button type="submit" class="btn btn-primary btn-lg" [disabled]="sending()">
             {{ sending() ? 'Sending…' : 'Request my free consultation' }}
           </button>
-          <p class="mk-form-note">We’ll only use these details to reply to your request.</p>
+          <p class="mk-form-note">We’ll only use these details to reply to your request.@if (site.legalReady()) { See our <a routerLink="/privacy-policy">privacy policy</a>.}</p>
         </form>
       }
     </div>

@@ -62,6 +62,19 @@ export const routes: Routes = [
     title: 'Contact',
     loadComponent: () => import('./pages/contact/contact').then((m) => m.Contact),
   },
+  // Legal pages: published once the legal details are set in the admin area (404 until then).
+  {
+    path: 'privacy-policy',
+    title: 'Privacy policy',
+    data: { legal: true },
+    loadComponent: () => import('./pages/legal/privacy-policy').then((m) => m.PrivacyPolicy),
+  },
+  {
+    path: 'terms',
+    title: 'Terms and conditions',
+    data: { legal: true },
+    loadComponent: () => import('./pages/legal/terms').then((m) => m.Terms),
+  },
   // Linked from newsletter emails only; not indexed.
   ...(['confirm', 'unsubscribe'] as const).map((action) => ({
     path: `newsletter/${action}`,

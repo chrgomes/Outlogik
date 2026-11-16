@@ -1,12 +1,14 @@
 import { Routes } from '@angular/router';
 
 /**
- * Paths for sitemap.xml: every page in the route table except the 404 page and pages marked
- * noindex (the newsletter links). Built from the routes, so new pages are included automatically.
+ * Paths for sitemap.xml: every page in the route table except the 404 page, pages marked noindex
+ * (the newsletter links), and the legal pages until they're published. Built from the routes, so
+ * new pages are included automatically.
  */
-export function sitemapPaths(routes: Routes): string[] {
+export function sitemapPaths(routes: Routes, { legalPublished = false } = {}): string[] {
   return routes
     .filter((r) => r.path !== undefined && r.path !== '**' && !r.redirectTo && r.data?.['noindex'] !== true)
+    .filter((r) => legalPublished || r.data?.['legal'] !== true)
     .map((r) => '/' + r.path);
 }
 

@@ -42,6 +42,8 @@ export class Seo {
 
   readonly route = signal<RouteMeta>({ title: null, fullTitle: null, description: null, path: '/', noindex: false });
   readonly description = signal<string | null>(null);
+  /** Set by a page that exists but isn't published yet (the legal pages): noindex, no canonical. */
+  readonly unpublished = signal(false);
   readonly data = signal<Map<string, StructuredData>>(new Map());
 
   readonly title = computed(() => {
@@ -67,7 +69,11 @@ export class Seo {
   }
 
   private write(): void {
-    const r = this.route();
+    const r = { ...this.route() };
+    if (this.unpublished()) {
+      r.noindex = true;
+      r.path = null;
+    }
     const title = this.title();
     const description = this.description() ?? r.description ?? this.settings().seo_default_description;
     const url = r.path === null ? null : SITE_URL + r.path;

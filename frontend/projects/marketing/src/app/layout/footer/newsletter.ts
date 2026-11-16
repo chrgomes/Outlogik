@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component, afterNextRender, inject, signal } from '@angular/core';
 
+import { RouterLink } from '@angular/router';
+
 import { NEWSLETTER_CONSENT_TEXT } from '../../config/forms';
+import { SiteData } from '../../config/site-data';
 import { FormError } from '../../shared/form-status';
 import { LeadApi } from '../../shared/lead-api';
 
@@ -14,7 +17,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 @Component({
   selector: 'mk-newsletter',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormError],
+  imports: [FormError, RouterLink],
   template: `
     <h2 class="mk-footer__heading" id="newsletter-title">Newsletter</h2>
     @if (sent()) {
@@ -38,6 +41,9 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             [attr.aria-invalid]="showErrors() && !consent()" />
           {{ consentText }}
         </label>
+        @if (site.legalReady()) {
+          <p class="mk-newsletter__privacy">How we handle your email: <a routerLink="/privacy-policy">privacy policy</a>.</p>
+        }
         <div class="mk-honeypot" aria-hidden="true">
           <label for="nl-nickname">Leave this field empty</label>
           <input id="nl-nickname" type="text" tabindex="-1" autocomplete="off"
@@ -50,6 +56,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 })
 export class Newsletter {
   private readonly api = inject(LeadApi);
+  protected readonly site = inject(SiteData);
   protected readonly consentText = NEWSLETTER_CONSENT_TEXT;
   protected readonly email = signal('');
   protected readonly consent = signal(false);

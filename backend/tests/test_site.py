@@ -247,3 +247,29 @@ def test_analytics_ids_are_optional_and_validated(site_admin, new_client):
     assert site_admin.put(SETTINGS, json={**data, **good}).status_code == 200
     public = new_client().get(PUBLIC).json()["settings"]
     assert {k: public[k] for k in good} == good
+
+
+def test_legal_details_are_optional_and_validated(site_admin, new_client):
+    data = site_admin.get(SETTINGS).json()["data"]
+    assert (data["legal_name"], data["province"], data["privacy_email"]) == (None, None, None)
+    assert site_admin.put(SETTINGS, json={**data, "province": "Atlantis"}).status_code == 422
+    assert site_admin.put(SETTINGS, json={**data, "privacy_email": "nope"}).status_code == 422
+    details = {"legal_name": "Outlogik Inc.", "province": "Ontario",
+               "privacy_email": "Privacy@Outlogik.example.com",
+               "address": "1 Example Street\nToronto, ON"}
+    assert site_admin.put(SETTINGS, json={**data, **details}).status_code == 200
+    public = new_client().get(PUBLIC).json()["settings"]
+    assert public["legal_name"] == "Outlogik Inc." and public["province"] == "Ontario"
+    assert public["privacy_email"] == "privacy@outlogik.example.com"
+
+
+def test_admin_province_list_matches_the_api():
+    import re
+    from pathlib import Path
+    from typing import get_args
+
+    from app.modules.site.schemas import Province
+
+    src = (Path(__file__).parents[2] / "frontend/src/app/features/admin/admin-api.ts").read_text()
+    block = src.split("export const PROVINCES = [")[1].split("];")[0]
+    assert re.findall(r"'([^']+)'", block) == list(get_args(Province))

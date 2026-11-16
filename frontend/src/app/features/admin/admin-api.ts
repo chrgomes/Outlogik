@@ -74,6 +74,9 @@ export interface SiteSettings {
   consultation_cta_label: string;
   seo_title_suffix: string;
   seo_default_description: string;
+  legal_name: string | null;
+  province: string | null;
+  privacy_email: string | null;
   ga4_measurement_id: string | null;
   gtm_container_id: string | null;
   clarity_project_id: string | null;
@@ -152,3 +155,10 @@ export class AdminApi {
     return this.send('PATCH', `site/portal-features/${slug}`, change);
   }
 }
+
+/** For the governing law in the website's terms (must match the API's list). */
+export const PROVINCES = [
+  'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 'Newfoundland and Labrador',
+  'Northwest Territories', 'Nova Scotia', 'Nunavut', 'Ontario', 'Prince Edward Island', 'Quebec',
+  'Saskatchewan', 'Yukon',
+];

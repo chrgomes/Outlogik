@@ -20,7 +20,7 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
 | 9 | CMS admin UI | B | ☐ |
 | 10 | Resources: blog, guides, glossary | B | ☐ |
 | 11 | SEO (adds `ProfessionalService` schema once business details are known) | A | ✅ Done |
-| 12 | Analytics and consent; legal pages | A | 🟡 Analytics and consent done; legal pages wait for decision 12 |
+| 12 | Analytics and consent; legal pages | A | 🟡 Built; legal pages go live when the legal details are entered in the admin area |
 | 13 | Content pass | B | ☐ |
 | 14 | QA and release | A + B | ☐ |
 
@@ -392,3 +392,45 @@ Legal pages (privacy, terms, cookies) are the second part. They wait for the bus
     - after reopening "Cookie settings" and choosing Reject: `_ga` deleted, page reloaded, no requests to those hosts, and only `ol_consent=denied` left
   - The test IDs were removed afterwards.
 - **Note:** with the short shared cache (`s-maxage=60`), a cache in front of the site may serve the same page (and its nonce) to several visitors for up to a minute. Each page's HTML and CSP header always match, so pages work. Reusing the nonce only matters if an attacker can already inject markup, which the policy and Angular's escaping guard against.
+
+## Step 12 (part 2) — privacy policy and terms and conditions
+
+- **Pages:** `/privacy-policy` and `/terms` (Terms and conditions). Both are written from what the website and client portal actually collect and do (spec §17), considering PIPEDA and CASL.
+- **Published from the admin area, never as placeholders:**
+  - Website settings has a new **Legal details** section: legal business name, province or territory, and privacy contact email. The existing Address field is also required.
+  - Until all four are set, both pages answer **404**, carry `noindex`, are left out of the sitemap, and aren't linked anywhere.
+  - Once saved, they go live within about a minute, with links in the footer, under both forms, under the newsletter sign-up and in the cookie banner.
+  - The settings page says whether the pages are published.
+  - Decision 12 can be completed by entering the details there; no release is needed.
+- **The privacy policy:**
+  - what's collected: forms, the newsletter's consent record, the client portal, and visit details kept in the browser and sent only with a form
+  - IP address and browser for spam and security
+  - how it's used; consent and withdrawing it
+  - **cookies:** `ol_consent`, the portal's sign-in and security cookies, and the analytics tools **actually switched on** (or "none at present")
+  - who it's shared with, storage outside the province and Canada, retention, safeguards, breach notification
+  - rights to access, correct and delete, with a reply within 30 days
+  - complaints to the Office of the Privacy Commissioner of Canada, plus the provincial commissioner for Quebec, British Columbia or Alberta when that's the province set
+  - children, changes, and contact details
+- **The terms:**
+  - services are governed by each client's proposal or agreement, with **no guaranteed results**
+  - acceptable use of the website; portal accounts by invitation
+  - intellectual property, links, "as is" availability, limitation of liability
+  - governing law: the province set in the admin area
+- **For review before launch, ideally by a lawyer:**
+  - retention is stated generally ("as long as we need it"), not as fixed periods
+  - service providers aren't named, because hosting isn't decided
+  - **Quebec:** if Quebec is chosen, Law 25 adds duties, such as naming a person in charge of personal information and assessing transfers outside Quebec, and French-language requirements may apply
+- **Bug fixed along the way:** with `<base href="/">`, links like `href="#included"` loaded the homepage instead of scrolling. This affected:
+  - "What's included" on service pages, "How we help", and "See the client portal"
+  - the "Skip to content" links in both the website and the app
+  - Section links now use the router with a fragment; skip links move focus to the main content.
+  - CI now fails if a plain `href="#…"` link is added.
+- **Tests:**
+  - backend: 2 new (237 total): legal detail validation, and the app's province list matching the API's
+  - website: 7 new (86): hidden until complete, 404 with noindex, business details, analytics tools named, provincial regulator, governing law, and the sitemap
+  - app: 1 new (81): the Legal details section
+- **Checked by running it:**
+  - Without details: both pages returned 404 and weren't in the sitemap.
+  - With example details: both returned 200, appeared in the sitemap, and were linked from the footer and the forms.
+  - The example details were then removed.
+  - All section links and the skip links work in the browser.

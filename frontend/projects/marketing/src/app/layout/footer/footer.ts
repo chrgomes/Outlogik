@@ -89,9 +89,11 @@ import { Consent } from '../../consent/consent';
       </div>
       <div class="mk-footer__bottom">
         <p>© {{ year }} Outlogik. All rights reserved.</p>
-        @if (legal.length || consent.needed()) {
+        @if (site.legalReady() || consent.needed()) {
           <ul class="mk-footer__legal">
-            @for (l of legal; track l.path) { <li><a [routerLink]="l.path">{{ l.label }}</a></li> }
+            @if (site.legalReady()) {
+              @for (l of legal; track l.path) { <li><a [routerLink]="l.path">{{ l.label }}</a></li> }
+            }
             @if (consent.needed()) {
               <li><button type="button" class="mk-footer__link-btn" (click)="consent.open()">Cookie settings</button></li>
             }
@@ -102,7 +104,8 @@ import { Consent } from '../../consent/consent';
   `,
 })
 export class Footer {
-  protected readonly settings = inject(SiteData).settings;
+  protected readonly site = inject(SiteData);
+  protected readonly settings = this.site.settings;
   protected readonly consent = inject(Consent);
   protected readonly services = SERVICES;
   protected readonly audiences = AUDIENCES;

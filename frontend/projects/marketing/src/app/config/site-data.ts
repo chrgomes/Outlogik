@@ -1,7 +1,7 @@
 import { httpResource } from '@angular/common/http';
 import { Injectable, computed } from '@angular/core';
 
-import { DEFAULT_PORTAL_FEATURES, DEFAULT_SETTINGS, PortalFeature, SiteSettings } from './site';
+import { DEFAULT_PORTAL_FEATURES, DEFAULT_SETTINGS, PortalFeature, SiteSettings, legalReady } from './site';
 
 interface PublicSite {
   settings: SiteSettings;
@@ -23,4 +23,9 @@ export class SiteData {
 
   readonly portalFeatures = computed<PortalFeature[]>(() =>
     this.site.hasValue() ? this.site.value().portal_features : DEFAULT_PORTAL_FEATURES);
+
+  /** Whether the privacy policy and terms are published (all legal details are set). */
+  readonly legalReady = computed(() => legalReady(this.settings()));
+  /** False until the settings have arrived (or failed), so pages don't decide too early. */
+  readonly loaded = computed(() => !this.site.isLoading());
 }

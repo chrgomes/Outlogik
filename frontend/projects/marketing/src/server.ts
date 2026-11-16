@@ -9,6 +9,7 @@ import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 
 import { routes } from './app/app.routes';
+import { SiteSettings, legalReady } from './app/config/site';
 import { robotsTxt, sitemapPaths, sitemapXml } from './app/seo/sitemap';
 import { addNonce, contentSecurityPolicy } from './csp';
 
@@ -50,10 +51,24 @@ app.get('/robots.txt', (_req, res) => {
   res.type('text/plain').setHeader('Cache-Control', 'public, max-age=3600');
   res.send(robotsTxt(SITE_URL, NOINDEX));
 });
-const sitemap = sitemapXml(SITE_URL, sitemapPaths(routes));
-app.get('/sitemap.xml', (_req, res) => {
+// The legal pages are listed only once they're published (their details are set in the admin
+// area), so the sitemap checks the site settings, at most every five minutes.
+let legalCheck = { at: 0, published: false };
+async function legalPublished(): Promise<boolean> {
+  if (Date.now() - legalCheck.at < 5 * 60_000) return legalCheck.published;
+  try {
+    const res = await fetch(`${API_INTERNAL_URL}/api/v1/public/site`, { signal: AbortSignal.timeout(3000) });
+    const body = (await res.json()) as { settings: SiteSettings };
+    legalCheck = { at: Date.now(), published: res.ok && legalReady(body.settings) };
+  } catch {
+    legalCheck = { at: Date.now(), published: false };
+  }
+  return legalCheck.published;
+}
+app.get('/sitemap.xml', async (_req, res) => {
+  const paths = sitemapPaths(routes, { legalPublished: await legalPublished() });
   res.type('application/xml').setHeader('Cache-Control', 'public, max-age=3600');
-  res.send(sitemap);
+  res.send(sitemapXml(SITE_URL, paths));
 });
 
 /**

@@ -298,3 +298,14 @@
 .mk-newsletter__placeholder {
   min-height: 11rem;
 }
+
+.mk-form-note a,
+.mk-cookies a,
+.mk-newsletter__privacy a {
+  text-decoration: underline;
+}
+
+.mk-newsletter__privacy {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+}

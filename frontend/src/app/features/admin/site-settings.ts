@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Icon } from '@brand/icon/icon';
@@ -9,7 +9,7 @@ import { FieldError, showError } from '../../shared/forms/forms';
 import { PageHeader } from '../../shared/page-header/page-header';
 import { ErrorState, LoadingState } from '../../shared/states/states';
 import { ToastService } from '../../shared/toast/toast';
-import { ADMIN_API, AdminApi, SiteSettings } from './admin-api';
+import { ADMIN_API, AdminApi, PROVINCES, SiteSettings } from './admin-api';
 
 const NETWORKS = [
   { value: 'linkedin', label: 'LinkedIn' }, { value: 'facebook', label: 'Facebook' },
@@ -141,6 +141,41 @@ function socialLink(network = 'linkedin', url = '') {
         </section>
 
         <section class="settings-card">
+          <h2 class="h6">Legal details</h2>
+          <p class="text-muted small" id="legal-hint">
+            Used in the website's privacy policy and terms and conditions. Those pages are
+            published only once all of these <strong>and the address above</strong> are filled
+            in; until then they don't appear on the website.
+          </p>
+          <div class="row g-3">
+            <div class="col-12">
+              <label for="s-legal-name" class="form-label">Legal business name</label>
+              <input id="s-legal-name" class="form-control" formControlName="legal_name" placeholder="For example, Outlogik Inc."
+                [class.is-invalid]="bad('legal_name')" />
+              <ol-field-error [control]="form.controls.legal_name" />
+            </div>
+            <div class="col-md-6">
+              <label for="s-province" class="form-label">Province or territory</label>
+              <select id="s-province" class="form-select" formControlName="province" aria-describedby="s-province-hint">
+                <option value="">Not set</option>
+                @for (p of provinces; track p) { <option [value]="p">{{ p }}</option> }
+              </select>
+              <div id="s-province-hint" class="form-text">Whose laws govern the terms.</div>
+            </div>
+            <div class="col-md-6">
+              <label for="s-privacy" class="form-label">Privacy contact email</label>
+              <input id="s-privacy" type="email" class="form-control" formControlName="privacy_email"
+                [class.is-invalid]="bad('privacy_email')" aria-describedby="s-privacy-hint" />
+              <div id="s-privacy-hint" class="form-text">For requests about personal information.</div>
+              <ol-field-error [control]="form.controls.privacy_email" />
+            </div>
+          </div>
+          <p class="small mt-3 mb-0" [class.text-success]="legalComplete()" [class.text-muted]="!legalComplete()">
+            {{ legalComplete() ? 'Complete: the privacy policy and terms are published.' : 'Not complete: the privacy policy and terms are not published yet.' }}
+          </p>
+        </section>
+
+        <section class="settings-card">
           <h2 class="h6">Analytics</h2>
           <p class="text-muted small">
             Optional. A tool loads only for visitors who accept analytics cookies in the website's
@@ -191,6 +226,12 @@ export class SiteSettingsPage {
   private readonly api = inject(AdminApi);
   private readonly toast = inject(ToastService);
   protected readonly networks = NETWORKS;
+  protected readonly provinces = PROVINCES;
+  /** Matches the website's rule for publishing the legal pages (based on what's saved). */
+  protected readonly legalComplete = computed(() => {
+    const d = this.settings.hasValue() ? this.settings.value().data : null;
+    return !!(d?.legal_name && d.province && d.privacy_email && d.address);
+  });
   protected readonly busy = signal(false);
   protected readonly settings = httpResource<{ data: SiteSettings; updated_at: string }>(
     () => `${ADMIN_API}/site/settings`);
@@ -206,6 +247,9 @@ export class SiteSettingsPage {
     consultation_cta_label: text(40, true),
     seo_title_suffix: text(60),
     seo_default_description: text(200),
+    legal_name: text(160),
+    province: new FormControl('', { nonNullable: true }),
+    privacy_email: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
     ga4_measurement_id: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^G-[A-Z0-9]{4,16}$/)] }),
     gtm_container_id: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^GTM-[A-Z0-9]{4,12}$/)] }),
     clarity_project_id: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^[a-z0-9]{6,16}$/)] }),
@@ -224,6 +268,7 @@ export class SiteSettingsPage {
     this.form.reset({
       ...d, contact_email: d.contact_email ?? '', sales_email: d.sales_email ?? '',
       phone: d.phone ?? '', address: d.address ?? '',
+      legal_name: d.legal_name ?? '', province: d.province ?? '', privacy_email: d.privacy_email ?? '',
       ga4_measurement_id: d.ga4_measurement_id ?? '', gtm_container_id: d.gtm_container_id ?? '',
       clarity_project_id: d.clarity_project_id ?? '',
       social_links: d.social_links,
@@ -260,6 +305,7 @@ export class SiteSettingsPage {
       const saved = await this.api.saveSettings({
         ...v, contact_email: orNull(v.contact_email), sales_email: orNull(v.sales_email),
         phone: orNull(v.phone), address: orNull(v.address),
+        legal_name: orNull(v.legal_name), province: orNull(v.province), privacy_email: orNull(v.privacy_email),
         ga4_measurement_id: orNull(v.ga4_measurement_id), gtm_container_id: orNull(v.gtm_container_id),
         clarity_project_id: orNull(v.clarity_project_id),
       });

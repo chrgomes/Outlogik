@@ -65,6 +65,8 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      - name: No "#section" links (with <base href="/"> they load the homepage; use routerLink + fragment)
+        run: "! grep -rn 'href=\"#' src projects --include=*.html --include=*.ts | grep -v 'href=\"#main\" (click)' | grep -v '.spec.ts'"
       - name: App unit tests
         run: npx ng test frontend --watch=false
       - name: Marketing site unit tests
