@@ -116,24 +116,33 @@ own server, so the browser never talks to the API host.
 - **CSV exports** neutralise cells starting with `=`, `+`, `-` or `@`, so spreadsheets don't run them as formulas, and are sent with `Cache-Control: no-store`.
 - **Visitor input** is shown as text, never HTML. A visitor's website address becomes a link only as `http(s)`, and opens with `rel="noopener noreferrer"`.
 
-## Production checklist (not yet done)
+## Production (DigitalOcean App Platform, Toronto)
 
-These depend on how Outlogik is hosted, which hasn't been decided:
+Set up in step 14; the launch steps are in [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
-- [ ] Serve the Angular app and `/api` from **one origin**, behind HTTPS, with HSTS.
-- [ ] A **Content-Security-Policy** for the Angular app on the web server (the app needs no
-      third-party origins; one inline script in `index.html` sets the theme before first
-      paint, so allow it by hash).
-- [ ] Run uvicorn with `--proxy-headers` and a trusted `--forwarded-allow-ips` so rate limits
-      and audit entries see real client IPs.
-- [ ] Website server: set `TRUST_PROXY` when it sits behind a reverse proxy, so visitors' real
-      IP addresses reach the API's rate limits; set `API_INTERNAL_URL`; build with the real
-      `OL_APP_URL` and `OL_SITE_URL`. API: set `SITE_URL` to the website's public origin.
-- [ ] Run any staging copy of the website with `SITE_NOINDEX=true`, so it stays out of search
-      results.
-- [ ] Set `LEAD_NOTIFICATION_EMAILS` once the addresses are decided (decision 15).
-- [ ] Keep `COOKIE_SECURE=true`; set `FRONTEND_URL` to the public URL (used in email links).
-- [ ] A real SMTP provider with SPF, DKIM and DMARC for the sending domain.
-- [ ] Database backups, and secrets supplied by the host rather than `.env` files.
+- [x] The Angular app and `/api` share **one origin** (`app.outlogik.com`, `/api` routed to the
+      API), behind HTTPS (App Platform), with **HSTS** from all three services.
+- [x] **Content-Security-Policy for the app** (nginx, `frontend/docker/app/`): `script-src 'self'`
+      plus the SHA-256 hashes of the two inline scripts, computed from each build. The build
+      fails if an inline event handler appears. The website has its own nonce-based CSP.
+- [x] **Real visitor IPs:** the API reads the platform's header (`CLIENT_IP_HEADER`,
+      `do-connecting-ip`), and trusts the website's forwarded visitor IP only with the shared
+      `SITE_PROXY_SECRET`. A forged header without the secret is ignored. Uvicorn's own
+      proxy-header handling stays at its safe default.
+- [x] Website built with the real `OL_APP_URL` and `OL_SITE_URL`. Angular's server renders only
+      for known host names (`security.allowedHosts`); anything else is redirected to
+      `CANONICAL_HOST`.
+- [x] Staging runs with `SITE_NOINDEX=true`.
+- [x] `COOKIE_SECURE=true`, `FRONTEND_URL` and `SITE_URL` set in the app specs.
+- [x] The **interactive API docs and OpenAPI schema are off** when `APP_ENV=production`.
+- [x] **Containers run as non-root users** (`outlogik`, `node`, nginx-unprivileged).
+- [x] **Secrets** (`SITE_PROXY_SECRET`, `SMTP_PASSWORD`) are App Platform encrypted secrets,
+      never in the repository. Database URLs are injected from the managed clusters.
+- [x] **Database backups:** managed PostgreSQL, with daily backups and 7-day point-in-time
+      recovery. A restore test is in the launch checklist.
+- [x] **Dependency audit** (step 14): `npm audit` and `pip-audit` found no known vulnerabilities.
+- [ ] **Email:** Resend (port 2587) with SPF, DKIM and DMARC for outlogik.com (launch guide,
+      step 3).
+- [ ] Set `LEAD_NOTIFICATION_EMAILS` to the enquiries alias (decision 15).
 - [ ] Optional later: PostgreSQL row-level security as a second isolation layer; MFA (the
       schema already has room for it).

@@ -22,7 +22,7 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
 | 11 | SEO (adds `ProfessionalService` schema once business details are known) | A | ✅ Done |
 | 12 | Analytics and consent; legal pages | A | ✅ Done |
 | 13 | Content pass | B | ☐ |
-| 14 | QA and release | A + B | ☐ |
+| 14 | QA and release | A + B | ✅ Ready to launch (your setup: docs/DEPLOYMENT.md) |
 
 ## On hold (decisions 12, 13, 15)
 
@@ -480,3 +480,58 @@ Legal pages (privacy, terms, cookies) are the second part. They wait for the bus
   - a sending service for the system's emails (Postmark or Amazon SES)
   - SPF, DKIM and DMARC records in GoDaddy DNS
 - **Possible wording change:** with data hosted in Toronto, the privacy policy could say personal information is stored in Canada, noting that email and optional analytics providers may process it elsewhere. To be updated in step 14 once the providers are chosen.
+
+## Step 14 — QA and release preparation
+
+Hosting: DigitalOcean, Toronto (decision 13). Email: Google Workspace (mailboxes and aliases) and
+Resend (emails the system sends). **Launch guide: [`DEPLOYMENT.md`](DEPLOYMENT.md).**
+
+- **Docker images** (each built and run here, then built and smoke-tested in CI on every push):
+  - `backend/Dockerfile`: two stages, runs as a non-root user, 312 MB (503 MB before splitting the stages).
+  - `frontend/Dockerfile.marketing`: the website. The server bundle needs no `node_modules` at runtime. The public addresses are build arguments, so staging gets its own.
+  - `frontend/Dockerfile.app`: the portal on nginx-unprivileged. Its CSP allows the two inline scripts by hash, computed from each build (`docker/app/csp.mjs`). Hashed files are cached for a year; `index.html` is never cached.
+- **Checked by running the containers together** against a fresh database:
+  - The migration job created the schema from a `postgresql://` address in DigitalOcean's format.
+  - Readiness reported database and Redis ok.
+  - A browser sent a website form and signed in to the portal (with `/api` routed as App Platform will do it), and found the enquiry in the admin inbox.
+  - There were no CSP errors, and the app's theme script ran under its hash.
+- **App Platform specs** (`.do/production`, `.do/staging`):
+  - Two apps per environment: the site, and the app (`web` plus `api`, with `/api` routed to the API keeping its prefix).
+  - A pre-deploy `migrate` job; health checks; deployment and domain alerts.
+  - Managed PostgreSQL 16 and Valkey clusters in the Toronto region.
+  - Staging deploys automatically from `main`; production deploys by hand.
+  - **Not yet validated against a real DigitalOcean account.** The launch guide says to run `doctl apps spec validate` first.
+- **Backend for hosting:**
+  - accepts DigitalOcean's `postgresql://` database addresses
+  - visitor IPs come from `CLIENT_IP_HEADER`, or from the website with `SITE_PROXY_SECRET` (forged headers are ignored, as tested end to end)
+  - API docs are off in production; HSTS
+- **Website server for hosting:**
+  - **Found and fixed:** Angular's server answered **400** to `outlogik.com`, because only `localhost` was allowed. The production and staging hosts are now in `security.allowedHosts`; CI checks it.
+  - `CANONICAL_HOST` redirects `www` and other hosts to `outlogik.com`
+  - `/healthz` for the platform's health checks
+  - response compression; HSTS
+- **Accessibility (axe, WCAG 2.2 AA plus best practices):**
+  - **Website:** 20 pages at desktop and phone widths, **0 violations** after fixes: header and footer landmarks, and "Learn more" links whose names include their visible text.
+  - **App:** sign-in, the portal and every admin page, in light and dark mode, **0 violations** after fixes:
+    - top bar and sidebar landmarks
+    - the workspace switcher's name includes the organization's name
+    - readable "Not connected yet" and "Built-in" badges
+    - lighter red and green text and buttons in dark mode
+- **Lighthouse (website):**
+
+  | | Performance | Accessibility | Best practices | SEO |
+  |---|---|---|---|---|
+  | Phone (slow connection) | 92–97 | 100 | 100 | 100 |
+  | Desktop | 100 | 100 | 100 | 100 |
+
+  Phone performance was 78–83. Two fixes raised it: compressing responses (the main script went from 379 KB to 120 KB sent), and 720 px screenshot versions with `sizes`, so phones download a 7 KB image instead of 22 KB. Largest paint on a phone went from about 4 seconds to 2.
+- **Security:**
+  - `npm audit` and `pip-audit` found no known vulnerabilities
+  - security headers checked on all three containers
+  - the portal serves no hidden files, and path traversal is refused
+  - `SECURITY.md` has the production section
+- **Privacy policy:** now says the site, portal and database are hosted in Toronto, and names DigitalOcean, Google Workspace and Resend (which may process data in the United States).
+- **Not done here:**
+  - **cross-browser testing:** only Chromium is available in this environment; check Safari and Firefox on staging
+  - **the real deployment:** it needs your DigitalOcean, Google Workspace and Resend accounts (`DEPLOYMENT.md`, steps 1–10)
+- **Tests:** backend 244 (+7), website 87, app 81. CI also builds the three images, checks the website's host handling and the portal's CSP, and that the API runs as a non-root user.

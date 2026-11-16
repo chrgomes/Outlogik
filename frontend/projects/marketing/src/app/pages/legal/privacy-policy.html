@@ -110,8 +110,10 @@
   <p>We share personal information only with:</p>
   <ul>
     <li>
-      <strong>Service providers</strong> who host our website, portal and data, and deliver our
-      email, under agreements that require them to protect it and use it only for us.
+      <strong>Service providers</strong> that work for us under agreements requiring them to
+      protect it and use it only on our behalf: DigitalOcean, which hosts our website, client
+      portal and database; Google Workspace, our email; and Resend, which delivers the emails
+      our website and portal send.
     </li>
     @if (consent.needed()) {
       <li><strong>{{ toolList() }}</strong>, as described under Cookies, only if you accept analytics cookies.</li>
@@ -125,9 +127,11 @@
 
   <h2 id="storage">6. Where it’s stored, and for how long</h2>
   <p>
-    Our service providers may store or process personal information outside {{ s().province }}
-    and outside Canada. When they do, it’s subject to the laws of those places, and may be
-    accessible to authorities there.
+    Our website, client portal and database are hosted in Toronto, Canada. Some of our service
+    providers (Google Workspace and Resend for email{{ consent.needed() ? ', and the analytics tools if you accept them' : '' }})
+    may process personal information outside {{ s().province }} and outside Canada, mainly in the
+    United States. When they do, it’s subject to the laws of those places, and may be accessible
+    to authorities there.
   </p>
   <p>
     We keep personal information only for as long as we need it for the purposes above, or as the

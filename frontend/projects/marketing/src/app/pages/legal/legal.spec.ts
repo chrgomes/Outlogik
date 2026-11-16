@@ -32,7 +32,9 @@ describe('Legal pages', () => {
     const text = el.textContent!;
     expect(text).toContain('Outlogik (“we”) collects');
     expect(text).toContain('Toronto, Ontario, Canada');
+    expect(text).toContain('hosted in Toronto, Canada');
     expect(text).toContain('outside Ontario and outside Canada');
+    expect(text).toContain('DigitalOcean');
     expect(text).toContain('Office of the Privacy Commissioner of Canada');
     expect(text).not.toContain('Commission d');
     expect(text).toContain('We don’t use them at present'); // no analytics switched on
