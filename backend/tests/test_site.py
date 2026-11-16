@@ -251,7 +251,9 @@ def test_analytics_ids_are_optional_and_validated(site_admin, new_client):
 
 def test_legal_details_are_optional_and_validated(site_admin, new_client):
     data = site_admin.get(SETTINGS).json()["data"]
-    assert (data["legal_name"], data["province"], data["privacy_email"]) == (None, None, None)
+    # The business's details are the defaults, so a new site publishes its legal pages.
+    assert (data["legal_name"], data["province"], data["privacy_email"], data["address"]) == (
+        "Outlogik", "Ontario", "privacy@outlogik.com", "Toronto, Ontario, Canada")
     assert site_admin.put(SETTINGS, json={**data, "province": "Atlantis"}).status_code == 422
     assert site_admin.put(SETTINGS, json={**data, "privacy_email": "nope"}).status_code == 422
     details = {"legal_name": "Outlogik Inc.", "province": "Ontario",

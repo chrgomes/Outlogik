@@ -5,10 +5,8 @@ import { DEFAULT_SETTINGS } from '../../config/site';
 import { sitemapPaths } from '../../seo/sitemap';
 import { answerSite, settle, visit } from '../../../testing/marketing';
 
-const LEGAL = {
-  legal_name: 'Outlogik Inc.', province: 'Ontario', privacy_email: 'privacy@outlogik.example.com',
-  address: '1 Example Street\nToronto, ON',
-};
+// The business's own details (the defaults since 2026-11-16).
+const LEGAL = {};
 
 async function open(url: string, over: object = {}) {
   const el = await visit(url);
@@ -22,7 +20,7 @@ const robots = () => document.head.querySelector('meta[name="robots"]')?.getAttr
 
 describe('Legal pages', () => {
   it.each(['/privacy-policy', '/terms'])('%s is not published until the legal details are set', async (url) => {
-    const el = await open(url, { legal_name: 'Outlogik Inc.', province: 'Ontario' }); // no email or address
+    const el = await open(url, { privacy_email: null, address: null }); // details removed in the admin area
     expect(el.querySelector('h1')!.textContent).toContain('couldn’t find');
     expect(robots()).toBe('noindex');
     expect(document.head.querySelector('link[rel="canonical"]')).toBeNull();
@@ -32,12 +30,13 @@ describe('Legal pages', () => {
     const el = await open('/privacy-policy', LEGAL);
     expect(el.querySelector('h1')!.textContent).toContain('Privacy policy');
     const text = el.textContent!;
-    expect(text).toContain('Outlogik Inc.');
+    expect(text).toContain('Outlogik (“we”) collects');
+    expect(text).toContain('Toronto, Ontario, Canada');
     expect(text).toContain('outside Ontario and outside Canada');
     expect(text).toContain('Office of the Privacy Commissioner of Canada');
     expect(text).not.toContain('Commission d');
     expect(text).toContain('We don’t use them at present'); // no analytics switched on
-    expect(el.querySelector('a[href="mailto:privacy@outlogik.example.com"]')).not.toBeNull();
+    expect(el.querySelector('a[href="mailto:privacy@outlogik.com"]')).not.toBeNull();
     expect(robots()).toBeNull();
   });
 

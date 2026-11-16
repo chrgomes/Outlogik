@@ -36,7 +36,7 @@ class SiteSettingsData(BaseModel):
     contact_email: Email | None = None
     sales_email: Email | None = None
     phone: Annotated[str, StringConstraints(strip_whitespace=True, max_length=40)] | None = None
-    address: Text | None = None
+    address: Text | None = "Toronto, Ontario, Canada"
     social_links: Annotated[list[SocialLink], Field(max_length=10)] = []
     # The main call to action used across the site
     consultation_cta_label: Label = "Book a free consultation"
@@ -47,12 +47,12 @@ class SiteSettingsData(BaseModel):
         "marketing and analytics, with clear reporting in your own client portal."
     )
 
-    # Legal details (decision 12). The privacy policy and terms are published on the website only
-    # once these and the address are all set; until then those pages answer 404.
+    # Legal details (decision 12, provided 2026-11-16). The privacy policy and terms are published
+    # on the website only while these and the address are all set; otherwise those pages answer 404.
     legal_name: Annotated[str, StringConstraints(
-        strip_whitespace=True, min_length=1, max_length=160)] | None = None
-    province: Province | None = None
-    privacy_email: Email | None = None
+        strip_whitespace=True, min_length=1, max_length=160)] | None = "Outlogik"
+    province: Province | None = "Ontario"
+    privacy_email: Email | None = "privacy@outlogik.com"
 
     # Analytics (all optional, off by default). Loaded on the website only for visitors who accept
     # analytics cookies; with none set, the site uses no tracking cookies and shows no banner.

@@ -97,7 +97,7 @@ describe('Header', () => {
 });
 
 describe('Footer', () => {
-  it('links every service and business type, and no legal links until they exist', () => {
+  it('links every service, business type and legal page', () => {
     setupMarketing();
     const fixture = TestBed.createComponent(Footer);
     fixture.detectChanges();
@@ -107,8 +107,19 @@ describe('Footer', () => {
     for (const a of AUDIENCES) expect(hrefs).toContain(`/who-we-help/${a.slug}`);
     expect(hrefs).toContain(LOGIN_URL);
     expect(hrefs).toContain('/book-a-consultation');
-    expect(el.querySelector('.mk-footer__legal')).toBeNull();
+    expect(hrefs).toEqual(expect.arrayContaining(['/privacy-policy', '/terms']));
     expect(el.textContent).toContain(`© ${new Date().getFullYear()} Outlogik`);
+  });
+
+  it('hides the legal links if the legal details are removed in the admin area', async () => {
+    setupMarketing();
+    const fixture = TestBed.createComponent(Footer);
+    fixture.detectChanges();
+    await settle();
+    answerSite({ settings: { ...DEFAULT_SETTINGS, privacy_email: null } });
+    await settle();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('a[href="/privacy-policy"]')).toBeNull();
   });
 
   it('shows contact details and social links only once they are set', async () => {

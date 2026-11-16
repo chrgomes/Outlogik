@@ -9,7 +9,7 @@ import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 
 import { routes } from './app/app.routes';
-import { SiteSettings, legalReady } from './app/config/site';
+import { DEFAULT_SETTINGS, SiteSettings, legalReady } from './app/config/site';
 import { robotsTxt, sitemapPaths, sitemapXml } from './app/seo/sitemap';
 import { addNonce, contentSecurityPolicy } from './csp';
 
@@ -61,7 +61,8 @@ async function legalPublished(): Promise<boolean> {
     const body = (await res.json()) as { settings: SiteSettings };
     legalCheck = { at: Date.now(), published: res.ok && legalReady(body.settings) };
   } catch {
-    legalCheck = { at: Date.now(), published: false };
+    // Same fallback as the pages themselves: the built-in settings.
+    legalCheck = { at: Date.now(), published: legalReady(DEFAULT_SETTINGS) };
   }
   return legalCheck.published;
 }

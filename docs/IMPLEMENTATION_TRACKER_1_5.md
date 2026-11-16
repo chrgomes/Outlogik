@@ -20,7 +20,7 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
 | 9 | CMS admin UI | B | ☐ |
 | 10 | Resources: blog, guides, glossary | B | ☐ |
 | 11 | SEO (adds `ProfessionalService` schema once business details are known) | A | ✅ Done |
-| 12 | Analytics and consent; legal pages | A | 🟡 Built; legal pages go live when the legal details are entered in the admin area |
+| 12 | Analytics and consent; legal pages | A | ✅ Done |
 | 13 | Content pass | B | ☐ |
 | 14 | QA and release | A + B | ☐ |
 
@@ -434,3 +434,15 @@ Legal pages (privacy, terms, cookies) are the second part. They wait for the bus
   - With example details: both returned 200, appeared in the sitemap, and were linked from the footer and the forms.
   - The example details were then removed.
   - All section links and the skip links work in the browser.
+
+## Decision 12 — legal details provided (2026-11-16)
+
+- **Legal business name:** Outlogik
+- **Location:** Toronto, Ontario, Canada. No street address yet; the city is shown, and a full mailing address can be added in Website settings → Contact details → Address.
+- **Province:** Ontario. Federal PIPEDA applies, and complaints go to the Office of the Privacy Commissioner of Canada. Ontario has no separate private-sector privacy law, and Quebec's Law 25 doesn't apply.
+- **Privacy contact:** privacy@outlogik.com
+- These are now the **built-in defaults** (backend `SiteSettingsData` and the website's fallback settings), so a newly launched site publishes the privacy policy and terms straight away. Staff can change them in the admin area. If any is removed, the pages are unpublished again (404).
+- The pages now say "Outlogik ("we")" rather than repeating the name, since the legal name and the brand are the same.
+- If the website's server can't reach the API, the sitemap uses the same built-in settings as the pages, so the two always agree.
+- **Domain:** the privacy email uses **outlogik.com**. That's likely the website's domain (decision 13); to be confirmed with hosting in step 14.
+- **Still open:** lead notification emails (decision 15), and domain and hosting (decision 13).
