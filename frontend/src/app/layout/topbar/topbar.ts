@@ -14,6 +14,7 @@ import { IconName } from '@brand/icon/icons';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CdkMenuTrigger, CdkMenu, CdkMenuItem, CdkMenuItemRadio, Icon],
   templateUrl: './topbar.html',
+  host: { role: 'banner' },
   styleUrl: './topbar.scss',
 })
 export class Topbar {

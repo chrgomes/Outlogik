@@ -20,7 +20,7 @@ import { Consent } from '../../consent/consent';
   selector: 'mk-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, Logo, Newsletter],
-  host: { class: 'mk-footer' },
+  host: { class: 'mk-footer', role: 'contentinfo' },
   template: `
     <div class="mk-container">
       <div class="mk-footer__top">

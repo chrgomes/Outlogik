@@ -32,7 +32,7 @@ import { PageHero } from '../../shared/page-hero';
               <h2 class="mk-h3"><a [routerLink]="['/services', s.slug]">{{ s.name }}</a></h2>
               <p>{{ s.summary }}</p>
               <a [routerLink]="['/services', s.slug]" class="mk-arrow-link"
-                [attr.aria-label]="'More about ' + s.name">Learn more <ol-icon name="arrow-right" /></a>
+                [attr.aria-label]="'Learn more about ' + s.name">Learn more <ol-icon name="arrow-right" /></a>
             </div>
             <ul class="mk-checks mk-checks--compact">
               @for (i of included(s.slug); track i) {

@@ -30,6 +30,7 @@ type Menu = 'services' | 'who' | 'resources' | 'company';
   imports: [RouterLink, RouterLinkActive, Icon, Logo],
   templateUrl: './header.html',
   host: {
+    role: 'banner',
     class: 'mk-header',
     '[class.is-scrolled]': 'scrolled()',
     '(document:keydown.escape)': 'closeMenu(true)',

@@ -4,7 +4,7 @@
 //
 //   UVICORN_LOG=/tmp/uvicorn.log node scripts/capture-marketing-screenshots.mjs
 //
-// Needs Playwright (npx playwright, or a global install). Writes 1440×720 (1x) and 2880×1440 (2x) WebP files to
+// Needs Playwright (npx playwright, or a global install). Writes 720×360, 1440×720 and 2880×1440 WebP files to
 // projects/marketing/public/images/. Example data only: no real clients.
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -64,7 +64,8 @@ from PIL import Image
 im = Image.open("${OUT}${name}.png").convert("RGB")
 im.save("${OUT}${name}@2x.webp", "WEBP", quality=86, method=6)
 im.resize((im.width // 2, im.height // 2), Image.LANCZOS).save("${OUT}${name}.webp", "WEBP", quality=88, method=6)
+im.resize((im.width // 4, im.height // 4), Image.LANCZOS).save("${OUT}${name}-720.webp", "WEBP", quality=82, method=6)
 import os; os.remove("${OUT}${name}.png")`]);
-  console.log(`Wrote ${name}.webp and ${name}@2x.webp`);
+  console.log(`Wrote ${name}-720.webp, ${name}.webp and ${name}@2x.webp`);
 }
 await browser.close();

@@ -62,7 +62,9 @@ describe('Homepage', () => {
     for (const img of imgs) {
       expect(img.getAttribute('alt')!.length).toBeGreaterThan(10);
       expect(img.getAttribute('width')).toBe('1440');
-      expect(img.getAttribute('srcset')).toContain('@2x.webp 2x');
+      // Phones get the 720 px image, large screens the 1440 or 2880 px one.
+      expect(img.getAttribute('srcset')).toMatch(/-720\.webp 720w, .*\.webp 1440w, .*@2x\.webp 2880w/);
+      expect(img.getAttribute('sizes')).toBeTruthy();
     }
     expect(imgs[0].getAttribute('loading')).toBe('eager');
     expect(imgs[1].getAttribute('loading')).toBe('lazy');

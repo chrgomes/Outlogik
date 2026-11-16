@@ -4,6 +4,7 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
+import compression from 'compression';
 import express from 'express';
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
@@ -49,6 +50,9 @@ const NOINDEX = process.env['SITE_NOINDEX'] === 'true';
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 app.disable('x-powered-by');
+// Compress pages, scripts and styles (about 70% smaller): most of the time to first paint on a
+// slow phone connection was spent downloading uncompressed files.
+app.use(compression());
 const trustProxy = process.env['TRUST_PROXY'];
 if (trustProxy) app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
 

@@ -14,6 +14,8 @@ import { ADMIN_NAV, NAV } from '../nav';
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
   host: {
+    role: 'complementary',
+    'aria-label': 'Sidebar',
     '[class.collapsed]': 'collapsed()',
     '[class.mobile]': 'layout.isMobile()',
     '[class.open]': 'layout.mobileOpen()',

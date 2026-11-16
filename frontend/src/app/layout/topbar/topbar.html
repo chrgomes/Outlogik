@@ -9,8 +9,8 @@
   type="button"
   class="org-switcher"
   [cdkMenuTriggerFor]="orgMenu"
-  [attr.aria-label]="org.area() === 'admin' ? 'Switch workspace' : 'Switch organization'"
 >
+  <span class="visually-hidden">{{ org.area() === 'admin' ? 'Switch workspace:' : 'Switch organization:' }}</span>
   @if (org.area() === 'admin') {
     <span class="org-badge" aria-hidden="true"><ol-icon name="sliders" /></span>
     <span class="org-text">
