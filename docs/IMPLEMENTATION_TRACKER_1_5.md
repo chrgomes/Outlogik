@@ -20,7 +20,7 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
 | 9 | CMS admin UI | B | ☐ |
 | 10 | Resources: blog, guides, glossary | B | ☐ |
 | 11 | SEO (adds `ProfessionalService` schema once business details are known) | A | ✅ Done |
-| 12 | Analytics and consent; legal pages | A | ☐ |
+| 12 | Analytics and consent; legal pages | A | 🟡 Analytics and consent done; legal pages wait for decision 12 |
 | 13 | Content pass | B | ☐ |
 | 14 | QA and release | A + B | ☐ |
 
@@ -350,3 +350,45 @@ Plan: [`PHASE1_5_PLAN.md`](PHASE1_5_PLAN.md) (**revision 2, agency direction, ap
 - **To do at launch (step 14):**
   - build with the real domain (`OL_SITE_URL`), so canonical URLs, the sitemap and share links use it
   - submit the sitemap to Google Search Console and Bing Webmaster Tools
+
+## Step 12 (part 1) — analytics, cookie banner, Content-Security-Policy
+
+Legal pages (privacy, terms, cookies) are the second part. They wait for the business details (decision 12).
+
+- **Optional analytics tools:** Google Analytics 4, Google Tag Manager and Microsoft Clarity.
+  - Each is switched on by entering its ID in the admin area (Website settings → Analytics). All are **off by default**, and the IDs are checked against each tool's format.
+  - With none set, the website sets **no tracking cookies and shows no banner**: there's nothing to ask about.
+- **Cookie banner** (`consent/`):
+  - It appears only when a tool is switched on and the visitor hasn't chosen yet.
+  - It names the tools in use and says plainly what they do.
+  - **Accept analytics** and **Reject analytics** look identical, so neither is nudged.
+  - The banner is never in the server-rendered HTML, so visitors who have already chosen never see it flash.
+  - The choice is kept for a year in one first-party cookie, `ol_consent` (strictly necessary: it only remembers the choice).
+  - **"Cookie settings"** in the footer (shown only when a tool is on) reopens the banner and says which choice is current.
+  - Withdrawing deletes the tools' cookies (`_ga*`, `_clck` and the like) and reloads the page, so their code stops running.
+- **Tools load only after Accept:**
+  - Google Analytics sends a page view for every page, including moves within the site (one per address, no duplicates).
+  - Form submissions are reported as conversions: `generate_lead` for consultations and messages, `sign_up` for the newsletter.
+- **Cookie-free conversion tracking:**
+  - The leads inbox now has **"Where leads came from"**: the last 90 days of consultations, messages and confirmed newsletter sign-ups, grouped by campaign tag or referring site.
+  - It's built from the website's own records, so it works with or without analytics and needs no consent (`GET /api/v1/admin/leads/sources`).
+- **Content-Security-Policy** on every page:
+  - Each response gets a fresh random nonce, added to every script tag by the website's server.
+  - Only those scripts, and what they load (`strict-dynamic`), may run. That covers the site's own lazy-loaded code, and the analytics tools after consent.
+  - Also: `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`.
+  - Inline styles stay allowed, because Angular's component styles need them and styles can't run code.
+  - The analytics hosts are listed so the tools work once switched on; nothing contacts them without consent.
+  - The CSP helpers are in `projects/marketing/src/csp.ts`.
+- **Tests:**
+  - backend: 2 new (235 total): analytics ID validation and public exposure, and the lead sources report
+  - website: 7 new (79): the banner, consent, loading, conversions and the CSP
+  - app: 1 new (80): checking analytics ID formats in settings
+  - CI checks the CSP header and that every script carries the nonce.
+- **Checked in a real browser:**
+  - With no tool switched on: no banner, no "Cookie settings" link, and no CSP violations on pages, client-side navigation, the deferred newsletter form or a form submission.
+  - With test IDs for GA4 and Clarity, and requests to Google and Microsoft answered by a stub so nothing left the machine:
+    - before a choice: banner shown, **no requests to those hosts, no cookies**
+    - after Accept: both tools loaded, one page view per page, and the contact form reported as `generate_lead`
+    - after reopening "Cookie settings" and choosing Reject: `_ga` deleted, page reloaded, no requests to those hosts, and only `ol_consent=denied` left
+  - The test IDs were removed afterwards.
+- **Note:** with the short shared cache (`s-maxage=60`), a cache in front of the site may serve the same page (and its nonce) to several visitors for up to a minute. Each page's HTML and CSP header always match, so pages work. Reusing the nonce only matters if an attacker can already inject markup, which the policy and Angular's escaping guard against.

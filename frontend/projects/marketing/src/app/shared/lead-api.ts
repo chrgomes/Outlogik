@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { Consent } from '../consent/consent';
 import { VisitAttribution } from './attribution';
 
 export type SendResult = { ok: true } | { ok: false; message: string; fields: string[] };
@@ -15,6 +16,7 @@ export type SendResult = { ok: true } | { ok: false; message: string; fields: st
 export class LeadApi {
   private readonly http = inject(HttpClient);
   private readonly attribution = inject(VisitAttribution);
+  private readonly consent = inject(Consent);
 
   async send(path: string, body: object, openedAt: number, honeypot = ''): Promise<SendResult> {
     try {
@@ -24,12 +26,25 @@ export class LeadApi {
         elapsed_ms: Math.max(0, Math.round(performance.now() - openedAt)),
         attribution: this.attribution.forForm(),
       }));
+      this.reportConversion(path);
       return { ok: true };
     } catch (e) {
       return failure(e);
     }
   }
+
+  private reportConversion(path: string): void {
+    const conversion = CONVERSIONS[path];
+    if (conversion) this.consent.track(...conversion);
+  }
 }
+
+/** Conversion events for analytics tools (sent only if the visitor accepted analytics). */
+const CONVERSIONS: Record<string, [string, Record<string, string>]> = {
+  'leads/consultation': ['generate_lead', { form: 'consultation' }],
+  'leads/contact': ['generate_lead', { form: 'contact' }],
+  newsletter: ['sign_up', { method: 'newsletter' }],
+};
 
 export function failure(e: unknown): { ok: false; message: string; fields: string[] } {
   const res = e instanceof HttpErrorResponse ? e : null;

@@ -104,6 +104,11 @@ own server, so the browser never talks to the API host.
 - **What's stored with a lead:** the form fields, the attribution, the IP address and the
   browser's user agent (for spam review). The privacy policy (step 12) must say so.
 
+## Website: Content-Security-Policy and analytics
+
+- Every page has a **nonce-based CSP**: a fresh nonce per response, added to every script tag by the website's server, with `'strict-dynamic'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` and `frame-ancestors 'none'`. Inline styles are allowed; inline scripts without the nonce are not. Helpers: `frontend/projects/marketing/src/csp.ts`.
+- **Analytics** (GA4, GTM, Clarity) are off unless an ID is set in the admin area, and load only after a visitor accepts in the cookie banner. The only cookie the site sets itself is `ol_consent`, which remembers that choice.
+
 ## Website admin area
 
 - `/api/v1/admin/*` needs a signed-in **site admin** (or super admin); everyone else gets 404. A test checks every admin route for a staff dependency.

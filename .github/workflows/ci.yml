@@ -86,3 +86,7 @@ jobs:
           grep -q '"@type":"Service"' seo.html
           curl -sf localhost:4310/robots.txt | grep -q 'Sitemap:'
           test "$(curl -sf localhost:4310/sitemap.xml | grep -c '<loc>')" -ge 16
+          # Pages carry a nonce-based Content-Security-Policy, and every script has the nonce.
+          curl -sfD headers.txt localhost:4310/ -o home.html
+          grep -qi "content-security-policy: .*script-src 'nonce-" headers.txt
+          test "$(grep -o '<script' home.html | wc -l)" = "$(grep -o '<script nonce=' home.html | wc -l)"

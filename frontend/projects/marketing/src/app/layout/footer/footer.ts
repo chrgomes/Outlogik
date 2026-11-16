@@ -14,6 +14,7 @@ import {
 } from '../../config/site';
 import { SiteData } from '../../config/site-data';
 import { Newsletter } from './newsletter';
+import { Consent } from '../../consent/consent';
 
 @Component({
   selector: 'mk-footer',
@@ -88,9 +89,12 @@ import { Newsletter } from './newsletter';
       </div>
       <div class="mk-footer__bottom">
         <p>© {{ year }} Outlogik. All rights reserved.</p>
-        @if (legal.length) {
+        @if (legal.length || consent.needed()) {
           <ul class="mk-footer__legal">
             @for (l of legal; track l.path) { <li><a [routerLink]="l.path">{{ l.label }}</a></li> }
+            @if (consent.needed()) {
+              <li><button type="button" class="mk-footer__link-btn" (click)="consent.open()">Cookie settings</button></li>
+            }
           </ul>
         }
       </div>
@@ -99,6 +103,7 @@ import { Newsletter } from './newsletter';
 })
 export class Footer {
   protected readonly settings = inject(SiteData).settings;
+  protected readonly consent = inject(Consent);
   protected readonly services = SERVICES;
   protected readonly audiences = AUDIENCES;
   protected readonly resources = RESOURCES;

@@ -174,3 +174,12 @@ class SubscriberOut(BaseModel):
     confirmed_at: datetime | None
     unsubscribed_at: datetime | None
     source_page: str | None = None
+
+
+class LeadSource(BaseModel):
+    """Leads from one source: a campaign (utm_source), a referring site, or "Direct"."""
+
+    source: str
+    consultations: int = 0
+    messages: int = 0
+    newsletter: int = 0

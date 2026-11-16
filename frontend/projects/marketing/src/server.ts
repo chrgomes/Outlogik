@@ -5,10 +5,12 @@ import {
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
 import express from 'express';
+import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 
 import { routes } from './app/app.routes';
 import { robotsTxt, sitemapPaths, sitemapXml } from './app/seo/sitemap';
+import { addNonce, contentSecurityPolicy } from './csp';
 
 /**
  * The marketing site's Node server: serves static files, proxies /api/public/* to the API,
@@ -33,8 +35,7 @@ app.disable('x-powered-by');
 const trustProxy = process.env['TRUST_PROXY'];
 if (trustProxy) app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
 
-// Security headers for every response. The Content-Security-Policy is added with analytics and
-// consent in step 12, once the full list of allowed sources is known.
+// Security headers for every response. Pages also get a Content-Security-Policy (below).
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -121,7 +122,20 @@ app.use(
 app.use((req, res, next) => {
   angularApp
     .handle(req)
-    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
+    .then(async (response) => {
+      if (!response) return next();
+      if (!response.headers.get('content-type')?.includes('text/html')) {
+        return writeResponseToNodeResponse(response, res);
+      }
+      const nonce = randomBytes(16).toString('base64');
+      const html = addNonce(await response.text(), nonce);
+      res.status(response.status);
+      response.headers.forEach((value, name) => {
+        if (name !== 'content-length') res.setHeader(name, value);
+      });
+      res.setHeader('Content-Security-Policy', contentSecurityPolicy(nonce));
+      res.send(html);
+    })
     .catch(next);
 });
 

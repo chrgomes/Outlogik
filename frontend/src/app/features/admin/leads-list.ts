@@ -10,7 +10,8 @@ import { PageHeader } from '../../shared/page-header/page-header';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/states/states';
 import { Pager, Search, Status } from '../../shared/table/table-parts';
 import {
-  ADMIN_API, KIND_LABELS, LEAD_STATUSES, LeadCounts, LeadKind, LeadListItem, LeadStatus, SERVICE_LABELS,
+  ADMIN_API, KIND_LABELS, LEAD_STATUSES, LeadCounts, LeadKind, LeadListItem, LeadSource, LeadStatus,
+  SERVICE_LABELS,
 } from './admin-api';
 
 const PAGE_SIZE = 25;
@@ -89,6 +90,36 @@ const PAGE_SIZE = 25;
     } @else {
       <ol-loading-state label="Loading leads…" />
     }
+
+    @if (sources.hasValue() && sources.value().length) {
+      <section class="ol-section mt-4" aria-labelledby="sources-title">
+        <header>
+          <h2 id="sources-title">Where leads came from</h2>
+          <span class="text-muted small">Last 90 days · from the website’s own records, no cookies</span>
+        </header>
+        <div class="ol-table-card">
+          <table class="table ol-table">
+            <thead>
+              <tr><th>Source</th><th class="text-end">Consultations</th><th class="text-end">Messages</th><th class="text-end">Newsletter</th></tr>
+            </thead>
+            <tbody>
+              @for (s of sources.value(); track s.source) {
+                <tr>
+                  <td>{{ s.source }}</td>
+                  <td class="text-end tabular-nums">{{ s.consultations }}</td>
+                  <td class="text-end tabular-nums">{{ s.messages }}</td>
+                  <td class="text-end tabular-nums">{{ s.newsletter }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="text-muted small mt-2 mb-0">
+          The source is the campaign tag (utm_source) if the visit had one, otherwise the website
+          that linked to Outlogik. Spam and unconfirmed newsletter sign-ups aren’t counted.
+        </p>
+      </section>
+    }
   `,
 })
 export class LeadsList {
@@ -106,6 +137,7 @@ export class LeadsList {
     params: queryParams({ ...this.filters(), page: this.page(), page_size: PAGE_SIZE }),
   }));
   protected readonly counts = httpResource<LeadCounts>(() => `${ADMIN_API}/leads/counts`);
+  protected readonly sources = httpResource<LeadSource[]>(() => `${ADMIN_API}/leads/sources`);
   /** The CSV download uses the same filters as the list. */
   protected readonly exportUrl = computed(() => {
     const params = queryParams(this.filters()).toString();

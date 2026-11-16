@@ -166,3 +166,20 @@ def test_subscribers_list_filter_export_and_delete(admin, db):
 
     assert admin.delete(f"{SUBS}/{gone.id}").status_code == 204
     assert admin.get(SUBS).json()["total"] == 2
+
+
+def test_lead_sources_report(admin, db):
+    add_lead(db, attribution={"utm_source": "LinkedIn", "referrer": "https://x.example.com/"})
+    add_lead(db, kind="contact", attribution={"referrer": "https://www.google.com/search?q=x"})
+    add_lead(db, attribution={"referrer": "https://www.google.com/"})
+    add_lead(db, attribution={})
+    add_lead(db, status="spam", attribution={"utm_source": "spammy"})
+    add_subscriber(db, "a@example.com")  # attribution: page /about, no source
+    add_subscriber(db, "b@example.com", status="pending")  # not counted until confirmed
+    rows = admin.get(f"{LEADS}/sources").json()
+    assert rows == [
+        {"source": "Direct or unknown", "consultations": 1, "messages": 0, "newsletter": 1},
+        {"source": "google.com", "consultations": 1, "messages": 1, "newsletter": 0},
+        {"source": "linkedin", "consultations": 1, "messages": 0, "newsletter": 0},
+    ]
+    assert admin.get(f"{LEADS}/sources", params={"days": 0}).status_code == 422

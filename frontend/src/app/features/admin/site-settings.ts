@@ -140,6 +140,35 @@ function socialLink(network = 'linkedin', url = '') {
           </div>
         </section>
 
+        <section class="settings-card">
+          <h2 class="h6">Analytics</h2>
+          <p class="text-muted small">
+            Optional. A tool loads only for visitors who accept analytics cookies in the website's
+            banner, which appears only while at least one tool is set. Leave all empty to use none:
+            the website then sets no tracking cookies.
+          </p>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="s-ga4" class="form-label">Google Analytics 4 measurement ID</label>
+              <input id="s-ga4" class="form-control" formControlName="ga4_measurement_id" placeholder="G-XXXXXXXXXX"
+                [class.is-invalid]="bad('ga4_measurement_id')" autocomplete="off" />
+              <ol-field-error [control]="form.controls.ga4_measurement_id" />
+            </div>
+            <div class="col-md-6">
+              <label for="s-gtm" class="form-label">Google Tag Manager container ID</label>
+              <input id="s-gtm" class="form-control" formControlName="gtm_container_id" placeholder="GTM-XXXXXX"
+                [class.is-invalid]="bad('gtm_container_id')" autocomplete="off" />
+              <ol-field-error [control]="form.controls.gtm_container_id" />
+            </div>
+            <div class="col-md-6">
+              <label for="s-clarity" class="form-label">Microsoft Clarity project ID</label>
+              <input id="s-clarity" class="form-control" formControlName="clarity_project_id"
+                [class.is-invalid]="bad('clarity_project_id')" autocomplete="off" />
+              <ol-field-error [control]="form.controls.clarity_project_id" />
+            </div>
+          </div>
+        </section>
+
         <div class="save-bar">
           <span class="text-muted small">Last saved {{ settings.value().updated_at | date: 'MMM d, y, h:mm a' }}</span>
           <button type="submit" class="btn btn-primary" [disabled]="busy() || form.pristine">Save changes</button>
@@ -177,6 +206,9 @@ export class SiteSettingsPage {
     consultation_cta_label: text(40, true),
     seo_title_suffix: text(60),
     seo_default_description: text(200),
+    ga4_measurement_id: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^G-[A-Z0-9]{4,16}$/)] }),
+    gtm_container_id: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^GTM-[A-Z0-9]{4,12}$/)] }),
+    clarity_project_id: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^[a-z0-9]{6,16}$/)] }),
   });
 
   constructor() {
@@ -192,6 +224,8 @@ export class SiteSettingsPage {
     this.form.reset({
       ...d, contact_email: d.contact_email ?? '', sales_email: d.sales_email ?? '',
       phone: d.phone ?? '', address: d.address ?? '',
+      ga4_measurement_id: d.ga4_measurement_id ?? '', gtm_container_id: d.gtm_container_id ?? '',
+      clarity_project_id: d.clarity_project_id ?? '',
       social_links: d.social_links,
     });
   }
@@ -226,6 +260,8 @@ export class SiteSettingsPage {
       const saved = await this.api.saveSettings({
         ...v, contact_email: orNull(v.contact_email), sales_email: orNull(v.sales_email),
         phone: orNull(v.phone), address: orNull(v.address),
+        ga4_measurement_id: orNull(v.ga4_measurement_id), gtm_container_id: orNull(v.gtm_container_id),
+        clarity_project_id: orNull(v.clarity_project_id),
       });
       this.settings.set(saved);
       this.load(saved.data);

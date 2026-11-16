@@ -99,6 +99,9 @@ describe('Leads inbox', () => {
     fixture.detectChanges();
     await flushPending();
     http.expectOne('/api/v1/admin/leads/counts').flush({ new: 1, contacted: 0, qualified: 0, closed: 0, spam: 2 });
+    http.expectOne('/api/v1/admin/leads/sources').flush([
+      { source: 'linkedin', consultations: 2, messages: 0, newsletter: 1 },
+    ]);
     const req = http.expectOne((r) => r.url === '/api/v1/admin/leads');
     expect(req.request.params.has('status')).toBe(false);
     req.flush(page([{ ...lead, services: lead.details.services, utm_source: 'linkedin', note_count: 2 }]));
@@ -111,6 +114,8 @@ describe('Leads inbox', () => {
     expect(row.textContent).toContain('linkedin');
     expect(row.textContent).toContain('2 notes');
     expect(el.querySelector('select option[value="spam"]')!.textContent).toContain('Spam (2)');
+    const sources = el.querySelector('[aria-labelledby="sources-title"] tbody tr')!;
+    expect([...sources.querySelectorAll('td')].map((td) => td.textContent!.trim())).toEqual(['linkedin', '2', '0', '1']);
 
     const status = el.querySelector<HTMLSelectElement>('select[aria-label="Status"]')!;
     status.value = 'new';
@@ -127,6 +132,7 @@ describe('Leads inbox', () => {
     fixture.detectChanges();
     await flushPending();
     http.expectOne('/api/v1/admin/leads/counts').flush({});
+    http.expectOne('/api/v1/admin/leads/sources').flush([]);
     http.expectOne((r) => r.url === '/api/v1/admin/leads').flush(page([]));
     await flushPending();
     fixture.detectChanges();
@@ -197,6 +203,7 @@ describe('Website settings', () => {
       social_links: [{ network: 'linkedin', url: 'https://linkedin.com/company/x' }],
       consultation_cta_label: 'Book a free consultation', seo_title_suffix: ' · Outlogik',
       seo_default_description: 'Default.',
+      ga4_measurement_id: null, gtm_container_id: null, clarity_project_id: null,
     } });
     await flushPending();
     fixture.detectChanges();
@@ -210,7 +217,7 @@ describe('Website settings', () => {
     const put = http.expectOne('/api/v1/admin/site/settings');
     expect(put.request.method).toBe('PUT');
     expect(put.request.body).toMatchObject({
-      contact_email: null, phone: null,
+      contact_email: null, phone: null, ga4_measurement_id: null,
       social_links: [{ network: 'linkedin', url: 'https://linkedin.com/company/x' }],
     });
   });
@@ -234,5 +241,34 @@ describe('Portal features', () => {
     const req = http.expectOne('/api/v1/admin/site/portal-features/monthly-reports');
     expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual({ status: 'available' });
+  });
+});
+
+describe('Website settings: analytics', () => {
+  it('checks the format of analytics IDs before saving', async () => {
+    const http = setup();
+    const fixture = TestBed.createComponent(SiteSettingsPage);
+    fixture.detectChanges();
+    await flushPending();
+    http.expectOne('/api/v1/admin/site/settings').flush({ updated_at: '2026-11-15T00:00:00Z', data: {
+      company_description: 'An agency.', tagline: 'Tagline', contact_email: null, sales_email: null,
+      phone: null, address: null, social_links: [], consultation_cta_label: 'Book', seo_title_suffix: '',
+      seo_default_description: '', ga4_measurement_id: null, gtm_container_id: null, clarity_project_id: null,
+    } });
+    await flushPending();
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const ga4 = el.querySelector<HTMLInputElement>('#s-ga4')!;
+    ga4.value = 'UA-1234-5';
+    ga4.dispatchEvent(new Event('input'));
+    el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    http.expectNone('/api/v1/admin/site/settings');
+    expect(el.textContent).toContain('Check the format');
+
+    ga4.value = 'G-ABC123XYZ';
+    ga4.dispatchEvent(new Event('input'));
+    el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
+    expect(http.expectOne('/api/v1/admin/site/settings').request.body.ga4_measurement_id).toBe('G-ABC123XYZ');
   });
 });

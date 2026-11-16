@@ -127,6 +127,10 @@ export interface SiteSettings {
   consultation_cta_label: string;
   seo_title_suffix: string;
   seo_default_description: string;
+  /** Optional analytics tools, loaded only after a visitor accepts analytics cookies. */
+  ga4_measurement_id: string | null;
+  gtm_container_id: string | null;
+  clarity_project_id: string | null;
 }
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -142,6 +146,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   seo_title_suffix: ' · Outlogik',
   seo_default_description:
     'Outlogik is a digital marketing agency: SEO, social media management, content marketing and analytics, with clear reporting in your own client portal.',
+  ga4_measurement_id: null,
+  gtm_container_id: null,
+  clarity_project_id: null,
 };
 
 export const SOCIAL_LABELS: Record<string, string> = {

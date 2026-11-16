@@ -232,3 +232,18 @@ def test_create_organization_for_existing_user_needs_no_password(monkeypatch, cl
 def test_create_organization_unknown_owner_without_name_fails(monkeypatch, db):
     assert run_cli(monkeypatch, "create-organization", "--name", "X",
                    "--owner-email", "nobody@example.com") == 1
+
+
+# --- analytics settings -------------------------------------------------------------------------
+
+def test_analytics_ids_are_optional_and_validated(site_admin, new_client):
+    data = site_admin.get(SETTINGS).json()["data"]
+    assert data["ga4_measurement_id"] is None and data["clarity_project_id"] is None
+    for bad in [{"ga4_measurement_id": "UA-12345-1"}, {"gtm_container_id": "<script>"},
+                {"clarity_project_id": "Bad ID!"}]:
+        assert site_admin.put(SETTINGS, json={**data, **bad}).status_code == 422, bad
+    good = {"ga4_measurement_id": "G-ABC123XYZ", "gtm_container_id": "GTM-AB12CD",
+            "clarity_project_id": "abc123defg"}
+    assert site_admin.put(SETTINGS, json={**data, **good}).status_code == 200
+    public = new_client().get(PUBLIC).json()["settings"]
+    assert {k: public[k] for k in good} == good

@@ -74,6 +74,16 @@ export interface SiteSettings {
   consultation_cta_label: string;
   seo_title_suffix: string;
   seo_default_description: string;
+  ga4_measurement_id: string | null;
+  gtm_container_id: string | null;
+  clarity_project_id: string | null;
+}
+
+export interface LeadSource {
+  source: string;
+  consultations: number;
+  messages: number;
+  newsletter: number;
 }
 
 export interface PortalFeature {

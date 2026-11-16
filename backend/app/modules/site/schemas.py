@@ -41,6 +41,15 @@ class SiteSettingsData(BaseModel):
         "marketing and analytics, with clear reporting in your own client portal."
     )
 
+    # Analytics (all optional, off by default). Loaded on the website only for visitors who accept
+    # analytics cookies; with none set, the site uses no tracking cookies and shows no banner.
+    ga4_measurement_id: Annotated[str, StringConstraints(
+        strip_whitespace=True, pattern=r"^G-[A-Z0-9]{4,16}$")] | None = None
+    gtm_container_id: Annotated[str, StringConstraints(
+        strip_whitespace=True, pattern=r"^GTM-[A-Z0-9]{4,12}$")] | None = None
+    clarity_project_id: Annotated[str, StringConstraints(
+        strip_whitespace=True, pattern=r"^[a-z0-9]{6,16}$")] | None = None
+
     @classmethod
     def from_stored(cls, data: dict) -> "SiteSettingsData":
         """Read stored settings, ignoring keys from older versions (new writes are strict)."""

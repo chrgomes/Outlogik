@@ -4,7 +4,9 @@ import csv
 import io
 import uuid
 from collections.abc import Iterable
+from datetime import timedelta
 from typing import Annotated
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy import delete, func, or_, select
@@ -24,6 +26,7 @@ from app.modules.leads.schemas import (
     LeadNoteIn,
     LeadNoteOut,
     LeadOut,
+    LeadSource,
     LeadStatus,
     LeadUpdate,
     SubscriberOut,
@@ -74,6 +77,41 @@ def list_leads(db: DB, paging: Paging, _: SiteAdmin, kind: LeadKind | None = Non
 def lead_counts(db: DB, _: SiteAdmin) -> LeadCounts:
     return LeadCounts(**dict(db.execute(
         select(Lead.status, func.count()).group_by(Lead.status)).all()))
+
+
+DIRECT = "Direct or unknown"
+
+
+def source_of(attribution: dict) -> str:
+    """A campaign tag if there is one, otherwise the referring site, otherwise "Direct"."""
+    if attribution.get("utm_source"):
+        return attribution["utm_source"].strip().lower()
+    host = urlsplit(attribution.get("referrer") or "").hostname or ""
+    return host.removeprefix("www.") or DIRECT
+
+
+@router.get("/leads/sources", response_model=list[LeadSource],
+            summary="Where leads came from (first-party, no cookies)")
+def lead_sources(db: DB, _: SiteAdmin,
+                 days: Annotated[int, Query(ge=1, le=730)] = 90) -> list[LeadSource]:
+    since = utcnow() - timedelta(days=days)
+    rows: dict[str, LeadSource] = {}
+    leads = db.execute(select(Lead.kind, Lead.attribution).where(
+        Lead.created_at >= since, Lead.status != "spam")).all()
+    subs = db.execute(select(NewsletterSubscriber.attribution).where(
+        NewsletterSubscriber.created_at >= since,
+        NewsletterSubscriber.status == "confirmed")).all()
+    for kind, attribution in leads:
+        row = rows.setdefault(source_of(attribution), LeadSource(source=source_of(attribution)))
+        if kind == "consultation":
+            row.consultations += 1
+        else:
+            row.messages += 1
+    for (attribution,) in subs:
+        row = rows.setdefault(source_of(attribution), LeadSource(source=source_of(attribution)))
+        row.newsletter += 1
+    return sorted(rows.values(), key=lambda r: (-(r.consultations + r.messages + r.newsletter),
+                                                r.source))
 
 
 CSV_COLUMNS = [
