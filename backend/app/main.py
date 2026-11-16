@@ -39,9 +39,10 @@ def create_app() -> FastAPI:
         title=f"{settings.app_name} API",
         version="0.1.0",
         lifespan=lifespan,
-        docs_url="/api/docs",
+        # Interactive API docs in development only; production doesn't advertise its API.
+        docs_url=None if settings.app_env == "production" else "/api/docs",
         redoc_url=None,
-        openapi_url="/api/openapi.json",
+        openapi_url=None if settings.app_env == "production" else "/api/openapi.json",
     )
     install_error_handlers(app)
     install_csrf(app)

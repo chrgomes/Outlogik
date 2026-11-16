@@ -20,6 +20,12 @@ import { addNonce, contentSecurityPolicy } from './csp';
  *   API_INTERNAL_URL   where the API is reachable from this server (default http://localhost:8000)
  *   SITE_NOINDEX       set to "true" on staging sites: robots.txt blocks everything and every
  *                      response says noindex, so staging never appears in search results.
+ *   CLIENT_IP_HEADER   a header the hosting platform sets to the visitor's IP, e.g.
+ *                      "do-connecting-ip" on DigitalOcean App Platform.
+ *   SITE_PROXY_SECRET  shared with the API: forwarded form posts carry the visitor's IP with it,
+ *                      so the API's rate limits see real visitors (same value as the API's).
+ *   CANONICAL_HOST     the site's main host name (e.g. outlogik.com): requests for any other
+ *                      host, such as www.outlogik.com, are redirected to it permanently.
  *   TRUST_PROXY        set when a reverse proxy (e.g. Caddy or nginx) sits in front of this
  *                      server, so visitors' real IP addresses reach the API's rate limits. Takes
  *                      Express's "trust proxy" values: a hop count ("1"), or addresses.
@@ -28,6 +34,16 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const API_INTERNAL_URL = (process.env['API_INTERNAL_URL'] ?? 'http://localhost:8000').replace(/\/$/, '');
 
 const SITE_URL = OL_SITE_URL.replace(/\/$/, '');
+const CLIENT_IP_HEADER = process.env['CLIENT_IP_HEADER']?.toLowerCase();
+const SITE_PROXY_SECRET = process.env['SITE_PROXY_SECRET'];
+const CANONICAL_HOST = process.env['CANONICAL_HOST']?.toLowerCase();
+
+/** The visitor's IP: the platform's header if configured, otherwise Express's view. */
+function visitorIp(req: express.Request): string {
+  const header = CLIENT_IP_HEADER ? req.headers[CLIENT_IP_HEADER] : undefined;
+  const value = Array.isArray(header) ? header[0] : header;
+  return (value?.split(',')[0].trim() || req.ip || '').slice(0, 64);
+}
 const NOINDEX = process.env['SITE_NOINDEX'] === 'true';
 
 const app = express();
@@ -42,9 +58,26 @@ app.use((_req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+  // HTTPS only from now on (browsers ignore this over plain HTTP, e.g. local development).
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000');
   if (NOINDEX) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   next();
 });
+
+/** Health check for the hosting platform (answered for any host name, never redirected). */
+app.get('/healthz', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.type('text/plain').send('ok');
+});
+
+/** One address for the site: www.outlogik.com (or the platform's own address) → outlogik.com. */
+if (CANONICAL_HOST) {
+  app.use((req, res, next) => {
+    const host = (req.headers.host ?? '').split(':')[0].toLowerCase();
+    if (!host || host === CANONICAL_HOST) return next();
+    res.redirect(301, `https://${CANONICAL_HOST}${req.originalUrl}`);
+  });
+}
 
 /** Search engines: robots.txt and a sitemap built from the page routes (spec §13). */
 app.get('/robots.txt', (_req, res) => {
@@ -102,7 +135,11 @@ app.all('/api/public/{*path}', express.raw({ type: 'application/json', limit: '3
     return;
   }
   const upstream = API_INTERNAL_URL + req.originalUrl.replace('/api/public/', '/api/v1/public/');
-  const headers: Record<string, string> = { accept: 'application/json', 'x-forwarded-for': req.ip ?? '' };
+  const headers: Record<string, string> = { accept: 'application/json', 'x-forwarded-for': visitorIp(req) };
+  if (SITE_PROXY_SECRET) {
+    headers['x-site-proxy-key'] = SITE_PROXY_SECRET;
+    headers['x-site-client-ip'] = visitorIp(req);
+  }
   for (const name of ['origin', 'user-agent', 'content-type']) {
     const value = req.headers[name];
     if (typeof value === 'string') headers[name] = value;

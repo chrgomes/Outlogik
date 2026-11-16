@@ -1,0 +1,109 @@
+# DigitalOcean App Platform: the Outlogik client portal and its API on app.outlogik.com.
+# Region: Toronto. See docs/DEPLOYMENT.md before creating it:
+#   doctl apps create --spec .do/production/app.yaml
+# Values marked CHANGE_ME are secrets: set them here before creating the app, or in the control
+# panel afterwards (App Platform stores secrets encrypted).
+name: outlogik-app
+region: tor
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+domains:
+  - domain: app.outlogik.com
+    type: PRIMARY
+    zone: outlogik.com
+
+# /api goes to the API (keeping the /api prefix); everything else is the Angular app. One address
+# for both is what the sign-in cookies require.
+ingress:
+  rules:
+    - match:
+        path:
+          prefix: /api
+      component:
+        name: api
+        preserve_path_prefix: true
+    - match:
+        path:
+          prefix: /
+      component:
+        name: web
+
+services:
+  - name: api
+    github:
+      repo: chrgomes/Outlogik
+      branch: main
+      deploy_on_push: false   # production deploys are started by hand, after staging is checked
+    source_dir: backend
+    dockerfile_path: backend/Dockerfile
+    http_port: 8080
+    instance_size_slug: apps-s-1vcpu-1gb
+    instance_count: 1
+    health_check:
+      http_path: /api/v1/health
+      initial_delay_seconds: 10
+      period_seconds: 15
+    envs:
+      - { key: APP_ENV, value: production }
+      - { key: DATABASE_URL, scope: RUN_TIME, value: "${outlogik-db.DATABASE_URL}" }
+      - { key: REDIS_URL, scope: RUN_TIME, value: "${outlogik-cache.DATABASE_URL}" }
+      - { key: FRONTEND_URL, value: "https://app.outlogik.com" }
+      - { key: SITE_URL, value: "https://outlogik.com" }
+      - { key: COOKIE_SECURE, value: "true" }
+      - { key: SIGNUP_MODE, value: invite_only }
+      - { key: CLIENT_IP_HEADER, value: do-connecting-ip }
+      - { key: SITE_PROXY_SECRET, scope: RUN_TIME, type: SECRET, value: CHANGE_ME }
+      # Email through Resend (port 2587: DigitalOcean blocks the usual SMTP ports)
+      - { key: EMAIL_BACKEND, value: smtp }
+      - { key: SMTP_HOST, value: smtp.resend.com }
+      - { key: SMTP_PORT, value: "2587" }
+      - { key: SMTP_STARTTLS, value: "true" }
+      - { key: SMTP_USERNAME, value: resend }
+      - { key: SMTP_PASSWORD, scope: RUN_TIME, type: SECRET, value: CHANGE_ME }
+      - { key: EMAIL_FROM, value: "Outlogik <no-reply@outlogik.com>" }
+      # Who is emailed about new leads (Google Workspace aliases), comma-separated
+      - { key: LEAD_NOTIFICATION_EMAILS, value: "" }
+
+  - name: web
+    github:
+      repo: chrgomes/Outlogik
+      branch: main
+      deploy_on_push: false
+    source_dir: frontend
+    dockerfile_path: frontend/Dockerfile.app
+    http_port: 8080
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+    health_check:
+      http_path: /index.html
+
+jobs:
+  # Database changes are applied before each new version starts.
+  - name: migrate
+    kind: PRE_DEPLOY
+    github:
+      repo: chrgomes/Outlogik
+      branch: main
+      deploy_on_push: false
+    source_dir: backend
+    dockerfile_path: backend/Dockerfile
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    run_command: alembic upgrade head
+    envs:
+      - { key: DATABASE_URL, scope: RUN_TIME, value: "${outlogik-db.DATABASE_URL}" }
+
+# The managed database clusters, created first in the control panel (Toronto). See
+# docs/DEPLOYMENT.md.
+databases:
+  - name: outlogik-db
+    engine: PG
+    version: "16"
+    production: true
+    cluster_name: outlogik-db
+    db_name: outlogik
+    db_user: outlogik
+  - name: outlogik-cache
+    engine: VALKEY
+    production: true
+    cluster_name: outlogik-cache

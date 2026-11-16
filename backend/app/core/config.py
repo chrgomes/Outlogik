@@ -1,6 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,6 +18,14 @@ class Settings(BaseSettings):
     # (plus any extra origins listed, comma-separated, e.g. a staging site).
     site_url: str = "http://localhost:4300"
     public_form_extra_origins: str = ""
+
+    # Real visitor IP addresses (for rate limits and audit entries).
+    # - CLIENT_IP_HEADER: a header the hosting platform sets to the visitor's IP and that visitors
+    #   can't forge, e.g. "do-connecting-ip" on DigitalOcean App Platform. Unset in development.
+    # - SITE_PROXY_SECRET: shared with the website's server, which forwards form posts and vouches
+    #   for the visitor's IP with it. Requests without the secret can't set that IP.
+    client_ip_header: str | None = None
+    site_proxy_secret: str | None = None
 
     # Cookies
     session_cookie_name: str = "outlogik_session"
@@ -63,6 +72,16 @@ class Settings(BaseSettings):
     smtp_starttls: bool = False
     email_from: str = "Outlogik <no-reply@outlogik.local>"
 
+
+    @field_validator("database_url")
+    @classmethod
+    def _use_psycopg_driver(cls, url: str) -> str:
+        """Hosting platforms give "postgresql://" or "postgres://" URLs; SQLAlchemy needs the
+        driver named (psycopg 3)."""
+        for prefix in ("postgresql://", "postgres://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg://" + url[len(prefix):]
+        return url
 
     @property
     def public_form_origins(self) -> set[str]:

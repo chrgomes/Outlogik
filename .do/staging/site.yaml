@@ -1,0 +1,35 @@
+# STAGING. DigitalOcean App Platform: the Outlogik website on outlogik.com .
+# Region: Toronto. See docs/DEPLOYMENT.md before creating it:
+#   doctl apps create --spec .do/staging/site.yaml
+name: outlogik-site-staging
+region: tor
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+domains:
+  - domain: staging.outlogik.com
+    type: PRIMARY
+    zone: outlogik.com
+
+services:
+  - name: site
+    github:
+      repo: chrgomes/Outlogik
+      branch: main
+      deploy_on_push: true    # staging follows main automatically
+    source_dir: frontend
+    dockerfile_path: frontend/Dockerfile.marketing
+    http_port: 8080
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+    health_check:
+      http_path: /healthz
+    envs:
+      - { key: OL_SITE_URL, scope: BUILD_TIME, value: "https://staging.outlogik.com" }
+      - { key: OL_APP_URL, scope: BUILD_TIME, value: "https://app.staging.outlogik.com" }
+      - { key: SITE_NOINDEX, value: "true" }   # keep staging out of search results
+      - { key: CANONICAL_HOST, value: staging.outlogik.com }
+      # The website reads settings and sends forms through the API's public address.
+      - { key: API_INTERNAL_URL, value: "https://app.staging.outlogik.com" }
+      - { key: CLIENT_IP_HEADER, value: do-connecting-ip }
+      - { key: SITE_PROXY_SECRET, scope: RUN_TIME, type: SECRET, value: CHANGE_ME }

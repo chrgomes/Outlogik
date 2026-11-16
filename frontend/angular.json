@@ -138,7 +138,9 @@
             "outputMode": "server",
             "security": {
               "allowedHosts": [
-                "localhost"
+                "localhost",
+                "outlogik.com",
+                "staging.outlogik.com"
               ]
             },
             "ssr": {
