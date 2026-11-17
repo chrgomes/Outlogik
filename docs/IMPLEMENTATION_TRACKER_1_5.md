@@ -587,5 +587,22 @@ Resend (emails the system sends). **Launch guide: [`DEPLOYMENT.md`](DEPLOYMENT.m
   - an email domain that can't receive email: a DNS lookup of MX records (or the domain's own address), with null MX honoured and results cached
   - A failed lookup flags nothing. If DNS itself looks broken (gmail.com doesn't resolve), the check is skipped and re-checked every 10 minutes. This container's DNS is exactly like that, which is how the safeguard was found to be needed.
   - The newsletter ignores throwaway and undeliverable addresses.
-- **Not added:** the invisible proof-of-work check ("for now").
+- The invisible proof-of-work check was added afterwards (next section).
 - **Tests:** backend 259 (+14), app 82 (+1), website 89. Checked end to end through the website's server: a repeat became a note with one confirmation email; a throwaway address and a link-stuffed message went to Spam with their reasons.
+
+## Invisible proof-of-work check (2026-11-17)
+
+- **What it is:** a built-in check that a person's browser is sending the form. There's no third-party service, no cookies and no CAPTCHA. It's the same idea as the open ALTCHA scheme, implemented in Outlogik.
+- **How it works:**
+  - When a visitor first focuses a field, the website fetches a signed, 10-minute challenge from `GET /api/v1/public/challenge`. That endpoint isn't origin-checked, but it is rate-limited (60 per IP address per 10 minutes) and never cached.
+  - The browser solves it with its built-in SHA-256, in batches of 1,000, pausing between batches so the page stays responsive.
+  - The solution goes with the form. The API checks the signature, expiry and hash, and accepts each challenge once.
+  - The consultation, contact and newsletter forms all use it.
+- **Key:** derived from `SITE_PROXY_SECRET`, which both apps already have, so there's nothing new to configure. `FORM_CHALLENGE_SECRET` can override it. The API refuses to run the check in production without one of them.
+- **Failures:** missing, wrong, forged, expired or reused proofs are stored as spam (`no_proof`, `bad_proof`) with explanations in the admin area, and are never emailed. If fetching a challenge fails, the form tries once more, then is still sent (it may then land in Spam for review rather than be lost).
+- **Measured in a real browser:**
+  - solving averaged 0.2 seconds (0.01–0.5 s) on this machine
+  - with the work done while typing, Send to thank-you took 0.07 seconds
+  - a direct POST without the check was stored as spam
+  - no CSP errors
+- **Tests:** backend 268 (+9: valid, missing, wrong number, forged, expired, reused, newsletter, no secret in production, challenge endpoint), website 91 (+2: the solver; work starts on focus), app 82.

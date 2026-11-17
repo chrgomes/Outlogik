@@ -13,6 +13,8 @@ os.environ["FRONTEND_URL"] = "https://app.test"
 os.environ["SIGNUP_MODE"] = "open"
 # No DNS lookups in tests (example.com accepts no email); tests of the check switch it on.
 os.environ["EMAIL_DOMAIN_CHECK"] = "false"
+# Form tests don't solve proof-of-work puzzles; tests of the check switch it on.
+os.environ["FORM_CHALLENGE_REQUIRED"] = "false"
 
 import re  # noqa: E402
 

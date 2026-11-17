@@ -82,6 +82,17 @@ own server, so the browser never talks to the API host.
   - a minimum time the form must be open (`FORM_MIN_SECONDS`, 3 seconds)
   - Spam is stored with status `spam` for review, never emailed, and the sender sees the usual
     success message.
+- **Invisible proof of work** (`backend/app/modules/leads/challenge.py`), built in, with no
+  third-party service and no cookies (the same idea as the open ALTCHA scheme):
+  - When a visitor starts on a form, the browser fetches a signed, expiring challenge
+    (`GET /api/v1/public/challenge`).
+  - It finds the matching number in the background: about 50,000 SHA-256 hashes at most,
+    roughly 0.2 seconds on average on a desktop.
+  - The form is sent with the solution. The API checks the HMAC signature (a key derived from
+    `SITE_PROXY_SECRET`, or `FORM_CHALLENGE_SECRET` if set), the expiry (10 minutes) and the
+    hash, and accepts each challenge once (Redis).
+  - Missing, invalid, expired or reused proofs go to Spam ("no_proof" or "bad_proof").
+  - The API refuses to issue challenges in production without a secret.
 - **Content and email checks** (`backend/app/modules/leads/spam.py`), which flag as spam:
   - more than 2 links, HTML or forum link code in the message, or a link in the name
   - an address from a throwaway email service

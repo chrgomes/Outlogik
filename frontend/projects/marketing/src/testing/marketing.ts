@@ -60,3 +60,16 @@ export async function visit(url: string, features?: object[]): Promise<HTMLEleme
 /** Phrases the copy must never contain (spec §19: no guarantees, no invented proof). */
 export const FORBIDDEN_CLAIMS =
   /we guarantee|guaranteed|#1|number one|top of google|testimonial|case stud|trusted by|% increase/;
+
+/** A tiny proof-of-work challenge (the answer is 7), for tests that send a form. */
+export const TEST_CHALLENGE = {
+  algorithm: 'SHA-256', salt: 'test-salt?expires=9999999999', max_number: 10, signature: 'sig',
+  challenge: 'b2dbdfed6beab78907603daf70bc361044e680308f81282db32c88dbd4dab5f5',
+};
+
+/** Answers the form's challenge request and waits for the browser to solve it. */
+export async function answerChallenge(): Promise<void> {
+  await settle();
+  TestBed.inject(HttpTestingController).expectOne('/api/public/challenge').flush(TEST_CHALLENGE);
+  for (let i = 0; i < 10; i++) await settle(); // hashing is asynchronous
+}

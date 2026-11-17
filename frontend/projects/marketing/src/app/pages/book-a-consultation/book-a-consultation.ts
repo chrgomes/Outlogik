@@ -48,6 +48,8 @@ export class BookAConsultation {
   protected readonly sentTo = signal<string | null>(null);
   private readonly done = viewChild<ElementRef<HTMLElement>>('done');
   private openedAt = 0;
+  /** The invisible browser check: started when the visitor first focuses a field. */
+  protected readonly proof = this.api.proof();
 
   constructor() {
     pageDescription('Book a free, no-obligation consultation with Outlogik about SEO, social media, content or analytics for your business.');
@@ -75,7 +77,7 @@ export class BookAConsultation {
       name: v.name, email: v.email, company: v.company, website: v.website, phone: v.phone,
       services: SERVICE_OPTIONS.filter((_, i) => v.services[i]).map((o) => o.value),
       budget: v.budget || null, message: v.message, preferred_contact: v.preferred_contact,
-    }, this.openedAt, v.nickname);
+    }, this.openedAt, v.nickname, this.proof);
     this.sending.set(false);
     if (result.ok) {
       this.sentTo.set(v.email);

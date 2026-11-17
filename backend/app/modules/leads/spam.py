@@ -45,6 +45,9 @@ REASONS = {
     "link_in_name": "The name contains a link.",
     "disposable_email": "The email address is from a throwaway email service.",
     "email_domain": "The email address's domain can't receive email.",
+    "no_proof": "The form was sent without the browser check that people's browsers do "
+                "automatically.",
+    "bad_proof": "The browser check was invalid, expired or already used.",
 }
 
 

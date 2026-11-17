@@ -2,14 +2,14 @@
 session cookie); instead every request must come from the website's origin, passes spam checks,
 and is rate-limited by IP address and by email address."""
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, Response, status
 
 from app.core.config import get_settings
 from app.core.errors import AppError, Forbidden
 from app.core.rate_limit import hit
 from app.core.request import client_ip, user_agent
 from app.modules.auth.deps import DB
-from app.modules.leads import service
+from app.modules.leads import challenge, service
 from app.modules.leads.schemas import ConsultationIn, ContactIn, NewsletterIn, Received, TokenIn
 
 
@@ -20,6 +20,17 @@ def require_site_origin(request: Request) -> None:
 
 
 router = APIRouter(prefix="/public", tags=["public"], dependencies=[Depends(require_site_origin)])
+# The challenge is fetched with a plain GET (browsers send no Origin header on same-origin GETs),
+# so it isn't origin-checked; issuing one is cheap and reveals nothing.
+open_router = APIRouter(prefix="/public", tags=["public"])
+
+
+@open_router.get("/challenge", response_model=challenge.Challenge,
+                 summary="A proof-of-work challenge for the website's forms")
+def get_challenge(request: Request, response: Response) -> challenge.Challenge:
+    hit("public-challenge-ip", client_ip(request) or "unknown", (60, 600))
+    response.headers["Cache-Control"] = "no-store"
+    return challenge.create()
 
 
 def _limit(request: Request, email: str | None = None) -> None:

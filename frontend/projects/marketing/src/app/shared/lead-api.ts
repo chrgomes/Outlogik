@@ -4,13 +4,14 @@ import { firstValueFrom } from 'rxjs';
 
 import { Consent } from '../consent/consent';
 import { VisitAttribution } from './attribution';
+import { FormProof } from './proof-of-work';
 
 export type SendResult = { ok: true } | { ok: false; message: string; fields: string[] };
 
 /**
  * Sends the website's forms to the API (through this site's /api/public proxy). Every form
- * includes the visit's attribution and two spam checks: a hidden field people leave empty, and
- * how long the form was open.
+ * includes the visit's attribution and three spam checks: a hidden field people leave empty,
+ * how long the form was open, and the browser's proof of work.
  */
 @Injectable({ providedIn: 'root' })
 export class LeadApi {
@@ -18,13 +19,20 @@ export class LeadApi {
   private readonly attribution = inject(VisitAttribution);
   private readonly consent = inject(Consent);
 
-  async send(path: string, body: object, openedAt: number, honeypot = ''): Promise<SendResult> {
+  /** A proof-of-work check for one form; call its prepare() when the visitor starts on it. */
+  proof(): FormProof {
+    return new FormProof(this.http);
+  }
+
+  async send(path: string, body: object, openedAt: number, honeypot = '', proof?: FormProof): Promise<SendResult> {
     try {
+      const pow = await (proof ?? this.proof()).take();
       await firstValueFrom(this.http.post(`/api/public/${path}`, {
         ...body,
         nickname: honeypot,
         elapsed_ms: Math.max(0, Math.round(performance.now() - openedAt)),
         attribution: this.attribution.forForm(),
+        pow,
       }));
       this.reportConversion(path);
       return { ok: true };

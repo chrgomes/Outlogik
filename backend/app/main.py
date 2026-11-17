@@ -13,6 +13,7 @@ from app.modules.auth.router import router as auth_router
 from app.modules.clients.router import router as clients_router
 from app.modules.dashboard.router import router as dashboard_router
 from app.modules.leads.admin import router as leads_admin_router
+from app.modules.leads.router import open_router as leads_open_router
 from app.modules.leads.router import router as leads_router
 from app.modules.organizations.router import router as organizations_router
 from app.modules.rbac.router import router as rbac_router
@@ -58,6 +59,7 @@ def create_app() -> FastAPI:
     api.include_router(dashboard_router)
     api.include_router(site_public_router)
     api.include_router(leads_router)
+    api.include_router(leads_open_router)
     api.include_router(leads_admin_router)
     api.include_router(site_admin_router)
     app.include_router(api)

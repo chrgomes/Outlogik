@@ -5,7 +5,7 @@ import { Meta } from '@angular/platform-browser';
 import { Newsletter } from '../layout/footer/newsletter';
 import { NEWSLETTER_CONSENT_TEXT, SERVICE_OPTIONS } from '../config/forms';
 import { VisitAttribution } from '../shared/attribution';
-import { settle, setupMarketing, visit } from '../../testing/marketing';
+import { answerChallenge, settle, setupMarketing, visit } from '../../testing/marketing';
 
 function type(el: HTMLElement, selector: string, value: string) {
   const input = el.querySelector<HTMLInputElement | HTMLTextAreaElement>(selector)!;
@@ -54,6 +54,7 @@ describe('Book a consultation', () => {
     el.querySelector('#c-budget')!.dispatchEvent(new Event('change'));
     tick(el, 'fieldset label:nth-of-type(1) input');
     await submit(el);
+    await answerChallenge();
 
     const req = http().expectOne('/api/public/leads/consultation');
     expect(req.request.method).toBe('POST');
@@ -63,6 +64,8 @@ describe('Book a consultation', () => {
       attribution: { utm_source: 'x', landing_page: '/?utm_source=x', page: '/' },
     });
     expect(typeof req.request.body.elapsed_ms).toBe('number');
+    // The invisible browser check: the solved challenge goes with the form.
+    expect(req.request.body.pow).toMatchObject({ number: 7, signature: 'sig', salt: 'test-salt?expires=9999999999' });
     req.flush({ received: true }, { status: 201, statusText: 'Created' });
     await settle();
     TestBed.tick();
@@ -76,6 +79,7 @@ describe('Book a consultation', () => {
     type(el, '#c-name', 'Casey');
     type(el, '#c-email', 'casey@example.com');
     await submit(el);
+    await answerChallenge();
     http().expectOne('/api/public/leads/consultation').flush(
       { error: { code: 'rate_limited', message: 'x', details: null } }, { status: 429, statusText: 'Too Many' });
     await settle();
@@ -105,6 +109,7 @@ describe('Contact', () => {
     el.querySelector<HTMLSelectElement>('#m-topic')!.value = 'press';
     el.querySelector('#m-topic')!.dispatchEvent(new Event('change'));
     await submit(el);
+    await answerChallenge();
     const req = http().expectOne('/api/public/leads/contact');
     expect(req.request.body).toMatchObject({ name: 'Pat', topic: 'press', message: 'Hello' });
     req.flush({ received: true });
@@ -138,8 +143,9 @@ describe('Newsletter sign-up', () => {
     type(el, '#nl-email', 'reader@example.com');
     tick(el, 'input[type="checkbox"]');
     el.querySelector<HTMLButtonElement>('button')!.click();
+    await answerChallenge();
     const req = http().expectOne('/api/public/newsletter');
-    expect(req.request.body).toMatchObject({ email: 'reader@example.com', consent: true, nickname: '' });
+    expect(req.request.body).toMatchObject({ email: 'reader@example.com', consent: true, nickname: '', pow: { number: 7 } });
     req.flush({ received: true }, { status: 202, statusText: 'Accepted' });
     await settle();
     fixture.detectChanges();
@@ -195,5 +201,21 @@ describe('Visit attribution', () => {
     });
     expect(document.cookie).toBe('');
     history.replaceState(null, '', '/');
+  });
+});
+
+describe('Invisible browser check', () => {
+  it('finds the number behind a challenge', async () => {
+    const { solve } = await import('../shared/proof-of-work');
+    const { TEST_CHALLENGE } = await import('../../testing/marketing');
+    expect(await solve(TEST_CHALLENGE)).toBe(7);
+    expect(await solve({ ...TEST_CHALLENGE, challenge: '0'.repeat(64) })).toBeNull();
+  });
+
+  it('starts work when the visitor focuses the form, before they press Send', async () => {
+    const el = await visit('/contact');
+    el.querySelector<HTMLInputElement>('#m-name')!.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    await settle();
+    http().expectOne('/api/public/challenge').flush({ algorithm: 'SHA-256', challenge: 'x', salt: 's?expires=9999999999', max_number: 1, signature: 'sig' });
   });
 });

@@ -10,7 +10,7 @@ from app.core.config import get_settings
 from app.core.email import send_email
 from app.core.models import utcnow
 from app.core.security import generate_token, hash_token
-from app.modules.leads import spam
+from app.modules.leads import challenge, spam
 from app.modules.leads.models import Lead, LeadNote, NewsletterSubscriber
 from app.modules.leads.schemas import ConsultationIn, ContactIn, NewsletterIn, SpamChecks
 
@@ -50,6 +50,8 @@ def spam_reason(body: SpamChecks) -> str | None:
         return "honeypot"
     if body.elapsed_ms < get_settings().form_min_seconds * 1000:
         return "too_fast"
+    if get_settings().form_challenge_required:
+        return challenge.problem(body.pow)
     return None
 
 

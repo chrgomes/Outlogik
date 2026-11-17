@@ -25,7 +25,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         Almost done. Check your inbox and click the link to confirm your subscription.
       </p>
     } @else {
-      <form class="mk-newsletter" (submit)="submit($event)" novalidate aria-labelledby="newsletter-title">
+      <form class="mk-newsletter" (submit)="submit($event)" (focusin)="proof.prepare()" novalidate aria-labelledby="newsletter-title">
         <p>Practical marketing tips and news from Outlogik, now and then.</p>
         <div class="mk-newsletter__row">
           <label for="nl-email" class="visually-hidden">Email address</label>
@@ -66,6 +66,7 @@ export class Newsletter {
   protected readonly error = signal<string | null>(null);
   protected nickname = '';
   private openedAt = 0;
+  protected readonly proof = this.api.proof();
 
   constructor() {
     afterNextRender(() => (this.openedAt = performance.now()));
@@ -83,7 +84,7 @@ export class Newsletter {
     this.error.set(null);
     this.sending.set(true);
     const result = await this.api.send('newsletter', { email: this.email().trim(), consent: true },
-      this.openedAt, this.nickname);
+      this.openedAt, this.nickname, this.proof);
     this.sending.set(false);
     if (result.ok) this.sent.set(true);
     else this.error.set(result.message);

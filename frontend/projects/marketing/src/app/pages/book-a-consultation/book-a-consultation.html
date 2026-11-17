@@ -13,7 +13,7 @@
           <p><a routerLink="/how-we-work" class="mk-arrow-link">What happens next <ol-icon name="arrow-right" /></a></p>
         </div>
       } @else {
-        <form [formGroup]="form" (ngSubmit)="submit()" novalidate aria-labelledby="form-title">
+        <form [formGroup]="form" (ngSubmit)="submit()" (focusin)="proof.prepare()" novalidate aria-labelledby="form-title">
           <h2 class="mk-h3" id="form-title">Your details</h2>
           <p class="mk-form-note">Fields marked <span aria-hidden="true">*</span><span class="visually-hidden">with an asterisk</span> are required.</p>
 

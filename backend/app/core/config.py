@@ -62,6 +62,13 @@ class Settings(BaseSettings):
     # The same email sending the same form again within this window adds a note to the earlier
     # lead instead of creating a new one (and emails nobody again).
     duplicate_window_hours: int = 24
+    # Invisible proof-of-work on website forms (app/modules/leads/challenge.py). Its key is
+    # derived from FORM_CHALLENGE_SECRET, or else SITE_PROXY_SECRET. About max_number / 2
+    # SHA-256 hashes per form for the visitor's browser.
+    form_challenge_required: bool = True
+    form_challenge_secret: str | None = None
+    form_challenge_max_number: int = 50_000
+    form_challenge_minutes: int = 10
     # Flag form submissions whose email domain can't receive email (a DNS lookup, cached).
     email_domain_check: bool = True
     newsletter_confirm_token_hours: int = 72

@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.modules.auth.schemas import Email
+from app.modules.leads.challenge import Solution
 
 # Kept in step with the website (projects/marketing/src/app/config/forms.ts).
 SERVICE_CHOICES = Literal[
@@ -41,10 +42,11 @@ class Attribution(BaseModel):
 
 class SpamChecks(BaseModel):
     """Invisible checks sent with every form: a honeypot field people never see (so leave
-    empty), and how long the form was open before it was sent."""
+    empty), how long the form was open before it was sent, and the browser's proof of work."""
 
     nickname: Annotated[str, StringConstraints(max_length=200)] = ""
     elapsed_ms: int = Field(default=0, ge=0)
+    pow: Solution | None = None
 
 
 class ConsultationIn(SpamChecks):

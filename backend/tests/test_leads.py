@@ -387,3 +387,87 @@ def test_dns_check_reads_mail_records(monkeypatch):
 def test_newsletter_ignores_throwaway_addresses(site, db):
     assert site.post(NEWS, json=news(email="reader@mailinator.com")).status_code == 202
     assert db.scalar(select(NewsletterSubscriber)) is None and email.outbox == []
+
+
+# --- invisible proof of work ---------------------------------------------------------------------
+
+def solve(ch: dict) -> dict:
+    import hashlib
+
+    number = next(n for n in range(ch["max_number"] + 1)
+                  if hashlib.sha256(f"{ch['salt']}{n}".encode()).hexdigest() == ch["challenge"])
+    return {"algorithm": ch["algorithm"], "challenge": ch["challenge"], "salt": ch["salt"],
+            "number": number, "signature": ch["signature"]}
+
+
+@pytest.fixture
+def pow_on(monkeypatch):
+    s = get_settings()
+    monkeypatch.setattr(s, "form_challenge_required", True)
+    monkeypatch.setattr(s, "form_challenge_max_number", 2000)  # quick to solve in tests
+
+
+def test_challenge_needs_no_origin_and_is_never_cached(pow_on):
+    with TestClient(app, base_url="https://testserver") as c:
+        res = c.get("/api/v1/public/challenge")
+    assert res.status_code == 200 and res.headers["cache-control"] == "no-store"
+    ch = res.json()
+    assert ch["algorithm"] == "SHA-256" and ch["max_number"] == 2000
+    assert "?expires=" in ch["salt"] and len(ch["signature"]) == 64
+
+
+def test_forms_with_a_solved_challenge_are_accepted(site, db, pow_on, notify):
+    proof = solve(site.get("/api/v1/public/challenge").json())
+    assert site.post(CONTACT, json=contact(pow=proof)).status_code == 201
+    assert db.scalar(select(Lead)).status == "new"
+
+
+@pytest.mark.parametrize("tamper", ["missing", "wrong_number", "forged_signature", "expired",
+                                    "reused"])
+def test_missing_wrong_or_reused_proof_is_spam(site, db, pow_on, notify, monkeypatch, tamper):
+    import hashlib
+    import time
+    from types import SimpleNamespace
+
+    from app.modules.leads import challenge
+
+    proof = solve(site.get("/api/v1/public/challenge").json())
+    body = contact(pow=proof)
+    if tamper == "missing":
+        body.pop("pow")
+    elif tamper == "wrong_number":
+        body["pow"] = {**proof, "number": proof["number"] + 1}
+    elif tamper == "forged_signature":  # a made-up challenge the server never signed
+        salt = "abc?expires=9999999999"
+        body["pow"] = {**proof, "salt": salt, "number": 1,
+                       "challenge": hashlib.sha256(f"{salt}1".encode()).hexdigest()}
+    elif tamper == "expired":  # sent 11 minutes later
+        later = time.time() + 11 * 60
+        monkeypatch.setattr(challenge, "time", SimpleNamespace(time=lambda: later))
+    elif tamper == "reused":
+        site.post(CONTACT, json=contact(email="first@example.com", pow=proof))
+    assert site.post(CONTACT, json=body).status_code == 201  # looks the same to a bot
+    lead = db.scalar(select(Lead).where(Lead.email == "pat@example.com"))
+    assert lead.status == "spam"
+    assert lead.spam_reason == ("no_proof" if tamper == "missing" else "bad_proof")
+    assert all(m.to != "sales@outlogik.example.com" for m in email.outbox
+               if "pat@example.com" in m.body)
+
+
+def test_newsletter_needs_the_proof_too(site, db, pow_on):
+    assert site.post(NEWS, json=news()).status_code == 202
+    assert db.scalar(select(NewsletterSubscriber)) is None
+    proof = solve(site.get("/api/v1/public/challenge").json())
+    assert site.post(NEWS, json=news(pow=proof)).status_code == 202
+    assert db.scalar(select(NewsletterSubscriber)).status == "pending"
+
+
+def test_production_refuses_to_run_without_a_secret(monkeypatch):
+    from app.modules.leads import challenge
+
+    s = get_settings()
+    monkeypatch.setattr(s, "app_env", "production")
+    monkeypatch.setattr(s, "site_proxy_secret", None)
+    monkeypatch.setattr(s, "form_challenge_secret", None)
+    with pytest.raises(RuntimeError):
+        challenge.create()

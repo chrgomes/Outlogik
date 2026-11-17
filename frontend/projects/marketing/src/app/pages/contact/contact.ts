@@ -42,6 +42,8 @@ export class Contact {
   protected readonly sentTo = signal<string | null>(null);
   private readonly done = viewChild<ElementRef<HTMLElement>>('done');
   private openedAt = 0;
+  /** The invisible browser check: started when the visitor first focuses a field. */
+  protected readonly proof = this.api.proof();
 
   constructor() {
     pageDescription('Contact Outlogik: questions about our services, existing client support, partnerships and press.');
@@ -62,7 +64,7 @@ export class Contact {
     }
     const { nickname, ...body } = this.form.getRawValue();
     this.sending.set(true);
-    const result = await this.api.send('leads/contact', body, this.openedAt, nickname);
+    const result = await this.api.send('leads/contact', body, this.openedAt, nickname, this.proof);
     this.sending.set(false);
     if (result.ok) {
       this.sentTo.set(body.email);
