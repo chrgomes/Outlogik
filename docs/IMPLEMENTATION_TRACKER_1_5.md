@@ -626,3 +626,21 @@ Resend (emails the system sends). **Launch guide: [`DEPLOYMENT.md`](DEPLOYMENT.m
   - in a browser against the portal container, sign-in with the check took 0.18 seconds with no CSP errors
   - a direct API sign-in without the check was refused
 - **Tests:** backend 271 (+3: lockout after 5 failures, success clears it, IP lockout, bot check on sign-in and forgot password, single use), app 82 (sign-in and invitation tests now answer the check), website 91.
+
+## AI crawlers in robots.txt (2026-11-17)
+
+- **Decision:** block AI *training* crawlers; allow search engines and AI *search* tools.
+- **Blocked** (`Disallow: /`):
+  - GPTBot (OpenAI)
+  - ClaudeBot and anthropic-ai (Anthropic)
+  - Google-Extended (Gemini training; Google Search unaffected)
+  - Applebot-Extended (Apple AI training; Apple search unaffected)
+  - meta-externalagent and FacebookBot (Meta)
+  - CCBot (Common Crawl)
+  - Bytespider (ByteDance)
+  - cohere-training-data-crawler (Cohere)
+  - Diffbot
+- **Allowed** (the `*` rules): Googlebot, Bingbot and other search engines, plus OAI-SearchBot, ChatGPT-User, PerplexityBot, Perplexity-User, Claude-SearchBot and Claude-User. The site can still be found and cited in AI search.
+- The list is `AI_TRAINING_CRAWLERS` in `projects/marketing/src/app/seo/sitemap.ts`. AI companies add and rename crawlers, so check it now and then. Robots.txt is a request that well-behaved crawlers follow; it can't force compliance.
+- Staging still blocks everything; the client portal still blocks everything.
+- **Tests:** website 92 (+1).

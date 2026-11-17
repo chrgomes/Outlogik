@@ -114,6 +114,20 @@ describe('Sitemap and robots.txt', () => {
     expect(xml).toContain('<loc>https://example.com/a&amp;b</loc>');
   });
 
+  it('blocks AI training crawlers but not search engines or AI search', () => {
+    const txt = robotsTxt('https://example.com', false);
+    // One group: every training crawler, then Disallow: /
+    const group = txt.split('\n\n').find((g) => g.includes('User-agent: GPTBot'))!;
+    for (const bot of ['GPTBot', 'ClaudeBot', 'Google-Extended', 'Applebot-Extended', 'CCBot', 'meta-externalagent', 'Bytespider']) {
+      expect(group).toContain(`User-agent: ${bot}`);
+    }
+    expect(group.trim().endsWith('Disallow: /')).toBe(true);
+    for (const allowed of ['OAI-SearchBot', 'ChatGPT-User', 'PerplexityBot', 'Claude-SearchBot', 'Googlebot', 'Bingbot']) {
+      expect(txt).not.toContain(`User-agent: ${allowed}`); // they follow the "*" rules
+    }
+    expect(txt).toMatch(/User-agent: \*\nAllow: \/\nDisallow: \/api\/\nDisallow: \/newsletter\//);
+  });
+
   it('points to the sitemap, and blocks everything on staging', () => {
     expect(robotsTxt('https://example.com', false)).toContain('Sitemap: https://example.com/sitemap.xml');
     expect(robotsTxt('https://example.com', false)).toContain('Disallow: /newsletter/');
