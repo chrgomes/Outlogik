@@ -45,7 +45,8 @@ export class Pricing {
     { q: 'Is the consultation really free?', a: 'Yes. It’s free and there’s no obligation to go ahead.' },
     { q: 'Is there a minimum budget?', a: 'There’s no fixed minimum. When you book, you can tell us your budget range (it’s optional). It helps us recommend the work that will make the most difference for what you want to spend.' },
     { q: 'Can I change what’s included later?', a: 'Yes. We review the plan with you and update the proposal when your needs change.' },
-    { q: 'How long is the agreement?', a: 'It depends on the work, and it’s set out in your proposal. We’ll explain the terms before you agree to anything.' },
+    { q: 'How long is the agreement?', a: 'Ongoing services have no long-term contract unless your proposal says so: you can cancel any time with 30 days’ written notice. One-off projects end when the work is done.' },
+    { q: 'How does billing work?', a: 'Ongoing services are invoiced at the end of each month for the work done; one-off projects when they’re complete. Invoices are due within 15 days. Our payment and subscription policy has the details.' },
   ];
 
   constructor() {

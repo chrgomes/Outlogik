@@ -19,7 +19,7 @@ async function open(url: string, over: object = {}) {
 const robots = () => document.head.querySelector('meta[name="robots"]')?.getAttribute('content') ?? null;
 
 describe('Legal pages', () => {
-  it.each(['/privacy-policy', '/terms'])('%s is not published until the legal details are set', async (url) => {
+  it.each(['/privacy-policy', '/terms', '/payment-policy'])('%s is not published until the legal details are set', async (url) => {
     const el = await open(url, { privacy_email: null, address: null }); // details removed in the admin area
     expect(el.querySelector('h1')!.textContent).toContain('couldn’t find');
     expect(robots()).toBe('noindex');
@@ -56,9 +56,23 @@ describe('Legal pages', () => {
     expect(el.textContent).toContain('We don’t guarantee particular rankings');
   });
 
+  it('publishes the payment and subscription policy with the agreed terms', async () => {
+    const el = await open('/payment-policy', LEGAL);
+    expect(el.querySelector('h1')!.textContent).toContain('Payment and subscription policy');
+    const text = el.textContent!.replace(/\s+/g, ' ');
+    expect(text).toContain('invoiced monthly, at the end of each month, for the work done');
+    expect(text).toContain('Invoices are due 15 days after the invoice date');
+    expect(text).toContain('more than 30 days overdue, we may pause work');
+    expect(text).toContain('We don’t charge interest');
+    expect(text).toContain('30 days’ written notice');
+    expect(text).toContain('Fees for work already done aren’t refundable');
+    expect(el.querySelector('a[href="/terms"]')).not.toBeNull();
+  });
+
   it('are left out of the sitemap until published', () => {
     expect(sitemapPaths(routes)).not.toContain('/privacy-policy');
-    expect(sitemapPaths(routes, { legalPublished: true })).toEqual(expect.arrayContaining(['/privacy-policy', '/terms']));
+    expect(sitemapPaths(routes, { legalPublished: true })).toEqual(
+      expect.arrayContaining(['/privacy-policy', '/terms', '/payment-policy']));
   });
 
   it('are linked from the forms once published', async () => {

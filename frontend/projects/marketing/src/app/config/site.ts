@@ -92,10 +92,11 @@ export const COMPANY: NavLink[] = [
 export const LEGAL: NavLink[] = [
   { label: 'Privacy policy', path: '/privacy-policy' },
   { label: 'Terms and conditions', path: '/terms' },
+  { label: 'Payment and subscription policy', path: '/payment-policy' },
 ];
 
 /** When the legal pages' text was last changed (shown on the pages). Update with any change. */
-export const LEGAL_UPDATED = 'November 16, 2026';
+export const LEGAL_UPDATED = 'November 17, 2026';
 
 export type FeatureStatus = 'available' | 'in_development';
 

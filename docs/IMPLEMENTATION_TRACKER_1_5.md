@@ -535,3 +535,27 @@ Resend (emails the system sends). **Launch guide: [`DEPLOYMENT.md`](DEPLOYMENT.m
   - **cross-browser testing:** only Chromium is available in this environment; check Safari and Firefox on staging
   - **the real deployment:** it needs your DigitalOcean, Google Workspace and Resend accounts (`DEPLOYMENT.md`, steps 1–10)
 - **Tests:** backend 244 (+7), website 87, app 81. CI also builds the three images, checks the website's host handling and the portal's CSP, and that the API runs as a non-root user.
+
+## Payment and subscription policy (2026-11-17)
+
+- **New page:** `/payment-policy`, "Payment and subscription policy". It's published, linked and listed in the sitemap like the other legal pages: only while the legal details are set.
+- **Terms chosen:**
+  - **Billing:** ongoing services are invoiced monthly, after the work is done (in arrears); one-off projects on completion, or in stages for longer projects.
+  - **Payment:** invoices due **15 days** after the invoice date. Work may pause if an invoice is more than **30 days** overdue, with notice first. **No interest.**
+  - **Cancelling:** **30 days' written notice** (email is fine); no long-term contract unless a proposal says so.
+  - **Refunds:** fees for work already done aren't refunded. A payment in advance is refunded for work not done if Outlogik ends the service early.
+  - A client's proposal or agreement can set different terms, and then applies instead.
+- **For your review (also commitments):**
+  - prices in Canadian dollars, plus applicable taxes such as HST
+  - third-party costs passed on at cost, only with approval
+  - 30 days' notice of price changes
+  - disputed amounts can wait while being sorted out
+  - Outlogik may end a service with 30 days' notice, or sooner after unpaid invoices or serious breaches
+  - accounts and paid-for work stay the client's
+  - consumer protection rights aren't limited
+- **Also updated:**
+  - The **Pricing** FAQ: agreement length now matches the policy (30 days' notice), and a new "How does billing work?" answer.
+  - The **terms** link to the policy.
+  - Legal pages now show "Last updated November 17, 2026".
+- **Billing questions** go to the sales email if set, otherwise the contact email, otherwise privacy@outlogik.com.
+- **Tests:** website 89 (+2). The new page and the Pricing and terms pages pass the accessibility scan.

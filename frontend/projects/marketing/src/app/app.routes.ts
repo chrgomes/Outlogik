@@ -75,6 +75,12 @@ export const routes: Routes = [
     data: { legal: true },
     loadComponent: () => import('./pages/legal/terms').then((m) => m.Terms),
   },
+  {
+    path: 'payment-policy',
+    title: 'Payment and subscription policy',
+    data: { legal: true },
+    loadComponent: () => import('./pages/legal/payment-policy').then((m) => m.PaymentPolicy),
+  },
   // Linked from newsletter emails only; not indexed.
   ...(['confirm', 'unsubscribe'] as const).map((action) => ({
     path: `newsletter/${action}`,

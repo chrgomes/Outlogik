@@ -107,7 +107,7 @@ describe('Footer', () => {
     for (const a of AUDIENCES) expect(hrefs).toContain(`/who-we-help/${a.slug}`);
     expect(hrefs).toContain(LOGIN_URL);
     expect(hrefs).toContain('/book-a-consultation');
-    expect(hrefs).toEqual(expect.arrayContaining(['/privacy-policy', '/terms']));
+    expect(hrefs).toEqual(expect.arrayContaining(['/privacy-policy', '/terms', '/payment-policy']));
     expect(el.textContent).toContain(`© ${new Date().getFullYear()} Outlogik`);
   });
 
