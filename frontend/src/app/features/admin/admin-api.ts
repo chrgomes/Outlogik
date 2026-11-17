@@ -68,6 +68,7 @@ export interface SiteSettings {
   tagline: string;
   contact_email: string | null;
   sales_email: string | null;
+  billing_email: string | null;
   phone: string | null;
   address: string | null;
   social_links: SocialLink[];

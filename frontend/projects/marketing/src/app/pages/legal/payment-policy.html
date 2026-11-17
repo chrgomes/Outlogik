@@ -81,7 +81,7 @@
   <address class="mk-legal__address">
     {{ s().legal_name }}<br />
     <span class="mk-pre">{{ s().address }}</span><br />
-    @if (s().sales_email || s().contact_email; as email) {
+    @if (s().billing_email || s().contact_email; as email) {
       <a [href]="'mailto:' + email">{{ email }}</a>
     } @else {
       <a [href]="'mailto:' + s().privacy_email">{{ s().privacy_email }}</a>

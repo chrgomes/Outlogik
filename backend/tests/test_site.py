@@ -275,3 +275,13 @@ def test_admin_province_list_matches_the_api():
     src = (Path(__file__).parents[2] / "frontend/src/app/features/admin/admin-api.ts").read_text()
     block = src.split("export const PROVINCES = [")[1].split("];")[0]
     assert re.findall(r"'([^']+)'", block) == list(get_args(Province))
+
+
+def test_sales_and_billing_emails_default_to_the_business_aliases(site_admin, new_client):
+    data = site_admin.get(SETTINGS).json()["data"]
+    assert (data["sales_email"], data["billing_email"]) == (
+        "sales@outlogik.com", "billings@outlogik.com")
+    assert site_admin.put(SETTINGS, json={**data, "billing_email": "nope"}).status_code == 422
+    assert site_admin.put(SETTINGS, json={**data, "billing_email": "Accounts@Outlogik.com"}
+                          ).status_code == 200
+    assert new_client().get(PUBLIC).json()["settings"]["billing_email"] == "accounts@outlogik.com"

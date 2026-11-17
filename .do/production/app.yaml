@@ -63,7 +63,7 @@ services:
       - { key: SMTP_PASSWORD, scope: RUN_TIME, type: SECRET, value: CHANGE_ME }
       - { key: EMAIL_FROM, value: "Outlogik <no-reply@outlogik.com>" }
       # Who is emailed about new leads (Google Workspace aliases), comma-separated
-      - { key: LEAD_NOTIFICATION_EMAILS, value: "" }
+      - { key: LEAD_NOTIFICATION_EMAILS, value: "sales@outlogik.com" }
 
   - name: web
     github:

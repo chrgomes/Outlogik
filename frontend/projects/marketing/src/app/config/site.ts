@@ -131,6 +131,8 @@ export interface SiteSettings {
   tagline: string;
   contact_email: string | null;
   sales_email: string | null;
+  /** For billing questions (the payment and subscription policy). */
+  billing_email: string | null;
   phone: string | null;
   address: string | null;
   social_links: { network: string; url: string }[];
@@ -152,7 +154,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     'Outlogik is a digital marketing agency for SEO, social media, content and analytics, with a client portal that shows you exactly what we’re doing.',
   tagline: 'Digital Marketing. Smarter. Together.',
   contact_email: null,
-  sales_email: null,
+  sales_email: 'sales@outlogik.com',
+  billing_email: 'billings@outlogik.com',
   phone: null,
   address: 'Toronto, Ontario, Canada',
   social_links: [],

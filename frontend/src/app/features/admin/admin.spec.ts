@@ -199,7 +199,7 @@ describe('Website settings', () => {
     await flushPending();
     http.expectOne('/api/v1/admin/site/settings').flush({ updated_at: '2026-11-15T00:00:00Z', data: {
       company_description: 'An agency.', tagline: 'Digital Marketing. Smarter. Together.',
-      contact_email: 'hello@example.com', sales_email: null, phone: null, address: null,
+      contact_email: 'hello@example.com', sales_email: null, billing_email: null, phone: null, address: null,
       social_links: [{ network: 'linkedin', url: 'https://linkedin.com/company/x' }],
       consultation_cta_label: 'Book a free consultation', seo_title_suffix: ' · Outlogik',
       seo_default_description: 'Default.',
@@ -252,7 +252,7 @@ describe('Website settings: analytics', () => {
     fixture.detectChanges();
     await flushPending();
     http.expectOne('/api/v1/admin/site/settings').flush({ updated_at: '2026-11-15T00:00:00Z', data: {
-      company_description: 'An agency.', tagline: 'Tagline', contact_email: null, sales_email: null,
+      company_description: 'An agency.', tagline: 'Tagline', contact_email: null, sales_email: null, billing_email: null,
       phone: null, address: null, social_links: [], consultation_cta_label: 'Book', seo_title_suffix: '',
       seo_default_description: '', legal_name: null, province: null, privacy_email: null,
       ga4_measurement_id: null, gtm_container_id: null, clarity_project_id: null,
@@ -282,7 +282,7 @@ describe('Website settings: legal details', () => {
     fixture.detectChanges();
     await flushPending();
     http.expectOne('/api/v1/admin/site/settings').flush({ updated_at: '2026-11-16T00:00:00Z', data: {
-      company_description: 'An agency.', tagline: 'Tagline', contact_email: null, sales_email: null,
+      company_description: 'An agency.', tagline: 'Tagline', contact_email: null, sales_email: null, billing_email: null,
       phone: null, address: '1 Example Street', social_links: [], consultation_cta_label: 'Book',
       seo_title_suffix: '', seo_default_description: '', legal_name: null, province: null,
       privacy_email: null, ga4_measurement_id: null, gtm_container_id: null, clarity_project_id: null,

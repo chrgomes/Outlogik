@@ -78,6 +78,13 @@ function socialLink(network = 'linkedin', url = '') {
               <ol-field-error [control]="form.controls.sales_email" />
             </div>
             <div class="col-md-6">
+              <label for="s-billing" class="form-label">Billing email</label>
+              <input id="s-billing" type="email" class="form-control" formControlName="billing_email" [class.is-invalid]="bad('billing_email')"
+                aria-describedby="s-billing-hint" />
+              <div id="s-billing-hint" class="form-text">For invoice questions, in the payment and subscription policy.</div>
+              <ol-field-error [control]="form.controls.billing_email" />
+            </div>
+            <div class="col-md-6">
               <label for="s-phone" class="form-label">Phone</label>
               <input id="s-phone" type="tel" class="form-control" formControlName="phone" [class.is-invalid]="bad('phone')" />
               <ol-field-error [control]="form.controls.phone" />
@@ -241,6 +248,7 @@ export class SiteSettingsPage {
     company_description: text(300, true),
     contact_email: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
     sales_email: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
+    billing_email: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
     phone: text(40),
     address: text(300),
     social_links: new FormArray<ReturnType<typeof socialLink>>([]),
@@ -267,6 +275,7 @@ export class SiteSettingsPage {
     for (const l of d.social_links) links.push(socialLink(l.network, l.url));
     this.form.reset({
       ...d, contact_email: d.contact_email ?? '', sales_email: d.sales_email ?? '',
+      billing_email: d.billing_email ?? '',
       phone: d.phone ?? '', address: d.address ?? '',
       legal_name: d.legal_name ?? '', province: d.province ?? '', privacy_email: d.privacy_email ?? '',
       ga4_measurement_id: d.ga4_measurement_id ?? '', gtm_container_id: d.gtm_container_id ?? '',
@@ -304,6 +313,7 @@ export class SiteSettingsPage {
     try {
       const saved = await this.api.saveSettings({
         ...v, contact_email: orNull(v.contact_email), sales_email: orNull(v.sales_email),
+        billing_email: orNull(v.billing_email),
         phone: orNull(v.phone), address: orNull(v.address),
         legal_name: orNull(v.legal_name), province: orNull(v.province), privacy_email: orNull(v.privacy_email),
         ga4_measurement_id: orNull(v.ga4_measurement_id), gtm_container_id: orNull(v.gtm_container_id),

@@ -34,7 +34,9 @@ class SiteSettingsData(BaseModel):
     )
     tagline: Text = "Digital Marketing. Smarter. Together."
     contact_email: Email | None = None
-    sales_email: Email | None = None
+    sales_email: Email | None = "sales@outlogik.com"
+    # For billing questions (the payment and subscription policy)
+    billing_email: Email | None = "billings@outlogik.com"
     phone: Annotated[str, StringConstraints(strip_whitespace=True, max_length=40)] | None = None
     address: Text | None = "Toronto, Ontario, Canada"
     social_links: Annotated[list[SocialLink], Field(max_length=10)] = []

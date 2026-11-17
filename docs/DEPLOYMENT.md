@@ -70,7 +70,10 @@ DigitalOcean answers its DNS. App Platform then creates the website's records it
      to monitor; move to `p=quarantine` after a few weeks of clean reports)
 3. **Aliases** (Admin console → Users → your user → Add alternate emails):
    - `privacy@outlogik.com` (**required**: the privacy policy tells people to use it)
-   - your sales/enquiries alias (for example `sales@outlogik.com`)
+   - `sales@outlogik.com` (**required**: new enquiries are emailed here, and the consultation
+     page offers it)
+   - `billings@outlogik.com` (**required**: the payment and subscription policy gives it for
+     invoice questions)
 4. Send yourself a test email to each alias.
 
 ## 3. Email the system sends: Resend (you)
@@ -185,8 +188,8 @@ Sign in at `https://app.staging.outlogik.com`. Invite colleagues and clients fro
 
 2. Set the secrets as in step 6 (a **new** `SITE_PROXY_SECRET` for production, the same in both
    apps; the same Resend key).
-3. In `outlogik-app` → api, set `LEAD_NOTIFICATION_EMAILS` to your enquiries alias (for example
-   `sales@outlogik.com`; several addresses can be separated with commas).
+3. `LEAD_NOTIFICATION_EMAILS` in `outlogik-app` → api is already `sales@outlogik.com` (add more
+   addresses separated by commas if you like).
 4. Repeat step 7 (first staff account) in `outlogik-app`, and the checks in step 8 on
    `https://outlogik.com` and `https://app.outlogik.com`. `robots.txt` should now allow
    everything and point to the sitemap; `www.outlogik.com` should redirect to `outlogik.com`.
@@ -243,11 +246,11 @@ a `downgrade`).
 ## Launch checklist
 
 - [ ] DNS on DigitalOcean; Google Workspace mail records, SPF, DKIM, DMARC
-- [ ] `privacy@` and the enquiries alias receive email
+- [ ] `privacy@`, `sales@` and `billings@` receive email
 - [ ] Resend domain verified; API key set as `SMTP_PASSWORD`
 - [ ] PostgreSQL and Valkey clusters in Toronto; restore test done
 - [ ] Staging created and checked (step 8)
-- [ ] Production created, secrets and `LEAD_NOTIFICATION_EMAILS` set, checked
+- [ ] Production created, secrets set, checked (a test enquiry reaches sales@)
 - [ ] First staff account; Website admin → Settings reviewed (contact email, phone, social links)
 - [ ] Copy reviewed (business promises listed in `IMPLEMENTATION_TRACKER_1_5.md`); legal pages
       reviewed, ideally by a lawyer

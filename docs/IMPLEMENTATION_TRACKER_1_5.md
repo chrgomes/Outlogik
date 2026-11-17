@@ -559,3 +559,10 @@ Resend (emails the system sends). **Launch guide: [`DEPLOYMENT.md`](DEPLOYMENT.m
   - Legal pages now show "Last updated November 17, 2026".
 - **Billing questions** go to the sales email if set, otherwise the contact email, otherwise privacy@outlogik.com.
 - **Tests:** website 89 (+2). The new page and the Pricing and terms pages pass the accessibility scan.
+
+## Sales and billing emails (decision 15, 2026-11-17)
+
+- **sales@outlogik.com:** the default `sales_email`, offered on the consultation page. In production (`.do/production/app.yaml`), new consultation requests and messages are emailed to it (`LEAD_NOTIFICATION_EMAILS`). Staging sends none.
+- **billings@outlogik.com:** a new `billing_email` setting, with that as its default. The payment and subscription policy gives it for invoice questions; it's editable in Website admin → Settings → Contact details.
+- Both are Google Workspace aliases. The launch guide's step 2 now lists privacy@, sales@ and billings@ as required.
+- **Tests:** backend 245 (+1), website 89, app 81.
