@@ -606,3 +606,23 @@ Resend (emails the system sends). **Launch guide: [`DEPLOYMENT.md`](DEPLOYMENT.m
   - a direct POST without the check was stored as spam
   - no CSP errors
 - **Tests:** backend 268 (+9: valid, missing, wrong number, forged, expired, reused, newsletter, no secret in production, challenge endpoint), website 91 (+2: the solver; work starts on focus), app 82.
+
+## Sign-in protection and the portal's robots.txt (2026-11-17)
+
+- **Sign-in lockout:**
+  - Only **failed** attempts count now: 5 on one account, or 20 from one IP address, within 15 minutes lock sign-in for the rest of the window.
+  - A successful sign-in clears the account's count.
+  - The old limits counted every attempt (10 per email and 50 per IP address per 5 minutes), which could lock out people who simply sign in often.
+- **Bot check on the app:** sign-in, forgot password and accepting an invitation now use the same invisible proof of work as the website's forms, shared from `frontend/brand/forms/proof-of-work.ts`.
+  - The work starts when the person focuses the form.
+  - Without a valid proof, the API answers `400 bot_check_failed`, and a failed sign-in check counts toward the lockout.
+- **Portal and search engines:**
+  - `app.outlogik.com/robots.txt` says `Disallow: /` (served by nginx).
+  - Every portal page and API response sends `X-Robots-Tag: noindex, nofollow`.
+  - There's no sitemap for the portal; it's private.
+  - The website keeps its own: `outlogik.com/robots.txt` points to `outlogik.com/sitemap.xml`, which lists the public pages (step 11).
+  - CI checks the portal's robots.txt and header.
+- **Checked:**
+  - in a browser against the portal container, sign-in with the check took 0.18 seconds with no CSP errors
+  - a direct API sign-in without the check was refused
+- **Tests:** backend 271 (+3: lockout after 5 failures, success clears it, IP lockout, bot check on sign-in and forgot password, single use), app 82 (sign-in and invitation tests now answer the check), website 91.

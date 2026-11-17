@@ -44,7 +44,7 @@ type View = 'loading' | 'invalid' | 'new-account' | 'sign-in' | 'wrong-account' 
 
           @switch (view()) {
             @case ('new-account') {
-              <form [formGroup]="form" (ngSubmit)="accept()" novalidate>
+              <form [formGroup]="form" (ngSubmit)="accept()" (focusin)="proof.prepare()" novalidate>
                 <div class="mb-3">
                   <label for="full_name" class="form-label">Your name</label>
                   <input id="full_name" class="form-control" formControlName="full_name"
@@ -93,6 +93,8 @@ type View = 'loading' | 'invalid' | 'new-account' | 'sign-in' | 'wrong-account' 
 })
 export class AcceptInvite {
   protected readonly auth = inject(AuthService);
+  /** The invisible browser check; solved while the person types. */
+  protected readonly proof = this.auth.proof();
   private readonly router = inject(Router);
   private readonly token = takeLinkToken();
 
@@ -146,7 +148,7 @@ export class AcceptInvite {
     }
     this.busy.set(true);
     try {
-      await this.auth.acceptInvite({ token: this.token!, ...(isNew ? this.form.getRawValue() : {}) });
+      await this.auth.acceptInvite({ token: this.token!, ...(isNew ? this.form.getRawValue() : {}) }, this.proof);
       await this.router.navigate(['/o', this.invite()!.organization_slug]);
     } catch (err) {
       const problem = apiProblem(err);

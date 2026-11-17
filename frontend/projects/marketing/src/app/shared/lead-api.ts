@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { Consent } from '../consent/consent';
 import { VisitAttribution } from './attribution';
-import { FormProof } from './proof-of-work';
+import { FormProof } from '@brand/forms/proof-of-work';
 
 export type SendResult = { ok: true } | { ok: false; message: string; fields: string[] };
 

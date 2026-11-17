@@ -3,6 +3,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, firstValueFrom } from 'rxjs';
 
+import { FormProof } from '@brand/forms/proof-of-work';
+
 import { InvitePreview, Me } from './api.types';
 
 const API = '/api/v1/auth';
@@ -52,8 +54,14 @@ export class AuthService {
 
   // --- sign-in flows (each sets the signed-in user from the response) -----------------------
 
-  async login(email: string, password: string): Promise<Me> {
-    return this.signedIn(this.http.post<Me>(`${API}/login`, { email, password }));
+  /** The invisible browser check for one sign-in form; call prepare() when the form is used. */
+  proof(): FormProof {
+    return new FormProof(this.http, '/api/v1/public/challenge');
+  }
+
+  async login(email: string, password: string, proof?: FormProof): Promise<Me> {
+    const pow = await (proof ?? this.proof()).take();
+    return this.signedIn(this.http.post<Me>(`${API}/login`, { email, password, pow }));
   }
 
   async register(body: {
@@ -62,16 +70,18 @@ export class AuthService {
     return this.signedIn(this.http.post<Me>(`${API}/register`, body));
   }
 
-  async acceptInvite(body: { token: string; full_name?: string; password?: string }): Promise<Me> {
-    return this.signedIn(this.http.post<Me>(`${API}/accept-invite`, body));
+  async acceptInvite(body: { token: string; full_name?: string; password?: string }, proof?: FormProof): Promise<Me> {
+    const pow = await (proof ?? this.proof()).take();
+    return this.signedIn(this.http.post<Me>(`${API}/accept-invite`, { ...body, pow }));
   }
 
   previewInvite(token: string): Promise<InvitePreview> {
     return firstValueFrom(this.http.post<InvitePreview>(`${API}/invitations/preview`, { token }));
   }
 
-  forgotPassword(email: string): Promise<unknown> {
-    return firstValueFrom(this.http.post(`${API}/forgot-password`, { email }));
+  async forgotPassword(email: string, proof?: FormProof): Promise<unknown> {
+    const pow = await (proof ?? this.proof()).take();
+    return firstValueFrom(this.http.post(`${API}/forgot-password`, { email, pow }));
   }
 
   resetPassword(token: string, password: string): Promise<unknown> {

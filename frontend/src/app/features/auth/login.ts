@@ -25,7 +25,7 @@ import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
       <div class="alert alert-danger" role="alert">{{ error() }}</div>
     }
 
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <form [formGroup]="form" (ngSubmit)="submit()" (focusin)="proof.prepare()" novalidate>
       <div class="mb-3">
         <label for="email" class="form-label">Email</label>
         <input id="email" type="email" class="form-control" formControlName="email"
@@ -57,6 +57,8 @@ import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
 })
 export class Login {
   private readonly auth = inject(AuthService);
+  /** The invisible browser check; solved while the person types. */
+  protected readonly proof = this.auth.proof();
   protected readonly signup = inject(SignupStatus);
   private readonly router = inject(Router);
   protected readonly form = inject(NonNullableFormBuilder).group({
@@ -83,7 +85,7 @@ export class Login {
     this.busy.set(true);
     try {
       const { email, password } = this.form.getRawValue();
-      await this.auth.login(email, password);
+      await this.auth.login(email, password, this.proof);
       await this.router.navigateByUrl(safeReturnUrl(this.returnUrl()));
     } catch (err) {
       this.error.set(apiProblem(err).message);

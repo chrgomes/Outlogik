@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Request, Response, status
 
 from app.core.config import get_settings
-from app.core.rate_limit import hit
+from app.core.errors import AppError, Unauthorized
+from app.core.rate_limit import check_failures, clear_failures, hit, record_failure
 from app.core.request import client_ip, user_agent
 from app.modules.audit.service import record
 from app.modules.auth import service
@@ -19,6 +20,7 @@ from app.modules.auth.schemas import (
     TokenIn,
     UserOut,
 )
+from app.modules.leads import challenge
 from app.modules.organizations import invitations
 from app.platform import staff_role
 
@@ -50,14 +52,27 @@ def register(body: RegisterIn, request: Request, response: Response, db: DB) -> 
     return _me(db, user)
 
 
+def require_human(proof) -> None:
+    """The invisible browser check the app's sign-in forms send (see leads/challenge.py)."""
+    if get_settings().auth_challenge_required and challenge.problem(proof):
+        raise AppError("Please try again.", code="bot_check_failed")
+
+
 @router.post("/login", response_model=MeOut)
 def login(body: LoginIn, request: Request, response: Response, db: DB) -> MeOut:
-    ip = client_ip(request)
-    limit = get_settings().rate_limit_login
-    hit("login:ip", ip or "unknown", (limit[0] * 5, limit[1]))
-    hit("login:email", body.email, limit)
-
-    user = service.authenticate(db, email=body.email, password=body.password, ip=ip)
+    s = get_settings()
+    ip = client_ip(request) or "unknown"
+    # Locked after too many recent failures, for this account or from this IP address.
+    check_failures("login-fail:email", body.email, s.rate_limit_login_failures_email)
+    check_failures("login-fail:ip", ip, s.rate_limit_login_failures_ip)
+    try:
+        require_human(body.pow)
+        user = service.authenticate(db, email=body.email, password=body.password, ip=ip)
+    except (Unauthorized, AppError):
+        record_failure("login-fail:email", body.email, s.rate_limit_login_failures_email)
+        record_failure("login-fail:ip", ip, s.rate_limit_login_failures_ip)
+        raise
+    clear_failures("login-fail:email", body.email)
     # Rotate: drop any session this browser already had.
     old = request.cookies.get(get_settings().session_cookie_name)
     if old and (resolved := service.resolve_session(db, old)):
@@ -106,6 +121,7 @@ def forgot_password(body: ForgotPasswordIn, request: Request, db: DB) -> Message
     limit = get_settings().rate_limit_password_reset
     hit("reset:ip", ip or "unknown", (limit[0] * 4, limit[1]))
     hit("reset:email", body.email, limit)
+    require_human(body.pow)
     service.request_password_reset(db, body.email, ip)
     return MessageOut(message="If an account exists for this email, we've sent a reset link.")
 
@@ -155,6 +171,7 @@ def accept_invite(body: AcceptInviteIn, request: Request, response: Response, db
                   auth: OptionalAuth) -> MeOut:
     ip = client_ip(request)
     hit("invite:ip", ip or "unknown", get_settings().rate_limit_login)
+    require_human(body.pow)
     user, _, created = invitations.accept(
         db, body.token, current_user=auth.user if auth else None,
         full_name=body.full_name, password=body.password, ip=ip,

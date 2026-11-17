@@ -1,7 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
-/** A challenge from the API (see backend/app/modules/leads/challenge.py). */
+/**
+ * The invisible "a person's browser sent this" check, shared by the website's forms and the
+ * app's sign-in forms. A challenge from the API: see backend/app/modules/leads/challenge.py.
+ */
 export interface Challenge {
   algorithm: string;
   challenge: string;
@@ -57,7 +60,8 @@ export class FormProof {
   private pending: Promise<ProofSolution | null> | null = null;
   private validUntil = 0;
 
-  constructor(private readonly http: HttpClient) {}
+  /** `url`: the challenge address (the website goes through its own /api/public proxy). */
+  constructor(private readonly http: HttpClient, private readonly url = '/api/public/challenge') {}
 
   prepare(): void {
     if (this.pending && Date.now() < this.validUntil - 30_000) return;
@@ -74,7 +78,7 @@ export class FormProof {
 
   private async fetchAndSolve(): Promise<ProofSolution | null> {
     try {
-      const ch = await firstValueFrom(this.http.get<Challenge>('/api/public/challenge'));
+      const ch = await firstValueFrom(this.http.get<Challenge>(this.url));
       this.validUntil = expiresAt(ch.salt);
       const number = await solve(ch);
       if (number === null) return null;

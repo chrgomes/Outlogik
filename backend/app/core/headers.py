@@ -16,6 +16,8 @@ API_HEADERS = {
     "Cache-Control": "no-store",
     # HTTPS only from now on (browsers ignore this over plain HTTP, e.g. local development).
     "Strict-Transport-Security": "max-age=31536000",
+    # API responses never belong in search results.
+    "X-Robots-Tag": "noindex, nofollow",
 }
 # The interactive API docs page loads its own script and styles, so it can't use the strict CSP.
 DOCS_PATHS = {"/api/docs", "/api/docs/oauth2-redirect"}

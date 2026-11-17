@@ -206,7 +206,7 @@ describe('Visit attribution', () => {
 
 describe('Invisible browser check', () => {
   it('finds the number behind a challenge', async () => {
-    const { solve } = await import('../shared/proof-of-work');
+    const { solve } = await import('@brand/forms/proof-of-work');
     const { TEST_CHALLENGE } = await import('../../testing/marketing');
     expect(await solve(TEST_CHALLENGE)).toBe(7);
     expect(await solve({ ...TEST_CHALLENGE, challenge: '0'.repeat(64) })).toBeNull();

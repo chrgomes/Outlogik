@@ -116,5 +116,8 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{redirect_url}' -H 'Host: www.outlogik.com' localhost:8091/pricing)" = https://outlogik.com/pricing
           curl -sf localhost:8092/admin/leads | grep -q '<app-root'
           curl -sfI localhost:8092/ | grep -qi "content-security-policy: default-src 'self'; script-src 'self' 'sha256-"
+          # The portal is private: robots.txt keeps crawlers out, and every page says noindex.
+          curl -sf localhost:8092/robots.txt | grep -q 'Disallow: /'
+          curl -sfI localhost:8092/login | grep -qi 'x-robots-tag: noindex'
       - name: The API image runs as a non-root user
         run: test "$(docker run --rm outlogik-api whoami)" = outlogik

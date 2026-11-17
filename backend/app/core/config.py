@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     # Rate limits: (max attempts, window seconds)
     rate_limit_enabled: bool = True
     rate_limit_login: tuple[int, int] = (10, 300)
+    # Sign-in: only failed attempts count; a successful sign-in clears the account's count.
+    # 5 failures on one account, or 20 from one IP address, within 15 minutes lock sign-in
+    # for the rest of the window.
+    rate_limit_login_failures_email: tuple[int, int] = (5, 900)
+    rate_limit_login_failures_ip: tuple[int, int] = (20, 900)
     rate_limit_register: tuple[int, int] = (5, 3600)
     rate_limit_password_reset: tuple[int, int] = (5, 3600)
     # Website forms: at most 5 per IP address per 10 minutes, and 3 per email address per hour.
@@ -66,6 +71,8 @@ class Settings(BaseSettings):
     # derived from FORM_CHALLENGE_SECRET, or else SITE_PROXY_SECRET. About max_number / 2
     # SHA-256 hashes per form for the visitor's browser.
     form_challenge_required: bool = True
+    # The same check on the app's sign-in, forgot-password and accept-invitation forms.
+    auth_challenge_required: bool = True
     form_challenge_secret: str | None = None
     form_challenge_max_number: int = 50_000
     form_challenge_minutes: int = 10

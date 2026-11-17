@@ -19,9 +19,21 @@ deployment must add. Each item is covered by backend or frontend tests unless no
   them and sends no referrer to other sites.
 - **No account enumeration:** login errors and "forgot password" responses are identical
   whether or not the email exists.
-- **Rate limits** (Redis): login per email and per IP, registration, password reset,
-  invitation preview and acceptance, resending confirmation emails. If Redis is down the
-  limiter lets requests through and logs a warning, rather than locking everyone out.
+- **Sign-in lockout** (Redis):
+  - Only **failed** attempts count: 5 on one account, or 20 from one IP address, within
+    15 minutes lock sign-in for the rest of that window (`429` with `Retry-After`).
+  - A successful sign-in clears the account's count, so people who sign in often are never
+    locked out.
+  - A failed browser check also counts as a failure.
+- **Bot check on the app's sign-in forms:** sign-in, forgot password and accepting an
+  invitation need the same invisible proof of work as the website's forms (see Website forms).
+  Requests without a valid proof get `400 bot_check_failed`.
+- **Other rate limits:** registration, password reset, invitation preview and acceptance,
+  resending confirmation emails. If Redis is down the limiter lets requests through and logs
+  a warning, rather than locking everyone out.
+- **The client portal stays out of search results:** `app.outlogik.com/robots.txt` disallows
+  everything, and every page and API response says `X-Robots-Tag: noindex, nofollow`. The
+  website has its own robots.txt and sitemap (see Search).
 - **Super Admins** can only be created with the CLI.
 - **Sign-up is invite-only by default** (`SIGNUP_MODE=invite_only`): clients and staff join through invitations, and organizations are created with the CLI.
 

@@ -50,3 +50,16 @@ export function dialogProviders(data: unknown): Provider[] {
     { provide: DIALOG_DATA, useValue: data },
   ];
 }
+
+/** A tiny proof-of-work challenge (the answer is 7), for tests of the sign-in forms. */
+export const TEST_CHALLENGE = {
+  algorithm: 'SHA-256', salt: 'test-salt?expires=9999999999', max_number: 10, signature: 'sig',
+  challenge: 'b2dbdfed6beab78907603daf70bc361044e680308f81282db32c88dbd4dab5f5',
+};
+
+/** Answers the sign-in form's challenge request and waits for it to be solved. */
+export async function answerChallenge(http: HttpTestingController): Promise<void> {
+  await new Promise((r) => setTimeout(r));
+  http.expectOne('/api/v1/public/challenge').flush(TEST_CHALLENGE);
+  for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r));
+}

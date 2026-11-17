@@ -15,6 +15,7 @@ os.environ["SIGNUP_MODE"] = "open"
 os.environ["EMAIL_DOMAIN_CHECK"] = "false"
 # Form tests don't solve proof-of-work puzzles; tests of the check switch it on.
 os.environ["FORM_CHALLENGE_REQUIRED"] = "false"
+os.environ["AUTH_CHALLENGE_REQUIRED"] = "false"
 
 import re  # noqa: E402
 

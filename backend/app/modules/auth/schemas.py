@@ -4,6 +4,8 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 
+from app.modules.leads.challenge import Solution
+
 Email = Annotated[EmailStr, AfterValidator(lambda v: v.strip().lower())]
 # 10+ characters; length is the main strength factor. Max bounds hashing cost.
 Password = Annotated[str, Field(min_length=10, max_length=128)]
@@ -20,10 +22,13 @@ class RegisterIn(BaseModel):
 class LoginIn(BaseModel):
     email: Email
     password: Annotated[str, Field(min_length=1, max_length=128)]
+    # The invisible browser check (app/modules/leads/challenge.py)
+    pow: Solution | None = None
 
 
 class ForgotPasswordIn(BaseModel):
     email: Email
+    pow: Solution | None = None
 
 
 class ResetPasswordIn(BaseModel):
@@ -74,6 +79,7 @@ class AcceptInviteIn(BaseModel):
     # Only needed when the invited email has no account yet.
     full_name: Name | None = None
     password: Password | None = None
+    pow: Solution | None = None
 
 
 class InvitePreviewOut(BaseModel):
