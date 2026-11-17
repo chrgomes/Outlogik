@@ -566,3 +566,8 @@ Resend (emails the system sends). **Launch guide: [`DEPLOYMENT.md`](DEPLOYMENT.m
 - **billing@outlogik.com:** a new `billing_email` setting, with that as its default. The payment and subscription policy gives it for invoice questions; it's editable in Website admin → Settings → Contact details.
 - Both are Google Workspace aliases. The launch guide's step 2 now lists privacy@, sales@ and billing@ as required.
 - **Tests:** backend 245 (+1), website 89, app 81.
+
+## Form rate limit (2026-11-17)
+
+- Website forms now accept at most **5 submissions per IP address per 10 minutes** (was 10). The limit of 3 per email address per hour is unchanged.
+- Suggested next, not yet decided: duplicate detection (same email and form within 24 hours), an invisible built-in proof-of-work check, and content checks (many links, throwaway email services, domains that can't receive email).

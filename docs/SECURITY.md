@@ -82,7 +82,7 @@ own server, so the browser never talks to the API host.
   - a minimum time the form must be open (`FORM_MIN_SECONDS`, 3 seconds)
   - Spam is stored with status `spam` for review, never emailed, and the sender sees the usual
     success message.
-- **Rate limits:** 10 submissions per IP address per 10 minutes, and 3 per email address per
+- **Rate limits:** 5 submissions per IP address per 10 minutes, and 3 per email address per
   hour.
 - **Strict validation:**
   - unknown fields are rejected

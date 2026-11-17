@@ -151,12 +151,13 @@ def test_forms_need_no_csrf_token_but_the_app_still_does(site, client):
 
 
 def test_rate_limited_per_email_and_per_ip(site):
+    # 3 per email address per hour...
     for _ in range(3):
         assert site.post(CONTACT, json=contact()).status_code == 201
     res = site.post(CONTACT, json=contact())
     assert res.status_code == 429 and "Retry-After" in res.headers
-    for i in range(6):
-        site.post(CONTACT, json=contact(email=f"p{i}@example.com"))
+    # ...and 5 per IP address per 10 minutes (the refused attempt above counts too).
+    assert site.post(CONTACT, json=contact(email="other@example.com")).status_code == 201
     assert site.post(CONTACT, json=contact(email="new@example.com")).status_code == 429
 
 

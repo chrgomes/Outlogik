@@ -53,7 +53,8 @@ class Settings(BaseSettings):
     rate_limit_login: tuple[int, int] = (10, 300)
     rate_limit_register: tuple[int, int] = (5, 3600)
     rate_limit_password_reset: tuple[int, int] = (5, 3600)
-    rate_limit_public_form_ip: tuple[int, int] = (10, 600)
+    # Website forms: at most 5 per IP address per 10 minutes, and 3 per email address per hour.
+    rate_limit_public_form_ip: tuple[int, int] = (5, 600)
     rate_limit_public_form_email: tuple[int, int] = (3, 3600)
 
     # Website forms: anything sent faster than this after the form appeared is treated as spam.
