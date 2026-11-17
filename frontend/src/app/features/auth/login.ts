@@ -33,12 +33,13 @@ import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
         <ol-field-error [control]="form.controls.email" />
       </div>
       <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-baseline">
-          <label for="password" class="form-label">Password</label>
-          <a routerLink="/forgot-password" class="small">Forgot password?</a>
-        </div>
+        <label for="password" class="form-label">Password</label>
         <ol-password-input [control]="form.controls.password" inputId="password" />
         <ol-field-error [control]="form.controls.password" />
+        <!-- After the password field, so Tab goes from email straight to password. -->
+        <div class="text-end mt-2">
+          <a routerLink="/forgot-password" class="small">Forgot password?</a>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary w-100" [disabled]="busy()">
         @if (busy()) {<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>}

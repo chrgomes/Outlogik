@@ -644,3 +644,24 @@ Resend (emails the system sends). **Launch guide: [`DEPLOYMENT.md`](DEPLOYMENT.m
 - The list is `AI_TRAINING_CRAWLERS` in `projects/marketing/src/app/seo/sitemap.ts`. AI companies add and rename crawlers, so check it now and then. Robots.txt is a request that well-behaved crawlers follow; it can't force compliance.
 - Staging still blocks everything; the client portal still blocks everything.
 - **Tests:** website 92 (+1).
+
+## Keyboard navigation check (2026-11-17)
+
+Tested with the keyboard only, in a real browser, on the website and in the app (portal and admin), tabbing through whole pages and checking that each focused element is visible and its focus outline contrasts at least 3:1 with what's behind it.
+
+- **Already working:**
+  - "Skip to content" is the first Tab stop on both, and moves focus to the main content.
+  - Website menus open with Enter, Tab moves into them, and Escape closes them and returns focus to the button.
+  - FAQ answers open with Enter.
+  - Forms tab in order.
+  - App menus use the arrow keys, and Escape returns focus.
+  - Dialogs keep focus inside them, and Escape closes them and returns focus to the button that opened them.
+  - No invisible tab stops on any page tested.
+- **Fixed:**
+  - **Website:** on the black call-to-action band and the footer, the focus outline was black on black, and the buttons there had none. These areas now use a white outline, and every button has the same clear outline as links.
+  - **App sign-in:** Tab from the email field went to "Forgot password?" before the password field (easy to type a password into the wrong place). The link now comes after the password field.
+  - **App menus:** menu items reached by keyboard showed only a faint grey background. They now get a clear outline (the grey stays for mouse hover).
+- **Pages walked:**
+  - website: home, contact, book a consultation, SEO (37–44 tab stops each)
+  - app: dashboard, clients, team, admin inbox, admin settings
+  - All pass after the fixes.

@@ -184,3 +184,20 @@ main:focus {
   gap: 0.75rem;
   margin-top: 2.25rem;
 }
+
+// Keyboard focus is always visible (WCAG 2.4.7): every button gets the same outline as links
+// (Bootstrap's faint focus shadow is hard to see), and on the black sections and footer the
+// outline is white, because a black one would vanish.
+.btn:focus-visible {
+  outline: 2px solid var(--mk-black);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+.mk-section--dark,
+.mk-footer {
+  :focus-visible,
+  .btn:focus-visible {
+    outline-color: #fff;
+  }
+}
