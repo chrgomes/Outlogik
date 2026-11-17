@@ -588,4 +588,4 @@ Resend (emails the system sends). **Launch guide: [`DEPLOYMENT.md`](DEPLOYMENT.m
   - A failed lookup flags nothing. If DNS itself looks broken (gmail.com doesn't resolve), the check is skipped and re-checked every 10 minutes. This container's DNS is exactly like that, which is how the safeguard was found to be needed.
   - The newsletter ignores throwaway and undeliverable addresses.
 - **Not added:** the invisible proof-of-work check ("for now").
-- **Tests:** backend 258 (+13), app 82 (+1), website 89. Checked end to end through the website's server: a repeat became a note with one confirmation email; a throwaway address and a link-stuffed message went to Spam with their reasons.
+- **Tests:** backend 259 (+14), app 82 (+1), website 89. Checked end to end through the website's server: a repeat became a note with one confirmation email; a throwaway address and a link-stuffed message went to Spam with their reasons.
