@@ -116,6 +116,7 @@ class LeadNoteOut(BaseModel):
     id: uuid.UUID
     body: str
     author_name: str | None
+    source: Literal["staff", "website"] = "staff"
     created_at: datetime
 
 
@@ -134,6 +135,8 @@ class LeadOut(BaseModel):
     details: dict
     attribution: dict
     spam_reason: str | None
+    # Why it was marked as spam, in words (app.modules.leads.spam.REASONS)
+    spam_reason_text: str | None = None
     created_at: datetime
     updated_at: datetime
     notes: list[LeadNoteOut]

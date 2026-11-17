@@ -3,7 +3,7 @@ from datetime import timedelta
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 
 from app.core import email
 from app.core.config import get_settings
@@ -265,3 +265,125 @@ def test_website_form_choices_match_the_api():
     parts = re.findall(r""""([^"]*)"|'([^']*)'""", consent)  # concatenated string literals
     text = "".join(double or single for double, single in parts)
     assert text == NEWSLETTER_CONSENT_TEXT
+
+
+# --- duplicates and content checks (2026-11-17) --------------------------------------------------
+
+def test_same_person_sending_the_same_form_again_adds_a_note_not_a_lead(site, db, notify):
+    from app.models import LeadNote
+
+    assert site.post(CONSULT, json=consultation()).status_code == 201
+    sent = len(email.outbox)
+    again = consultation(message="Also interested in a new website.",
+                         services=["seo", "social-media-management"])
+    assert site.post(CONSULT, json=again).status_code == 201  # looks the same to the sender
+    assert db.scalar(select(func.count()).select_from(Lead)) == 1
+    note = db.scalar(select(LeadNote))
+    assert note.source == "website"
+    assert "Sent the consultation request form again." in note.body
+    assert "Also interested in a new website." in note.body
+    assert "Services this time: SEO, Social Media Management" in note.body
+    assert len(email.outbox) == sent  # nobody is emailed again
+
+
+def test_other_forms_people_and_older_leads_are_not_duplicates(site, db):
+    site.post(CONSULT, json=consultation())
+    site.post(CONTACT, json=contact(email="casey@bakery.example.com"))  # a different form
+    site.post(CONSULT, json=consultation(email="someone@else.example.com"))  # another person
+    db.execute(update(Lead).values(created_at=Lead.created_at - timedelta(hours=25)))
+    db.commit()
+    site.post(CONSULT, json=consultation())  # more than 24 hours later
+    assert db.scalar(select(func.count()).select_from(Lead)) == 4
+
+
+@pytest.mark.parametrize("over, reason", [
+    ({"message": "Great deals http://a.example http://b.example https://c.example"},
+     "too_many_links"),
+    ({"message": "Visit <a href='http://x.example'>here</a>"}, "markup"),
+    ({"message": "[url=http://x.example]cheap[/url]"}, "markup"),
+    ({"name": "Buy now www.spam.example"}, "link_in_name"),
+    ({"email": "someone@mailinator.com"}, "disposable_email"),
+    ({"email": "someone@inbox.yopmail.com"}, "disposable_email"),
+])
+def test_spammy_content_is_kept_as_spam_and_never_emailed(site, db, notify, over, reason):
+    assert site.post(CONSULT, json=consultation(**over)).status_code == 201
+    lead = db.scalar(select(Lead))
+    assert (lead.status, lead.spam_reason) == ("spam", reason)
+    assert email.outbox == []
+
+
+def test_normal_links_are_fine(site, db):
+    body = consultation(website="https://harbourbakery.example.com",
+                        message="Our site is https://harbourbakery.example.com and the shop is "
+                                "www.shop.example.com.")
+    site.post(CONSULT, json=body)
+    assert db.scalar(select(Lead)).status == "new"
+
+
+def test_spam_reasons_are_explained_in_the_admin_area(site, db, client):
+    from tests.conftest import register
+    from tests.test_site import make_staff
+
+    site.post(CONSULT, json=consultation(email="x@mailinator.com"))
+    register(client, "admin@outlogik.example.com", org="Outlogik HQ")
+    make_staff(db, "admin@outlogik.example.com", "site_admin")
+    lead = db.scalar(select(Lead))
+    body = client.get(f"/api/v1/admin/leads/{lead.id}").json()
+    assert body["spam_reason_text"] == "The email address is from a throwaway email service."
+
+
+def test_email_domains_that_cannot_receive_email(site, db, monkeypatch):
+    from app.modules.leads import spam
+
+    monkeypatch.setattr(get_settings(), "email_domain_check", True)
+    answers = {"gmail.com": True, "nomail.example": False, "flaky.example": None}
+    monkeypatch.setattr(spam, "domain_accepts_mail", lambda d: answers.get(d, True))
+    monkeypatch.setattr(spam, "dns_is_working", lambda: True)
+    site.post(CONTACT, json=contact(email="a@nomail.example"))
+    site.post(CONTACT, json=contact(email="b@flaky.example"))  # couldn't tell: not flagged
+    leads = {x.email: (x.status, x.spam_reason) for x in db.scalars(select(Lead))}
+    assert leads == {"a@nomail.example": ("spam", "email_domain"), "b@flaky.example": ("new", None)}
+
+
+def test_nothing_is_flagged_when_dns_itself_is_broken(site, db, monkeypatch):
+    from app.modules.leads import spam
+
+    monkeypatch.setattr(get_settings(), "email_domain_check", True)
+    monkeypatch.setattr(spam, "domain_accepts_mail", lambda d: False)  # everything "fails"...
+    monkeypatch.setattr(spam, "dns_is_working", lambda: False)  # ...because DNS is broken
+    site.post(CONTACT, json=contact(email="a@gmail.com"))
+    assert db.scalar(select(Lead)).status == "new"
+
+
+def test_dns_check_reads_mail_records(monkeypatch):
+    import dns.resolver
+
+    from app.modules.leads import spam
+
+    class Record:
+        def __init__(self, exchange):
+            self.exchange = exchange
+
+    zones = {("ok.example", "MX"): [Record("mx.ok.example.")],
+             ("nullmx.example", "MX"): [Record(".")],
+             ("aonly.example", "A"): ["192.0.2.1"]}
+
+    def resolve(self, domain, rtype):
+        if domain == "missing.example":
+            raise dns.resolver.NXDOMAIN
+        if (domain, rtype) in zones:
+            return zones[(domain, rtype)]
+        raise dns.resolver.NoAnswer
+
+    monkeypatch.setattr(dns.resolver.Resolver, "resolve", resolve)
+    spam.domain_accepts_mail.cache_clear()
+    assert spam.domain_accepts_mail("ok.example") is True
+    assert spam.domain_accepts_mail("nullmx.example") is False  # RFC 7505: takes no email
+    assert spam.domain_accepts_mail("aonly.example") is True  # falls back to its address
+    assert spam.domain_accepts_mail("missing.example") is False
+    spam.domain_accepts_mail.cache_clear()
+
+
+def test_newsletter_ignores_throwaway_addresses(site, db):
+    assert site.post(NEWS, json=news(email="reader@mailinator.com")).status_code == 202
+    assert db.scalar(select(NewsletterSubscriber)) is None and email.outbox == []

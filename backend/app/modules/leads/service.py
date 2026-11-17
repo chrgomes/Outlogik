@@ -10,7 +10,8 @@ from app.core.config import get_settings
 from app.core.email import send_email
 from app.core.models import utcnow
 from app.core.security import generate_token, hash_token
-from app.modules.leads.models import Lead, NewsletterSubscriber
+from app.modules.leads import spam
+from app.modules.leads.models import Lead, LeadNote, NewsletterSubscriber
 from app.modules.leads.schemas import ConsultationIn, ContactIn, NewsletterIn, SpamChecks
 
 log = logging.getLogger(__name__)
@@ -78,7 +79,16 @@ def create_contact(db: Session, body: ContactIn, ip: str | None,
 def _store(db: Session, kind: str, body: ConsultationIn | ContactIn, *, details: dict,
            ip: str | None, user_agent: str | None, website: str | None = None,
            phone: str | None = None, message: str | None = None) -> Lead:
-    reason = spam_reason(body)
+    # The website field is meant to hold an address, so it's not counted as a link.
+    reason = (spam_reason(body)
+              or spam.content_reason(body.name, [message, body.company,
+                                                 details.get("preferred_contact")])
+              or spam.email_reason(body.email))
+    if not reason:
+        duplicate = _recent_lead(db, kind, body.email)
+        if duplicate is not None:
+            _note_resubmission(db, duplicate, details, message)
+            return duplicate
     lead = Lead(
         kind=kind, status="spam" if reason else "new", spam_reason=reason,
         name=body.name, email=body.email, company=_clean(body.company), website=website,
@@ -93,6 +103,31 @@ def _store(db: Session, kind: str, body: ConsultationIn | ContactIn, *, details:
         _notify_team(lead)
         _acknowledge(lead)
     return lead
+
+
+def _recent_lead(db: Session, kind: str, email: str) -> Lead | None:
+    """The same person's earlier request of the same kind, if it's recent (not spam)."""
+    since = utcnow() - timedelta(hours=get_settings().duplicate_window_hours)
+    return db.scalar(
+        select(Lead).where(Lead.kind == kind, Lead.email == email, Lead.status != "spam",
+                           Lead.created_at >= since)
+        .order_by(Lead.created_at.desc()).limit(1))
+
+
+def _note_resubmission(db: Session, lead: Lead, details: dict, message: str | None) -> None:
+    """Records a repeat on the existing lead instead of creating a duplicate. Nothing is lost
+    (a new message is kept in the note), and nobody is emailed again."""
+    what = "consultation request" if lead.kind == "consultation" else "message"
+    lines = [f"Sent the {what} form again."]
+    if message and message != lead.message:
+        lines += ["", "New message:", message]
+    services = details.get("services")
+    if services and services != lead.details.get("services"):
+        lines.append("Services this time: " + ", ".join(SERVICE_LABELS[x] for x in services))
+    db.add(LeadNote(lead_id=lead.id, body="\n".join(lines), source="website"))
+    lead.updated_at = utcnow()
+    db.commit()
+    log.info("Website %s from an existing lead recorded as a note", lead.kind)
 
 
 def _summary(lead: Lead) -> str:
@@ -157,7 +192,7 @@ def _acknowledge(lead: Lead) -> None:
 def subscribe(db: Session, body: NewsletterIn, ip: str | None) -> None:
     """Start (or restart) double opt-in. The response is the same whatever the address's state,
     so the form can't be used to find out who is subscribed."""
-    if spam_reason(body):
+    if spam_reason(body) or spam.email_reason(body.email):
         log.info("Newsletter sign-up ignored as spam")
         return
     s = get_settings()

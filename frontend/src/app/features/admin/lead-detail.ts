@@ -16,11 +16,6 @@ import {
   TOPIC_LABELS,
 } from './admin-api';
 
-const SPAM_REASONS: Record<string, string> = {
-  honeypot: 'A hidden field that people never see was filled in.',
-  too_fast: 'The form was sent within a few seconds of opening.',
-};
-
 /** /admin/leads/:leadId: everything sent, where it came from, status and notes. */
 @Component({
   selector: 'ol-lead-detail',
@@ -53,7 +48,7 @@ const SPAM_REASONS: Record<string, string> = {
 
       @if (l.status === 'spam' && l.spam_reason) {
         <div class="alert alert-warning">
-          <strong>Marked as spam automatically.</strong> {{ spamReasons[l.spam_reason] ?? l.spam_reason }}
+          <strong>Marked as spam automatically.</strong> {{ l.spam_reason_text ?? l.spam_reason }}
           If this is a real enquiry, change its status.
         </div>
       }
@@ -89,7 +84,7 @@ const SPAM_REASONS: Record<string, string> = {
             @for (n of l.notes; track n.id) {
               <article class="note">
                 <p class="mb-1">{{ n.body }}</p>
-                <small class="text-muted">{{ n.author_name ?? 'Former staff member' }} · {{ n.created_at | date: 'MMM d, y, h:mm a' }}</small>
+                <small class="text-muted">{{ n.source === 'website' ? 'Website' : (n.author_name ?? 'Former staff member') }} · {{ n.created_at | date: 'MMM d, y, h:mm a' }}</small>
               </article>
             } @empty {
               <p class="text-muted mb-0">No notes yet.</p>
@@ -153,7 +148,6 @@ export class LeadDetail {
   protected readonly kindLabels = KIND_LABELS;
   protected readonly budgetLabels = BUDGET_LABELS;
   protected readonly topicLabels = TOPIC_LABELS;
-  protected readonly spamReasons = SPAM_REASONS;
   protected readonly busy = signal(false);
   protected readonly note = signal('');
 

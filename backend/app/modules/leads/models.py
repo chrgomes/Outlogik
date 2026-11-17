@@ -73,9 +73,11 @@ class NewsletterSubscriber(UUIDPrimaryKey, Timestamps, Base):
 
 
 class LeadNote(UUIDPrimaryKey, Base):
-    """A staff note on a lead (calls made, what was agreed). Deleted with the lead."""
+    """A note on a lead: a staff note (calls made, what was agreed) or one the website adds.
+    Deleted with the lead."""
 
     __tablename__ = "lead_notes"
+    __table_args__ = (CheckConstraint("source IN ('staff', 'website')", name="source_valid"),)
 
     lead_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("leads.id", ondelete="CASCADE"), index=True
@@ -84,6 +86,9 @@ class LeadNote(UUIDPrimaryKey, Base):
         Uuid, ForeignKey("users.id", ondelete="SET NULL")
     )
     body: Mapped[str] = mapped_column(Text)
+    # "staff" for notes written in the admin area; "website" for notes the system adds (for
+    # example when the same person sends the same form again).
+    source: Mapped[str] = mapped_column(String(20), default="staff", server_default="staff")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), default=utcnow
     )

@@ -59,6 +59,11 @@ class Settings(BaseSettings):
 
     # Website forms: anything sent faster than this after the form appeared is treated as spam.
     form_min_seconds: float = 3.0
+    # The same email sending the same form again within this window adds a note to the earlier
+    # lead instead of creating a new one (and emails nobody again).
+    duplicate_window_hours: int = 24
+    # Flag form submissions whose email domain can't receive email (a DNS lookup, cached).
+    email_domain_check: bool = True
     newsletter_confirm_token_hours: int = 72
     # Who is emailed about new consultation requests and contact messages (comma-separated).
     # Empty means no notifications: leads are still stored and shown in the admin area.

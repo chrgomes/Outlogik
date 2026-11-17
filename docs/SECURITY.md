@@ -82,6 +82,16 @@ own server, so the browser never talks to the API host.
   - a minimum time the form must be open (`FORM_MIN_SECONDS`, 3 seconds)
   - Spam is stored with status `spam` for review, never emailed, and the sender sees the usual
     success message.
+- **Content and email checks** (`backend/app/modules/leads/spam.py`), which flag as spam:
+  - more than 2 links, HTML or forum link code in the message, or a link in the name
+  - an address from a throwaway email service
+  - an email domain that can't receive email, checked by DNS and cached. A failed lookup
+    flags nothing, and if DNS itself looks broken (gmail.com can't be resolved) the check is
+    skipped.
+  - Newsletter sign-ups from such addresses are ignored.
+- **Duplicates:** the same email sending the same form again within 24 hours adds a
+  "Website" note to the earlier lead, keeping any new message, instead of creating a new lead
+  or emailing anyone again.
 - **Rate limits:** 5 submissions per IP address per 10 minutes, and 3 per email address per
   hour.
 - **Strict validation:**

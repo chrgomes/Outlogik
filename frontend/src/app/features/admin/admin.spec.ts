@@ -29,7 +29,7 @@ const lead = {
   message: 'More local customers, please.',
   details: { services: ['seo', 'content-marketing'], budget: '1k-2.5k', preferred_contact: 'Mornings' },
   attribution: { page: '/book-a-consultation', landing_page: '/?utm_source=linkedin', utm_source: 'linkedin', utm_campaign: 'launch' },
-  spam_reason: null, created_at: '2026-11-15T10:00:00Z', updated_at: '2026-11-15T10:00:00Z', notes: [],
+  spam_reason: null, spam_reason_text: null, created_at: '2026-11-15T10:00:00Z', updated_at: '2026-11-15T10:00:00Z', notes: [],
 };
 
 describe('Website admin access', () => {
@@ -183,11 +183,32 @@ describe('Lead detail', () => {
     const post = http.expectOne('/api/v1/admin/leads/l1/notes');
     expect(post.request.body).toEqual({ body: 'Called; booked for Tuesday.' });
     post.flush({ ...lead, status: 'contacted', notes: [
-      { id: 'n1', body: 'Called; booked for Tuesday.', author_name: 'Ada Admin', created_at: '2026-11-15T11:00:00Z' }] });
+      { id: 'n1', body: 'Called; booked for Tuesday.', author_name: 'Ada Admin', source: 'staff', created_at: '2026-11-15T11:00:00Z' }] });
     await flushPending();
     fixture.detectChanges();
     expect(el.querySelector('.note')!.textContent).toContain('Ada Admin');
     expect(note.value).toBe('');
+  });
+});
+
+describe('Lead detail: website notes and spam', () => {
+  it('labels notes the website added, and explains why something is spam', async () => {
+    const http = setup();
+    const fixture = TestBed.createComponent(LeadDetail);
+    fixture.componentRef.setInput('leadId', 'l1');
+    fixture.detectChanges();
+    await flushPending();
+    http.expectOne('/api/v1/admin/leads/l1').flush({
+      ...lead, status: 'spam', spam_reason: 'disposable_email',
+      spam_reason_text: 'The email address is from a throwaway email service.',
+      notes: [{ id: 'n1', body: 'Sent the consultation request form again.', author_name: null,
+        source: 'website', created_at: '2026-11-15T11:00:00Z' }],
+    });
+    await flushPending();
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.alert')!.textContent).toContain('throwaway email service');
+    expect(el.querySelector('.note small')!.textContent).toContain('Website');
   });
 });
 

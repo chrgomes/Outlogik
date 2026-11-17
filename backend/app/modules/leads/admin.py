@@ -18,6 +18,7 @@ from app.core.pagination import Page, Paging, like_pattern, paginate
 from app.core.request import client_ip
 from app.modules.audit.service import record
 from app.modules.auth.deps import DB
+from app.modules.leads import spam
 from app.modules.leads.models import Lead, LeadNote, NewsletterSubscriber
 from app.modules.leads.schemas import (
     LeadCounts,
@@ -180,9 +181,11 @@ def _lead_out(db: Session, lead: Lead) -> LeadOut:
         select(LeadNote, User.full_name).outerjoin(User, User.id == LeadNote.author_user_id)
         .where(LeadNote.lead_id == lead.id).order_by(LeadNote.created_at.desc())).all()
     return LeadOut.model_validate({
-        **{c: getattr(lead, c) for c in LeadOut.model_fields if c != "notes"},
-        "notes": [LeadNoteOut(id=n.id, body=n.body, author_name=name, created_at=n.created_at)
-                  for n, name in notes],
+        **{c: getattr(lead, c) for c in LeadOut.model_fields
+           if c not in ("notes", "spam_reason_text")},
+        "spam_reason_text": spam.REASONS.get(lead.spam_reason or ""),
+        "notes": [LeadNoteOut(id=n.id, body=n.body, author_name=name, source=n.source,
+                              created_at=n.created_at) for n, name in notes],
     })
 
 

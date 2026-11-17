@@ -24,6 +24,8 @@ export interface LeadNote {
   id: string;
   body: string;
   author_name: string | null;
+  /** 'website' for notes the system adds (e.g. the same form sent again). */
+  source: 'staff' | 'website';
   created_at: string;
 }
 
@@ -41,6 +43,7 @@ export interface Lead {
   attribution: Partial<Record<'page' | 'landing_page' | 'referrer' | 'utm_source' | 'utm_medium'
     | 'utm_campaign' | 'utm_term' | 'utm_content', string>>;
   spam_reason: string | null;
+  spam_reason_text: string | null;
   created_at: string;
   updated_at: string;
   notes: LeadNote[];

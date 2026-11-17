@@ -570,4 +570,22 @@ Resend (emails the system sends). **Launch guide: [`DEPLOYMENT.md`](DEPLOYMENT.m
 ## Form rate limit (2026-11-17)
 
 - Website forms now accept at most **5 submissions per IP address per 10 minutes** (was 10). The limit of 3 per email address per hour is unchanged.
-- Suggested next, not yet decided: duplicate detection (same email and form within 24 hours), an invisible built-in proof-of-work check, and content checks (many links, throwaway email services, domains that can't receive email).
+- Duplicate detection and content checks: added (next section). The invisible proof-of-work check is not added (decided 2026-11-17: "for now").
+
+## Duplicates and content checks (2026-11-17)
+
+- **Duplicates:**
+  - The same email address sending the same form (consultation or contact) again within **24 hours** creates no new lead.
+  - The earlier lead gets a note marked **Website**: "Sent the consultation request form again", plus the new message and services if they changed.
+  - Nobody is emailed again, and the sender sees the usual thank-you.
+  - Migration `0007` adds `lead_notes.source` (`staff` or `website`).
+- **Content and email checks** (`app/modules/leads/spam.py`). Flagged submissions go to Spam with a reason that the admin area explains; they're never discarded and never emailed:
+  - more than 2 links (the Website field doesn't count)
+  - HTML or forum link code
+  - a link in the name
+  - a throwaway email service (about 50 common ones, including their subdomains)
+  - an email domain that can't receive email: a DNS lookup of MX records (or the domain's own address), with null MX honoured and results cached
+  - A failed lookup flags nothing. If DNS itself looks broken (gmail.com doesn't resolve), the check is skipped and re-checked every 10 minutes. This container's DNS is exactly like that, which is how the safeguard was found to be needed.
+  - The newsletter ignores throwaway and undeliverable addresses.
+- **Not added:** the invisible proof-of-work check ("for now").
+- **Tests:** backend 258 (+13), app 82 (+1), website 89. Checked end to end through the website's server: a repeat became a note with one confirmation email; a throwaway address and a link-stuffed message went to Spam with their reasons.
