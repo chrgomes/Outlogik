@@ -155,7 +155,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   tagline: 'Digital Marketing. Smarter. Together.',
   contact_email: null,
   sales_email: 'sales@outlogik.com',
-  billing_email: 'billings@outlogik.com',
+  billing_email: 'billing@outlogik.com',
   phone: null,
   address: 'Toronto, Ontario, Canada',
   social_links: [],

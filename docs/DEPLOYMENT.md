@@ -72,7 +72,7 @@ DigitalOcean answers its DNS. App Platform then creates the website's records it
    - `privacy@outlogik.com` (**required**: the privacy policy tells people to use it)
    - `sales@outlogik.com` (**required**: new enquiries are emailed here, and the consultation
      page offers it)
-   - `billings@outlogik.com` (**required**: the payment and subscription policy gives it for
+   - `billing@outlogik.com` (**required**: the payment and subscription policy gives it for
      invoice questions)
 4. Send yourself a test email to each alias.
 
@@ -246,7 +246,7 @@ a `downgrade`).
 ## Launch checklist
 
 - [ ] DNS on DigitalOcean; Google Workspace mail records, SPF, DKIM, DMARC
-- [ ] `privacy@`, `sales@` and `billings@` receive email
+- [ ] `privacy@`, `sales@` and `billing@` receive email
 - [ ] Resend domain verified; API key set as `SMTP_PASSWORD`
 - [ ] PostgreSQL and Valkey clusters in Toronto; restore test done
 - [ ] Staging created and checked (step 8)

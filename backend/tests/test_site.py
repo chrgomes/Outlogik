@@ -280,7 +280,7 @@ def test_admin_province_list_matches_the_api():
 def test_sales_and_billing_emails_default_to_the_business_aliases(site_admin, new_client):
     data = site_admin.get(SETTINGS).json()["data"]
     assert (data["sales_email"], data["billing_email"]) == (
-        "sales@outlogik.com", "billings@outlogik.com")
+        "sales@outlogik.com", "billing@outlogik.com")
     assert site_admin.put(SETTINGS, json={**data, "billing_email": "nope"}).status_code == 422
     assert site_admin.put(SETTINGS, json={**data, "billing_email": "Accounts@Outlogik.com"}
                           ).status_code == 200

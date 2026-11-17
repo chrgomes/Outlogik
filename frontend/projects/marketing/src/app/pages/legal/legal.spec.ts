@@ -68,7 +68,7 @@ describe('Legal pages', () => {
     expect(text).toContain('Fees for work already done aren’t refundable');
     expect(el.querySelector('a[href="/terms"]')).not.toBeNull();
     // Billing questions go to the billing alias.
-    expect(el.querySelector('a[href="mailto:billings@outlogik.com"]')).not.toBeNull();
+    expect(el.querySelector('a[href="mailto:billing@outlogik.com"]')).not.toBeNull();
   });
 
   it('are left out of the sitemap until published', () => {
