@@ -4,6 +4,7 @@ attempt failed and the job is retried, with a growing wait, until max_attempts."
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -17,16 +18,19 @@ class Handler:
     # Called after the job finishes or gives up: returns what's left of the payload, so
     # sensitive content (an email body with a sign-in link) isn't kept.
     scrub: Callable[[dict[str, Any]], dict[str, Any]] | None
+    # How long an attempt may run before recover() treats its worker as gone.
+    stuck_after: timedelta = timedelta(minutes=15)
 
 
 HANDLERS: dict[str, Handler] = {}
 
 
 def handler(kind: str, *, max_attempts: int = 5,
-            scrub: Callable[[dict[str, Any]], dict[str, Any]] | None = None):
+            scrub: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
+            stuck_after: timedelta = timedelta(minutes=15)):
     def register(fn: Callable[[Session, dict[str, Any]], None]):
         if kind in HANDLERS:
             raise ValueError(f"Job kind {kind!r} is registered twice")
-        HANDLERS[kind] = Handler(kind, fn, max_attempts, scrub)
+        HANDLERS[kind] = Handler(kind, fn, max_attempts, scrub, stuck_after)
         return fn
     return register

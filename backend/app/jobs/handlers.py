@@ -52,3 +52,22 @@ def cleanup_job(db: Session, payload: dict[str, Any]) -> None:
             model.used_at < now - USED_TOKENS_KEPT)))
     db.execute(delete(Job).where(Job.status.in_(("succeeded", "dead")),
                                  Job.finished_at < now - FINISHED_JOBS_KEPT))
+
+
+AUDIT_TIME = timedelta(minutes=50)  # a crawl stops itself at 40 minutes
+
+
+@handler("audit.run", max_attempts=2, stuck_after=AUDIT_TIME)
+def audit_job(db: Session, payload: dict[str, Any]) -> None:
+    import uuid
+
+    from app.modules.audits.service import run
+
+    run(db, uuid.UUID(payload["audit_id"]))
+
+
+@handler("audits.schedule", max_attempts=1)
+def audits_schedule_job(db: Session, payload: dict[str, Any]) -> None:
+    from app.modules.audits.service import schedule_due
+
+    schedule_due(db)

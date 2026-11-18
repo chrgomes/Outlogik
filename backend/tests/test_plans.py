@@ -78,7 +78,9 @@ def test_plan_page_shows_prices_limits_and_usage(client, business):
         "limit": 10, "used": 1}
     assert limit_of(body, "limits.team_members")["used"] == 1
     # Businesses have no clients, so the page doesn't mention them.
-    assert [x["key"] for x in body["limits"]] == ["limits.websites", "limits.team_members"]
+    assert [x["key"] for x in body["limits"]] == [
+        "limits.websites", "limits.team_members", "limits.audits_per_month",
+        "limits.pages_per_audit"]
 
 
 def test_only_owners_and_admins_see_the_plan(new_client, db, agency):

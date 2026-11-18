@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import ForeignKey, String, UniqueConstraint, Uuid
+from sqlalchemy import CheckConstraint, ForeignKey, String, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.models import Base, Timestamps, UUIDPrimaryKey
@@ -11,6 +11,8 @@ class Website(UUIDPrimaryKey, Timestamps, Base):
     # One record per normalised URL per organization.
     __table_args__ = (
         UniqueConstraint("organization_id", "url", name="uq_websites_organization_id_url"),
+        CheckConstraint("audit_frequency IN ('off', 'weekly', 'monthly')",
+                        name="audit_frequency_valid"),
     )
 
     organization_id: Mapped[uuid.UUID] = mapped_column(
@@ -29,3 +31,5 @@ class Website(UUIDPrimaryKey, Timestamps, Base):
     domain: Mapped[str] = mapped_column(String(253), index=True)
     # active | paused | archived
     status: Mapped[str] = mapped_column(String(20), default="active", server_default="active")
+    # Automatic audits: off | weekly | monthly
+    audit_frequency: Mapped[str] = mapped_column(String(10), default="off", server_default="off")

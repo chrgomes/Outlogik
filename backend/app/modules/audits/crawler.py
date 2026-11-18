@@ -23,6 +23,7 @@ class CrawledPage:
     url: str
     depth: int
     fetched: Fetched
+    found_on: str | None = None  # the first page that linked here
     page: Page | None = None  # set for HTML pages that loaded
 
 
@@ -90,7 +91,8 @@ def crawl(start_url: str, *, max_pages: int, max_seconds: int = 40 * 60) -> Craw
                 result.sitemap_urls += len(locs)
                 seeds += [normalize(u) for u in locs if on_site(u)]
 
-        queue: deque[tuple[str, int]] = deque([(home, 0)] + [(u, 1) for u in seeds])
+        queue: deque[tuple[str, int, str | None]] = deque(
+            [(home, 0, None)] + [(u, 1, "sitemap") for u in seeds])
         seen = {home, *seeds}
         while queue:
             if len(result.pages) >= max_pages:
@@ -99,14 +101,14 @@ def crawl(start_url: str, *, max_pages: int, max_seconds: int = 40 * 60) -> Craw
             if time.monotonic() - started > max_seconds:
                 result.hit_time_limit = True
                 break
-            url, depth = queue.popleft()
+            url, depth, found_on = queue.popleft()
             if not rp.can_fetch(BOT_NAME, url):
                 result.skipped_by_robots += 1
                 continue
             if result.pages:
                 time.sleep(delay)
             got = fetch(c, url)
-            item = CrawledPage(url=url, depth=depth, fetched=got)
+            item = CrawledPage(url=url, depth=depth, fetched=got, found_on=found_on)
             result.pages.append(item)
             if url == home:
                 result.home = item
@@ -120,7 +122,7 @@ def crawl(start_url: str, *, max_pages: int, max_seconds: int = 40 * 60) -> Craw
                 if (on_site(target) and target not in seen
                         and not urlsplit(target).path.lower().endswith(SKIP_EXTENSIONS)):
                     seen.add(target)
-                    queue.append((target, depth + 1))
+                    queue.append((target, depth + 1, url))
     return result
 
 

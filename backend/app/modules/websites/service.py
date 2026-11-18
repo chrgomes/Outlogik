@@ -29,10 +29,11 @@ def _out(site: Website, ws: Workspace) -> WebsiteOut:
     return WebsiteOut(id=site.id, workspace_id=ws.id, workspace_name=ws.name,
                       client_id=ws.client_id, client_name=ws.name if ws.client_id else None,
                       name=site.name, url=site.url, domain=site.domain, status=site.status,
+                      audit_frequency=site.audit_frequency,
                       created_at=site.created_at, updated_at=site.updated_at)
 
 
-def _reachable(ctx: OrgContext):
+def reachable(ctx: OrgContext):
     """Websites of this organization, or in a workspace shared with it, that the caller may
     see."""
     belongs = Website.organization_id == ctx.org.id
@@ -43,7 +44,7 @@ def _reachable(ctx: OrgContext):
 
 def get_website(db: Session, ctx: OrgContext, website_id: uuid.UUID, *,
                 workspace: Workspace | None = None, for_update: bool = False) -> Website:
-    stmt = select(Website).where(Website.id == website_id, _reachable(ctx))
+    stmt = select(Website).where(Website.id == website_id, reachable(ctx))
     if workspace is not None:
         stmt = stmt.where(Website.workspace_id == workspace.id)
     if for_update:
@@ -74,7 +75,7 @@ def list_websites(db: Session, ctx: OrgContext, params: PageParams, *, q: str | 
                   client_id: uuid.UUID | None = None, workspace_id: uuid.UUID | None = None,
                   status: str | None, sort: str | None) -> tuple[list[WebsiteOut], int]:
     stmt = (select(Website, Workspace).join(Workspace, Workspace.id == Website.workspace_id)
-            .where(_reachable(ctx)))
+            .where(reachable(ctx)))
     if q:
         like = like_pattern(q)
         stmt = stmt.where(or_(func.lower(Website.name).like(like, escape="\\"),
@@ -159,7 +160,7 @@ def update_website(db: Session, ctx: OrgContext, website_id: uuid.UUID, data: di
             site.url, site.domain = url, domain
     if data.get("status") and site.status == "archived" and data["status"] != "archived":
         check_limit(db, site.organization_id, "limits.websites")  # restoring counts again
-    for key in ("name", "status"):
+    for key in ("name", "status", "audit_frequency"):
         if data.get(key) and data[key] != getattr(site, key):
             changes[key] = {"from": getattr(site, key), "to": data[key]}
             setattr(site, key, data[key])

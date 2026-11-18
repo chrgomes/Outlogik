@@ -123,15 +123,23 @@ def recover() -> int:
     Safe to run any time: claiming makes a second delivery harmless."""
     now = utcnow()
     with SessionLocal() as db:
-        db.execute(update(Job).where(Job.status == "running", Job.started_at < now - STUCK_AFTER,
-                                     Job.attempts >= Job.max_attempts)
-                   .values(status="dead", finished_at=now,
-                           last_error="Stopped while running, with no attempts left."))
-        freed = list(db.scalars(
-            update(Job).where(Job.status == "running", Job.started_at < now - STUCK_AFTER)
-            .values(status="queued", run_after=now,
-                    last_error="Stopped while running; tried again.")
-            .returning(Job.id)))
+        # Each kind has its own time limit (a long crawl isn't stuck after 15 minutes).
+        running = db.execute(select(Job.id, Job.kind, Job.started_at, Job.attempts,
+                                    Job.max_attempts)
+                             .where(Job.status == "running",
+                                    Job.started_at < now - STUCK_AFTER)).all()
+        stuck = [r for r in running
+                 if r.started_at < now - getattr(HANDLERS.get(r.kind), "stuck_after", STUCK_AFTER)]
+        give_up = [r.id for r in stuck if r.attempts >= r.max_attempts]
+        freed = [r.id for r in stuck if r.attempts < r.max_attempts]
+        if give_up:
+            db.execute(update(Job).where(Job.id.in_(give_up))
+                       .values(status="dead", finished_at=now,
+                               last_error="Stopped while running, with no attempts left."))
+        if freed:
+            db.execute(update(Job).where(Job.id.in_(freed))
+                       .values(status="queued", run_after=now,
+                               last_error="Stopped while running; tried again."))
         due = freed + list(db.scalars(select(Job.id).where(
             Job.status == "queued", Job.run_after <= now - LOST_AFTER)))
         db.commit()

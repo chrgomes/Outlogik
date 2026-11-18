@@ -10,6 +10,8 @@ from app.core.db import SessionLocal, check_row_level_security
 from app.core.errors import install_error_handlers
 from app.core.headers import install_security_headers
 from app.modules import health
+from app.modules.audits.router import overview_router as audits_overview_router
+from app.modules.audits.router import router as audits_router
 from app.modules.auth.router import router as auth_router
 from app.modules.clients.router import router as clients_router
 from app.modules.dashboard.router import router as dashboard_router
@@ -71,6 +73,8 @@ def create_app() -> FastAPI:
     api.include_router(grants_linked_router)
     api.include_router(grants_open_router)
     api.include_router(plans_router)
+    api.include_router(audits_router)
+    api.include_router(audits_overview_router)
     api.include_router(workspace_websites_router)
     api.include_router(dashboard_router)
     api.include_router(site_public_router)

@@ -9,22 +9,24 @@ organization just can't add more until it has a plan.
 import uuid
 from datetime import timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError, Forbidden
 from app.core.models import utcnow
 from app.modules.audit.service import record
+from app.modules.audits.models import UsageRecord
 from app.modules.clients.models import Client
 from app.modules.organizations.models import Invitation, Organization, OrganizationMember
-from app.modules.plans.catalogue import ENTITLEMENTS, TRIAL_DAYS, TRIAL_PLAN
+from app.modules.plans.catalogue import CAPS, ENTITLEMENTS, METERED, TRIAL_DAYS, TRIAL_PLAN
 from app.modules.plans.models import Plan, PlanEntitlement, Subscription
 from app.modules.rbac.catalogue import CLIENT
 from app.modules.rbac.models import Role
 from app.modules.websites.models import Website
 
 NOUNS = {"limits.websites": ("website", "websites"), "limits.clients": ("client", "clients"),
-         "limits.team_members": ("team member", "team members")}
+         "limits.team_members": ("team member", "team members"),
+         "limits.audits_per_month": ("website audit a month", "website audits a month")}
 CONTACT = "Contact Outlogik to move to a bigger plan."
 
 
@@ -56,13 +58,43 @@ def limits(db: Session, plan_id: uuid.UUID) -> dict[str, int | None]:
     return {key: values.get(key) for key in ENTITLEMENTS}
 
 
-def usage(db: Session, org_id: uuid.UUID) -> dict[str, int]:
+def period(when=None) -> str:
+    return (when or utcnow()).strftime("%Y-%m")
+
+
+def metered_use(db: Session, org_id: uuid.UUID, metric: str) -> int:
+    return db.scalar(select(UsageRecord.count).where(
+        UsageRecord.organization_id == org_id, UsageRecord.metric == metric,
+        UsageRecord.period == period())) or 0
+
+
+def record_use(db: Session, org_id: uuid.UUID, metric: str) -> None:
+    """Count one more use this month (atomic, so simultaneous requests can't undercount)."""
+    db.execute(text("""
+        INSERT INTO usage_records (id, organization_id, metric, period, count)
+        VALUES (gen_random_uuid(), :org, :metric, :period, 1)
+        ON CONFLICT (organization_id, metric, period)
+        DO UPDATE SET count = usage_records.count + 1, updated_at = now()
+    """), {"org": org_id, "metric": metric, "period": period()})
+
+
+def cap(db: Session, org_id: uuid.UUID, key: str) -> int | None:
+    """A cap from the organization's plan (for example pages per audit); None: no cap."""
+    sub = subscription_for(db, org_id)
+    return limits(db, sub.plan_id)[key] if sub else None
+
+
+def usage(db: Session, org_id: uuid.UUID) -> dict[str, int | None]:
     websites = db.scalar(select(func.count()).select_from(Website).where(
         Website.organization_id == org_id, Website.status != "archived")) or 0
     clients = db.scalar(select(func.count()).select_from(Client).where(
         Client.organization_id == org_id, Client.status != "archived")) or 0
-    return {"limits.websites": websites, "limits.clients": clients,
-            "limits.team_members": team_count(db, org_id)}
+    counts: dict[str, int | None] = {
+        "limits.websites": websites, "limits.clients": clients,
+        "limits.team_members": team_count(db, org_id)}
+    counts |= {key: metered_use(db, org_id, metric) for key, metric in METERED.items()}
+    counts |= {key: None for key in CAPS}
+    return counts
 
 
 def team_count(db: Session, org_id: uuid.UUID, *, include_pending: bool = True) -> int:
