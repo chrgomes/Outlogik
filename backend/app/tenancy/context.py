@@ -13,7 +13,7 @@ from fastapi import Depends, Path
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.db import get_db
+from app.core.db import get_db, set_tenant
 from app.core.errors import Forbidden, NotFound
 from app.modules.auth.deps import AuthContext, get_auth
 from app.modules.organizations.models import Organization, OrganizationMember
@@ -95,6 +95,8 @@ def get_org_context(
         ).all()
         workspace_ids = {ws_id for ws_id, _ in rows}
         client_ids = {client_id for _, client_id in rows if client_id}
+    # The database now hides other organizations' rows too (row-level security).
+    set_tenant(db, org.id, linked)
     return OrgContext(org=org, member=member, role=role, user=auth.user,
                       permissions=role_permission_codes(db, role.id),
                       workspace_ids=workspace_ids, client_ids=client_ids, linked=linked)

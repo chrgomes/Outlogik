@@ -5,7 +5,7 @@ from fastapi import APIRouter, FastAPI
 
 from app.core.config import get_settings
 from app.core.csrf import install_csrf
-from app.core.db import SessionLocal
+from app.core.db import SessionLocal, check_row_level_security
 from app.core.errors import install_error_handlers
 from app.core.headers import install_security_headers
 from app.modules import health
@@ -37,6 +37,7 @@ async def lifespan(_: FastAPI):
     with SessionLocal() as db:
         sync_permissions(db)
         site_service.ensure_defaults(db)
+    check_row_level_security()
     yield
 
 

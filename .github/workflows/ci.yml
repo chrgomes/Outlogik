@@ -35,8 +35,10 @@ jobs:
           --health-cmd "redis-cli ping"
           --health-interval 5s --health-timeout 3s --health-retries 10
     env:
-      TEST_DATABASE_URL: postgresql+psycopg://outlogik:outlogik@localhost:5432/outlogik_test
-      DATABASE_URL: postgresql+psycopg://outlogik:outlogik@localhost:5432/outlogik_test
+      # An ordinary user, as in production: row-level security doesn't apply to superusers
+      # (the service container's POSTGRES_USER is one).
+      TEST_DATABASE_URL: postgresql+psycopg://outlogik_app:outlogik_app@localhost:5432/outlogik_test
+      DATABASE_URL: postgresql+psycopg://outlogik_app:outlogik_app@localhost:5432/outlogik_test
       TEST_REDIS_URL: redis://localhost:6379/15
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +47,14 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --frozen
+      - name: Create the ordinary database user the tests run as
+        env:
+          PGPASSWORD: outlogik
+        run: >-
+          psql -h localhost -U outlogik -d outlogik_test -v ON_ERROR_STOP=1
+          -c "CREATE ROLE outlogik_app LOGIN PASSWORD 'outlogik_app' NOSUPERUSER NOBYPASSRLS"
+          -c "ALTER DATABASE outlogik_test OWNER TO outlogik_app"
+          -c "ALTER SCHEMA public OWNER TO outlogik_app"
       - name: Lint
         run: uv run ruff check .
       - name: Tests (builds the schema from the migrations)

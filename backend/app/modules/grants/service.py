@@ -120,11 +120,9 @@ def _end(db: Session, g: WorkspaceGrant, actor: User, ip: str | None, action: st
         "revoked", utcnow(), actor.id, None)
     if was_active:
         # The agency's members lose their assignments to the workspace.
-        member_ids = select(OrganizationMember.id).where(
-            OrganizationMember.organization_id == g.agency_organization_id)
         db.execute(delete(WorkspaceAssignment).where(
             WorkspaceAssignment.workspace_id == g.workspace_id,
-            WorkspaceAssignment.member_id.in_(member_ids)))
+            WorkspaceAssignment.organization_id == g.agency_organization_id))
     _record_both(db, g, action, actor.id, {"email": g.email, "was": "active" if was_active
                                            else "pending"}, ip)
     db.commit()
