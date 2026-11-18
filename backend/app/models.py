@@ -1,6 +1,7 @@
 """Imports every model so SQLAlchemy metadata (and Alembic autogenerate) sees all tables."""
 
 from app.core.models import Base
+from app.jobs.models import Job
 from app.modules.audit.models import AuditLog
 from app.modules.auth.models import EmailVerificationToken, PasswordResetToken, UserSession
 from app.modules.clients.models import Client, ClientUser
@@ -21,6 +22,7 @@ __all__ = [
     "ClientUser",
     "EmailVerificationToken",
     "Invitation",
+    "Job",
     "Lead", "LeadNote",
     "NewsletterSubscriber",
     "Organization",

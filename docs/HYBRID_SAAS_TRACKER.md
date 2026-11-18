@@ -11,8 +11,125 @@ unfinished, security notes, and what's next.
 | H1-3 Roles, assignments, access grants, RLS | **Done** (2026-11-18) |
 | AI Search addendum | Planned 2026-11-18: GEO checks in H1-6, AI referral traffic in H1-7, monitoring as the first H2 module ([`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) |
 | H1-4 Plans and limits | **Done** (2026-11-18) |
-| H1-5 Background jobs | Next |
-| H1-6 … H1-12 | Not started |
+| H1-5 Background jobs | **Done** (2026-11-18) |
+| H1-6 SEO crawler and audits | Next |
+| H1-7 … H1-12 | Not started |
+
+---
+
+## H1-5: Background jobs
+
+### 1. What was completed
+
+- **A job system** for work that shouldn't happen during a click:
+  - **Recorded:** every job is in a `jobs` table, with its kind, status, attempts and last
+    error.
+  - **Retried:** a failure is tried again with a growing wait (30 seconds, 2 minutes,
+    8 minutes, …). After the kind's maximum attempts the job "gives up", and is kept for a
+    person to look at and retry.
+  - **No duplicates:** the same work can't be queued twice, and a message delivered twice
+    still runs once.
+  - **Recovered:** jobs left half-done by a stopped worker, or whose message was lost, are
+    picked up again automatically.
+- **Email now goes through a job.** A slow or failing mail server no longer slows down
+  sign-up, invitations or the website forms, and failed emails are retried. Once an email is
+  sent (or gives up), its text, which can contain a sign-in or reset link, is erased from the
+  job record.
+- **Scheduled jobs:**
+  - **Every 5 minutes:** recover stuck or lost jobs.
+  - **Nightly (3:17 am Toronto time):** delete expired and idle sessions, used or expired
+    one-time tokens, and finished jobs older than 30 days. Nothing deleted any of these
+    before, so they were piling up.
+- **Two modes:**
+  - **inline** (development and tests): jobs run straight away inside the API, so nothing
+    extra runs on your computer
+  - **queue** (staging and production): a separate worker process (Celery with Redis/Valkey)
+- **DigitalOcean:** both app specs get a `worker` component, built from the API's image. Each
+  environment has its own queue name, because staging and production share one Valkey.
+- **Command line:** `python -m app.cli jobs [--status dead]` and `retry-job ID`, until the
+  Super Admin area shows job health (H1.5).
+
+**Found and fixed while testing:** a job freed from a stopped worker was requeued but only
+re-sent on the next recovery run, 5 minutes later. It's now sent straight away.
+
+### 2. Files changed
+
+- **New:** `app/jobs/` (`models.py`, `registry.py`, `service.py`, `handlers.py`),
+  `app/worker.py`, migration `0014`, `tests/test_jobs.py`.
+- **Changed:**
+  - `core/email.py` (`send_email` queues; `deliver` sends), `core/config.py`
+    (`JOBS_MODE`, `JOBS_QUEUE`)
+  - `main.py`, `models.py`, `cli.py` (`jobs`, `retry-job`)
+  - `pyproject.toml` / `uv.lock` (Celery)
+  - `.env.example`
+- **Deployment:** `.do/staging/app.yaml`, `.do/production/app.yaml` (worker component, queue
+  settings); `.github/workflows/ci.yml` (the API image must be able to start the worker).
+- **Docs:** `ARCHITECTURE.md`, `SECURITY.md`, `DEPLOYMENT.md` (§6: the worker, its secrets,
+  checking and retrying jobs), `README.md`, `HYBRID_SAAS_PLAN.md`, this tracker.
+
+### 3. Database changes (migration `0014`)
+
+| Change | Existing data |
+|---|---|
+| New table `jobs`: kind, organization (optional), status, payload, dedupe key (unique while waiting or running), attempts, max attempts, run after, started/finished, last error | None |
+| Row-level security on `jobs` | None |
+
+Run up, checked, down and up again; the test suite builds from it.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **367 passed** (was 353) |
+| App (Vitest) | 113 passed (unchanged; no app changes) |
+| Website (Vitest) | 92 passed (unchanged) |
+
+The 14 new tests cover:
+- recording and success; erasing sensitive content
+- retries and the backoff schedule; giving up after the last attempt, and a person retrying
+- running once when delivered twice; no duplicate queued work
+- unknown kinds refused
+- recovery of stuck and lost jobs (and giving up on stuck ones with no attempts left)
+- the queue being down not breaking the request
+- queue mode through Celery
+- scheduled work recorded once
+- email through the queue (with its text erased), and a mail-server failure retried while the
+  request still succeeds
+- the nightly cleanup deleting only what's no longer needed
+
+**With a real worker** (Celery, the local Redis and Postgres, the API in queue mode):
+- A sign-up's confirmation email was sent by the worker, and its text erased from the job.
+- With the worker stopped, a sign-up still succeeded and its email waited in the queue. When
+  the worker restarted, the email was sent.
+
+### 5. Unfinished (on purpose)
+
+- **Job health on screen** (counts, failures, retry button) comes with the Super Admin control
+  center (H1.5). Until then, the command line.
+- **Inline mode (development) doesn't retry failed jobs,** since there's no worker to come back
+  later. Development email goes to Mailpit or the console anyway.
+- **No metrics or alerting on the queue yet:** monitoring is in DEPLOYMENT.md's checklist for
+  launch.
+
+### 6. Security notes
+
+- **Email text erased:** an email's text, which may contain a sign-in, reset or invitation
+  link, is erased from the job record once sent or given up. A failed email therefore can't be
+  retried by staff; the person asks again from the app.
+- **Errors stored briefly:** last errors are stored truncated, without the payload.
+- **Automatic deletion:** finished jobs after 30 days; expired and idle sessions and used
+  tokens nightly (less personal data kept, as PIPEDA asks).
+- **`jobs` is under row-level security** like other tenant tables.
+- **Separate queues** for staging and production, so neither can run the other's jobs.
+- **Handlers filter by organization themselves.** They run without an organization set, as
+  the architecture checklist says.
+
+### 7. Next: H1-6 SEO crawler and audits
+
+Our own crawler with safe fetching (blocking private addresses), on-page and technical checks,
+the **AI search readiness** checks from the addendum, PageSpeed, scheduled audits on the new job
+system, history and comparison, and prioritized issues. Monthly audit limits per plan arrive
+here, with the first metered usage records.
 
 ---
 

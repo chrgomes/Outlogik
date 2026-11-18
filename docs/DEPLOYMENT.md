@@ -146,16 +146,42 @@ python3 -c "import secrets; print(secrets.token_urlsafe(32))"
    ```
 
 3. In each app's **Settings → Environment variables**, replace every `CHANGE_ME`:
-   - `outlogik-app-staging`, component **api**: `SITE_PROXY_SECRET` (step 5) and `SMTP_PASSWORD`
-     (the Resend key, step 3)
+   - `outlogik-app-staging`, components **api** and **worker** (both): `SITE_PROXY_SECRET`
+     (step 5) and `SMTP_PASSWORD` (the Resend key, step 3). The worker sends the emails, so it
+     needs the same values as the api.
    - `outlogik-site-staging`: `SITE_PROXY_SECRET` (the **same** value as the api's)
 4. The first deploy builds the images, runs the database migrations (`migrate` job), then starts
-   everything. App Platform creates the DNS records for `staging.outlogik.com` and
+   everything: the website, the api, and the **worker** (background jobs: email, the nightly
+   cleanup, recovering stuck jobs). The worker is one more small instance in each app. App Platform creates the DNS records for `staging.outlogik.com` and
    `app.staging.outlogik.com` and their HTTPS certificates.
 
 **Note:** these specs were written against DigitalOcean's app spec format but haven't been
 validated against a real account yet. If the validator or the import complains (for example
 about the `VALKEY` engine name or a field), tell me the message and I'll adjust the file.
+
+### Background jobs (the worker)
+
+The api records each piece of background work in the database and hands it to the worker through
+the Valkey cache. Staging and production share the cache, so each uses its own queue
+(`JOBS_QUEUE`: `outlogik-staging`, `outlogik-production`); don't change them to the same name.
+
+- **If the worker is down,** nothing is lost: sign-ups and invitations still work, and their
+  emails wait in the queue until it's back. Jobs a stopped worker left half-done are retried
+  automatically every few minutes.
+- **To see recent jobs, or ones that failed** (in the app's **Console**, component **worker**):
+
+  ```bash
+  python -m app.cli jobs --status dead
+  ```
+
+- **To give a job that gave up another try:**
+
+  ```bash
+  python -m app.cli retry-job JOB_ID
+  ```
+
+  A failed email can't be retried this way: its text is removed when it gives up, because it may
+  contain a sign-in link. The person asks again from the app (for example "Forgot password?").
 
 ## 7. Create the first staff account
 

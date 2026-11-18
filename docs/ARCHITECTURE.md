@@ -30,6 +30,7 @@ schemas, service functions and router.
 | `modules/organizations` | Organizations, members, invitations |
 | `modules/rbac` | Permission catalogue, built-in roles, custom roles, escalation guard |
 | `modules/workspaces` | Workspaces (an organization's own, and one per agency client), the workspace list API, `require_workspace(...)` for `/orgs/{slug}/workspaces/{id}/…` routes, and member workspace assignments |
+| `jobs/` and `worker.py` | Background jobs: the `jobs` table, `enqueue()`, retries, recovery, the job kinds (`jobs/handlers.py`), and the Celery worker with its schedule |
 | `modules/plans` | Plans, their limits, subscriptions and trials; `check_limit(...)`, called by the services that add websites, clients and team members |
 | `modules/grants` | Access grants: a business shares its workspace with an agency (send, accept, revoke, disconnect) |
 | `modules/clients`, `modules/websites` | Clients, client-portal access, websites and URL validation |
@@ -168,6 +169,22 @@ users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
   counts. After a trial ends, or when cancelled, nothing new can be added; nothing is removed.
   A new limit (for example, audits per month) is a catalogue entry, a migration adding values
   to the plans, and a `check_limit` call where the thing is created.
+- **Background jobs** (`jobs` table, migration 0014; `app/jobs`, `app/worker.py`):
+  - `enqueue(kind, payload, dedupe_key=…)` records a job in its own transaction and hands it
+    to the worker. A `dedupe_key` stops the same work being queued twice.
+  - The worker claims a job with one UPDATE, so a message delivered twice runs once.
+  - A failure is retried with a growing wait (30 s, 2 min, 8 min…) up to the kind's
+    `max_attempts`, then the job is `dead`, kept for a person to retry.
+  - `JOBS_MODE=inline` (development, tests) runs jobs straight away in the same process;
+    `queue` (staging, production) uses the Celery worker, started with
+    `celery -A app.worker worker --beat`.
+  - Schedule: `jobs.recover` every 5 minutes (stuck or lost jobs), `maintenance.cleanup`
+    nightly (expired sessions and tokens, finished jobs after 30 days).
+  - Email always goes through a job (`email.send`). A kind's `scrub` removes sensitive payload
+    once it's done.
+  - **To add a kind:** a function with `@handler("area.thing")` in `jobs/handlers.py` (or the
+    module's own file, imported there), then `enqueue("area.thing", {...})` where it's needed.
+    Handlers get a session with no organization set, so they filter by organization themselves.
 - **Row-level security** (migration 0012) backs all of this up in Postgres. `get_org_context`
   calls `core.db.set_tenant`, which sets `app.org_id` and `app.linked_ws` at the start of each
   transaction for the rest of the request.

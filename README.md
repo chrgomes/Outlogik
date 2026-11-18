@@ -76,6 +76,19 @@ backend, so the browser sees a single site and the session and CSRF cookies just
 > `http://localhost`. If your browser doesn't, set `COOKIE_SECURE=false` in `backend/.env`
 > for local development only.
 
+### Background jobs
+
+Email and other background work run **inline** in development (`JOBS_MODE=inline`, the default),
+so nothing extra needs to run. To try the real worker locally, set `JOBS_MODE=queue` in
+`backend/.env`, restart the API, and in another terminal:
+
+```bash
+cd backend
+uv run celery -A app.worker worker --beat --loglevel INFO
+```
+
+`uv run python -m app.cli jobs` lists recent jobs.
+
 ### Super Admin and staff access
 
 Super Admins, and Outlogik staff who manage the marketing website, are set up from the command

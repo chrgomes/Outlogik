@@ -76,6 +76,11 @@ deployment must add. Each item is covered by backend or frontend tests unless no
   allow everything. They don't apply to superusers or `BYPASSRLS` users, so production uses
   an ordinary database user (DEPLOYMENT.md §4); the API warns at startup otherwise, and CI
   runs the tests as an ordinary user.
+- **Background jobs:** emails are sent by a job, and their text (which can contain a sign-in,
+  reset or invitation link) is erased from the job record as soon as the email is sent or gives
+  up. Errors are stored without the payload. Finished jobs are deleted after 30 days, and
+  expired sessions and used tokens nightly. The `jobs` table is under row-level security like
+  other tenant tables.
 - **Cross-tenant attack suite** (`tests/test_cross_tenant.py`): every organization route that
   takes an id, found automatically, is called by another organization's owner with the
   victim's ids, in the URL and in the body. All must fail, and the victim's data must be

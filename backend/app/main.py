@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI
 
+import app.jobs.handlers  # noqa: F401 - registers the background job kinds
 from app.core.config import get_settings
 from app.core.csrf import install_csrf
 from app.core.db import SessionLocal, check_row_level_security

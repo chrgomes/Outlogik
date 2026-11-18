@@ -13,6 +13,11 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://outlogik:outlogik@localhost:5432/outlogik"
     redis_url: str = "redis://localhost:6379/0"
+    # Background jobs: "inline" runs them straight away in the same process (development, tests);
+    # "queue" hands them to the Celery worker (staging, production). See app/worker.py.
+    jobs_mode: Literal["inline", "queue"] = "inline"
+    # The worker's queue. Staging and production share a Redis, so each needs its own name.
+    jobs_queue: str = "outlogik"
     frontend_url: str = "http://localhost:4200"
     # The public website. Its forms may post to /api/v1/public/* only from this origin
     # (plus any extra origins listed, comma-separated, e.g. a staging site).

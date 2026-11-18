@@ -11,6 +11,7 @@ Super Admins can only be created here, never through the API or UI.
 import argparse
 import getpass
 import sys
+import uuid
 
 from sqlalchemy import select
 
@@ -18,6 +19,9 @@ from app.core.db import SessionLocal
 from app.core.errors import AppError
 from app.core.models import utcnow
 from app.core.security import hash_password
+from app.jobs import handlers as _handlers  # noqa: F401 - registers the job kinds
+from app.jobs import service as jobs_service
+from app.jobs.models import JOB_STATUSES, Job
 from app.models import Organization, User
 from app.modules.audit.service import record
 from app.modules.organizations.service import create_organization
@@ -100,6 +104,36 @@ def set_plan_cmd(slug: str, plan: str, status: str, interval: str,
     return 0
 
 
+def list_jobs(status: str | None, limit: int) -> int:
+    """Recent background jobs, newest first (failed ones with their last error)."""
+    with SessionLocal() as db:
+        stmt = select(Job).order_by(Job.created_at.desc()).limit(limit)
+        if status:
+            stmt = stmt.where(Job.status == status)
+        jobs = db.scalars(stmt).all()
+    if not jobs:
+        print("No jobs.")
+    for j in jobs:
+        print(f"{j.id}  {j.created_at:%Y-%m-%d %H:%M}  {j.status:<9}  {j.kind:<20}  "
+              f"attempts {j.attempts}/{j.max_attempts}")
+        if j.last_error:
+            print(f"    last error: {j.last_error[:200]}")
+    return 0
+
+
+def retry_job_cmd(job_id: str) -> int:
+    try:
+        ok = jobs_service.retry(uuid.UUID(job_id))
+    except ValueError:
+        print("That isn't a job id.", file=sys.stderr)
+        return 1
+    if not ok:
+        print("No job that gave up with that id.", file=sys.stderr)
+        return 1
+    print(f"Job {job_id} queued again.")
+    return 0
+
+
 def set_staff_role(email: str, role: str | None) -> int:
     """Grant (or with role=None, revoke) Outlogik staff access to the admin area."""
     email = email.strip().lower()
@@ -138,6 +172,11 @@ def main() -> int:
     sp.add_argument("--status", choices=STATUSES, default="active")
     sp.add_argument("--interval", choices=INTERVALS, default="monthly")
     sp.add_argument("--trial-days", type=int, help="With --status trialing (default 14)")
+    jb = sub.add_parser("jobs", help="List recent background jobs")
+    jb.add_argument("--status", choices=JOB_STATUSES)
+    jb.add_argument("--limit", type=int, default=20)
+    rj = sub.add_parser("retry-job", help="Give a job that gave up another round of attempts")
+    rj.add_argument("id")
     g = sub.add_parser("grant-staff", help="Give an existing user access to the admin area")
     g.add_argument("--email", required=True)
     g.add_argument("--role", required=True, choices=PLATFORM_ROLES)
@@ -152,6 +191,10 @@ def main() -> int:
                                        args.kind, args.plan)
     if args.command == "set-plan":
         return set_plan_cmd(args.org, args.plan, args.status, args.interval, args.trial_days)
+    if args.command == "jobs":
+        return list_jobs(args.status, args.limit)
+    if args.command == "retry-job":
+        return retry_job_cmd(args.id)
     if args.command == "grant-staff":
         return set_staff_role(args.email, args.role)
     if args.command == "revoke-staff":
