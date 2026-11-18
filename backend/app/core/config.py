@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     jobs_mode: Literal["inline", "queue"] = "inline"
     # The worker's queue. Staging and production share a Redis, so each needs its own name.
     jobs_queue: str = "outlogik"
+    # Website audits (app/modules/audits). Fetching private network addresses is only for the
+    # test suite's local website; refused in production.
+    crawler_allow_private: bool = False
+    crawler_delay_seconds: float = 0.25
+    # Google PageSpeed Insights (free key from a Google Cloud project). Without it, audits say
+    # page speed isn't connected.
+    pagespeed_api_key: str | None = None
     frontend_url: str = "http://localhost:4200"
     # The public website. Its forms may post to /api/v1/public/* only from this origin
     # (plus any extra origins listed, comma-separated, e.g. a staging site).
@@ -107,6 +114,12 @@ class Settings(BaseSettings):
             if url.startswith(prefix):
                 return "postgresql+psycopg://" + url[len(prefix):]
         return url
+
+    @model_validator(mode="after")
+    def _no_private_crawling_in_production(self) -> "Settings":
+        if self.app_env == "production" and self.crawler_allow_private:
+            raise ValueError("CRAWLER_ALLOW_PRIVATE must not be set in production.")
+        return self
 
     @property
     def public_form_origins(self) -> set[str]:
