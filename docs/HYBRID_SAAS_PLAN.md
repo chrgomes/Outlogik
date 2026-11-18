@@ -131,6 +131,30 @@ Platform
   - a friendly error explaining the limit and how to upgrade
 - **Billing provider later (H3),** behind an adapter. Stripe supports Canada.
 
+**Plans and prices (decided 2026-11-18).** In Canadian dollars; HST is added for Canadian
+customers at checkout (H3). Annual billing is 20% off and paid upfront. "Digital" plans are
+for business accounts, "Agency" plans for agency accounts.
+
+| Plan | Account type | Monthly | Annual, upfront (per month) | Websites | Clients | Team members |
+|---|---|---|---|---|---|---|
+| Digital Starter | business | $29 | $278.40 ($23.20) | 1 | – | 2 |
+| Digital Growth | business | $59 | $566.40 ($47.20) | 3 | – | 5 |
+| Digital Professional | business | $99 | $950.40 ($79.20) | 10 | – | 10 |
+| Agency Starter | agency | $79 | $758.40 ($63.20) | 10 | 5 | 3 |
+| Agency Professional | agency | $149 | $1,430.40 ($119.20) | 30 | 15 | 8 |
+| Agency Business | agency | $299 | $2,870.40 ($239.20) | 100 | 40 | 20 |
+
+- These are the starting values seeded in H1-4. Super Admin can change any of them without
+  code changes.
+- Limits for SEO audits, AI Search monitoring and other modules are added to each plan when
+  the module exists, so no plan lists a feature that isn't built.
+- **Free trial: 14 days** with the full plan, no card needed during beta. Until billing exists
+  (H3), plans are assigned by hand.
+- **Before selling subscriptions,** the website needs subscription terms: annual upfront
+  payment, renewals, cancellation and refunds for the unused part of a year, and trial
+  terms. Today's payment policy covers Outlogik's agency services (monthly in arrears), not
+  software subscriptions. To write in H1.5 with the pricing page, and have reviewed.
+
 ### 1.5 Background processing (§19)
 
 - **Celery** with Redis as the broker, plus **Celery beat** for schedules. Both are ordinary
