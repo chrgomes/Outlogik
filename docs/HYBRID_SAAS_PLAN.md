@@ -229,7 +229,7 @@ counts as done only when its backend, storage, permissions, error handling and t
 | # | Step | Specification |
 |---|---|---|
 | H1-1 | **This audit and plan:** decisions (section 4) and approval | §2 |
-| H1-2 | **Account types and workspaces:** the data model and migration above; workspace-scoped API; the app's workspace switcher | §4 |
+| H1-2 ✅ | **Account types and workspaces:** the data model and migration above; workspace-scoped API; the app's workspace switcher | §4 |
 | H1-3 | **Roles, assignments and isolation:** business and agency role templates, workspace scope and assignments, platform roles, RLS backstop, cross-tenant test suite | §5, §16, §21 |
 | H1-4 | **Entitlements foundation:** plans, entitlements, subscriptions (assigned by hand), usage records, backend enforcement (websites, clients, team, audits) | §12 |
 | H1-5 | **Background jobs:** Celery and beat, the jobs table, retries, duplicate prevention; email moves to the queue | §19 |

@@ -55,14 +55,19 @@ deployment must add. Each item is covered by backend or frontend tests unless no
   through one dependency. A non-member, or a disabled member, gets **404**, identical to an
   organization that doesn't exist.
 - Rows are always loaded filtered by `organization_id`. Using another organization's IDs for
-  any object (member, role, client, website, invitation, portal user) returns 404 and changes
-  nothing. Tests try each of these.
+  any object (member, role, client, workspace, website, invitation, portal user) returns 404
+  and changes nothing. Tests try each of these.
+- **Workspaces:** workspace routes (`/orgs/{slug}/workspaces/{id}/…`) check the organization
+  first, then load the workspace within it. A workspace in another organization, or one the
+  caller can't see, is a 404. A website is only reachable through its own workspace, and can
+  only be moved to a workspace in the same organization.
 - **Permissions:** each endpoint declares exactly one; a test fails the build if one doesn't,
   and another runs every built-in role against every endpoint.
 - **No privilege escalation:** you can only assign or invite with a role whose permissions you
   hold. Only owners grant Owner, or change, disable or remove owners. The last owner can't be
   removed, demoted or leave. Nobody can change their own role or status.
-- **Client-portal users** see only the clients they're linked to and those clients' websites.
+- **Client-portal users** see only the clients they're linked to, those clients' workspaces
+  and websites. They never see the agency's own workspace or its websites.
   Internal notes and team information are never sent to them.
 - **Audit log:** sensitive actions are recorded with actor, target, details and IP.
 

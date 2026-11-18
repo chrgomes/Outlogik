@@ -29,12 +29,13 @@ schemas, service functions and router.
 | `modules/users` | The `User` model |
 | `modules/organizations` | Organizations, members, invitations |
 | `modules/rbac` | Permission catalogue, built-in roles, custom roles, escalation guard |
+| `modules/workspaces` | Workspaces (an organization's own, and one per agency client), the workspace list API, and `require_workspace(...)` for `/orgs/{slug}/workspaces/{id}/…` routes |
 | `modules/clients`, `modules/websites` | Clients, client-portal access, websites and URL validation |
 | `modules/dashboard` | Dashboard counts and recent activity |
 | `modules/audit` | The append-only audit log |
 | `modules/site` | Marketing site settings and product module statuses (public and admin API) |
 | `platform.py` | Outlogik staff roles (`content_editor`, `site_admin`) and `require_staff(...)` for `/api/v1/admin/...` |
-| `cli.py` | Admin commands (create a Super Admin, grant or revoke staff roles, sync permissions) |
+| `cli.py` | Admin commands (create a Super Admin, create an organization with `--kind business` or `agency`, grant or revoke staff roles, sync permissions) |
 
 Conventions:
 
@@ -50,7 +51,10 @@ Conventions:
 
 ### Checklist: adding an organization endpoint
 
-1. Put it under `/api/v1/orgs/{org_slug}/…` in the module's router.
+1. Put it under `/api/v1/orgs/{org_slug}/…` in the module's router. Marketing data that
+   belongs to a workspace goes under `/api/v1/orgs/{org_slug}/workspaces/{workspace_id}/…`
+   and depends on `require_workspace("<permission>")` instead, which also loads the
+   workspace (404 if the caller can't see it).
 2. Depend on `require("<permission>")`. Add new permissions to `rbac/catalogue.py` and decide
    which built-in roles get them; startup applies the change to every organization.
 3. Load rows with `get_scoped()` / `scoped_select()`, or `get_visible()` plus
@@ -121,17 +125,30 @@ Conventions:
 4. Add unit tests for permission-dependent behaviour, and check it at phone width in both
    themes.
 
-## Data model (Phase 1)
+## Data model
 
 ```
 users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
-       └─ organization_members ─┬─ organizations ─┬─ roles ── role_permissions ── permissions
-                                │                 ├─ invitations
-                                │                 ├─ clients ─┬─ websites
-                                │                 │           └─ client_users ── users
-                                │                 └─ audit_logs
+       └─ organization_members ─┬─ organizations (kind: business | agency)
+                                │    ├─ roles ── role_permissions ── permissions
+                                │    ├─ invitations
+                                │    ├─ clients ─┬─ client_users ── users
+                                │    │           └─ workspaces (kind client, one per client)
+                                │    ├─ workspaces (kind own, exactly one) ─┐
+                                │    │                                       └─ websites
+                                │    └─ audit_logs
                                 └─ roles
 ```
 
+- **Organizations** are the tenant: team, roles and (later) the subscription belong to them. A
+  **business** markets itself; an **agency** also works for clients.
+- **Workspaces** hold marketing data. Every organization has one `own` workspace; each agency
+  client has a `client` workspace. Both are created and renamed with their organization or
+  client; deleting a client deletes its workspace and websites.
+- **Websites** belong to a workspace (`workspace_id`). `websites.client_id` is kept in step
+  (null in the own workspace) until every reader has moved to `workspace_id`
+  (docs/HYBRID_SAAS_PLAN.md §2).
+- Business accounts can't create clients (403 `business_account`).
+
 Every tenant-owned table has `organization_id`. Migrations are in `backend/alembic/versions`
-(`0001` initial schema, `0002` unique website URL per organization).
+(`0001` initial schema … `0008` account types and workspaces).
