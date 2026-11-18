@@ -7,6 +7,7 @@ from app.modules.clients.models import Client, ClientUser
 from app.modules.grants.models import WorkspaceGrant
 from app.modules.leads.models import Lead, LeadNote, NewsletterSubscriber
 from app.modules.organizations.models import Invitation, Organization, OrganizationMember
+from app.modules.plans.models import Plan, PlanEntitlement, Subscription
 from app.modules.rbac.models import Permission, Role, RolePermission
 from app.modules.site.models import PortalFeature, SiteSettings
 from app.modules.users.models import User
@@ -25,11 +26,14 @@ __all__ = [
     "Organization",
     "OrganizationMember",
     "PasswordResetToken",
+    "Plan",
+    "PlanEntitlement",
     "Permission",
     "PortalFeature",
     "Role",
     "RolePermission",
     "SiteSettings",
+    "Subscription",
     "User",
     "UserSession",
     "Website",

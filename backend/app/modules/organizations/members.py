@@ -10,6 +10,7 @@ from app.core.pagination import PageParams, apply_sort, like_pattern, paginate
 from app.modules.audit.service import record
 from app.modules.organizations.models import OrganizationMember
 from app.modules.organizations.schemas import MemberOut, RoleRef
+from app.modules.plans.service import check_limit
 from app.modules.rbac.catalogue import CLIENT, OWNER
 from app.modules.rbac.models import Role
 from app.modules.rbac.service import ensure_can_grant
@@ -91,6 +92,8 @@ def update_member(db: Session, ctx: OrgContext, member_id: uuid.UUID, *,
                 code="role_kind_change",
             )
     loses_ownership = (new_role.system_key != OWNER) or (status == "disabled")
+    if member.status == "disabled" and status == "active" and new_role.system_key != CLIENT:
+        check_limit(db, ctx.org.id, "limits.team_members")  # restoring counts again
     _guard_owner_change(db, ctx, role, loses_ownership)
 
     changes: dict = {}

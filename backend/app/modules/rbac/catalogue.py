@@ -24,6 +24,7 @@ PERMISSIONS: dict[str, str] = {
     "audit.read": "View the audit log",
     "access_grants.manage": "Give agencies access to your workspace, and revoke it",
     "linked_accounts.manage": "Accept and disconnect businesses' access to their workspaces",
+    "plan.read": "View the plan, its limits and usage",
 }
 
 OWNER, ADMIN, MEMBER, CLIENT = "owner", "admin", "member", "client"
@@ -39,6 +40,7 @@ GROUP_LABELS = {
     "clients": "Clients", "client_users": "Clients", "websites": "Websites",
     "dashboard": "Dashboard", "audit": "Audit log",
     "access_grants": "Agency access", "linked_accounts": "Linked businesses",
+    "plan": "Plan",
 }
 
 

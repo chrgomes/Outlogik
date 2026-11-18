@@ -17,6 +17,7 @@ from app.modules.audit.service import record
 from app.modules.clients.models import Client
 from app.modules.organizations.models import Invitation, Organization, OrganizationMember
 from app.modules.organizations.schemas import InvitationOut, RoleRef
+from app.modules.plans.service import check_limit, team_count
 from app.modules.rbac.catalogue import CLIENT
 from app.modules.rbac.models import Role
 from app.modules.rbac.service import ensure_can_grant
@@ -85,6 +86,8 @@ def create_invitation(db: Session, ctx: OrgContext, *, email: str, role_id: uuid
     ensure_can_grant(db, ctx.permissions, ctx.is_owner, role, ctx.role.workspace_scope)
 
     client = None
+    if role.system_key != CLIENT:
+        check_limit(db, ctx.org.id, "limits.team_members")
     if role.system_key == CLIENT:
         if client_id is None:
             raise AppError("Choose which client this person can see.", code="client_required")
@@ -220,6 +223,10 @@ def accept(db: Session, token: str, *, current_user: User | None, full_name: str
     member = db.scalar(select(OrganizationMember).where(
         OrganizationMember.organization_id == org.id, OrganizationMember.user_id == user.id))
     if member is None:
+        if found.role.system_key != CLIENT:
+            # The invitation was counted when it was sent; now only members count.
+            check_limit(db, org.id, "limits.team_members",
+                        used=team_count(db, org.id, include_pending=False))
         member = OrganizationMember(organization_id=org.id, user_id=user.id, role_id=inv.role_id)
         db.add(member)
         db.flush()

@@ -9,6 +9,7 @@ from app.modules.audit.service import record
 from app.modules.clients.models import Client
 from app.modules.clients.schemas import ClientOut, ClientUserOut
 from app.modules.organizations.models import OrganizationMember
+from app.modules.plans.service import check_limit
 from app.modules.rbac.catalogue import CLIENT
 from app.modules.rbac.models import Role
 from app.modules.users.models import User
@@ -79,6 +80,8 @@ BUSINESS_HAS_NO_CLIENTS = "Business accounts don't have clients."
 def create_client(db: Session, ctx: OrgContext, data: dict, ip: str | None) -> ClientOut:
     if ctx.org.kind != "agency":
         raise Forbidden(BUSINESS_HAS_NO_CLIENTS, code="business_account")
+    if data.get("status", "active") != "archived":
+        check_limit(db, ctx.org.id, "limits.clients")
     client = Client(organization_id=ctx.org.id, **data)
     db.add(client)
     db.flush()
@@ -92,6 +95,8 @@ def create_client(db: Session, ctx: OrgContext, data: dict, ip: str | None) -> C
 def update_client(db: Session, ctx: OrgContext, client_id: uuid.UUID, data: dict,
                   ip: str | None) -> ClientOut:
     client = get_client(db, ctx, client_id, for_update=True)
+    if client.status == "archived" and data.get("status") not in (None, "archived"):
+        check_limit(db, ctx.org.id, "limits.clients")  # restoring counts again
     changed = sorted(k for k, v in data.items() if getattr(client, k) != v)
     for key in changed:
         setattr(client, key, data[key])

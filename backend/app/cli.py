@@ -15,11 +15,14 @@ import sys
 from sqlalchemy import select
 
 from app.core.db import SessionLocal
+from app.core.errors import AppError
 from app.core.models import utcnow
 from app.core.security import hash_password
-from app.models import User
+from app.models import Organization, User
 from app.modules.audit.service import record
 from app.modules.organizations.service import create_organization
+from app.modules.plans.catalogue import DEFAULT_PLANS, INTERVALS, STATUSES, TRIAL_DAYS
+from app.modules.plans.service import set_plan
 from app.modules.rbac.service import sync_permissions
 from app.modules.users.models import PLATFORM_ROLES
 
@@ -49,7 +52,7 @@ def create_super_admin(email: str, name: str) -> int:
 
 
 def create_organization_cmd(name: str, owner_email: str, owner_name: str | None,
-                            kind: str = "agency") -> int:
+                            kind: str = "agency", plan: str | None = None) -> int:
     """Create an organization with its owner. With invite-only sign-up, this is how Outlogik's
     own workspace (or any organization) is set up; everyone else is then invited from the app."""
     owner_email = owner_email.strip().lower()
@@ -68,13 +71,32 @@ def create_organization_cmd(name: str, owner_email: str, owner_name: str | None,
                         password_hash=hash_password(password), email_verified_at=utcnow())
             db.add(user)
             db.flush()
-        org = create_organization(db, name, owner=user, kind=kind)
+        org = create_organization(db, name, owner=user, kind=kind, plan=plan)
         record(db, "organization.create", actor_user_id=user.id, organization_id=org.id,
                target_type="organization", target_id=org.id,
                meta={"name": org.name, "kind": org.kind, "via": "cli"})
         db.commit()
         print(f"Created {org.kind} organization {org.name!r} (/o/{org.slug}) "
               f"owned by {owner_email}.")
+    return 0
+
+
+def set_plan_cmd(slug: str, plan: str, status: str, interval: str,
+                 trial_days: int | None) -> int:
+    """Assign a plan by hand (until billing exists)."""
+    with SessionLocal() as db:
+        org = db.scalar(select(Organization).where(Organization.slug == slug.lower()))
+        if org is None:
+            print(f"No organization with the address /o/{slug}.", file=sys.stderr)
+            return 1
+        try:
+            set_plan(db, org, plan, status=status, interval=interval, trial_days=trial_days)
+        except AppError as exc:
+            print(exc.message, file=sys.stderr)
+            return 1
+        db.commit()
+    detail = f"trial for {trial_days or TRIAL_DAYS} days" if status == "trialing" else status
+    print(f"{org.name}: {plan} ({interval}), {detail}.")
     return 0
 
 
@@ -108,6 +130,14 @@ def main() -> int:
     o.add_argument("--owner-name", help="Needed only if the owner has no account yet")
     o.add_argument("--kind", choices=("agency", "business"), default="agency",
                    help="agency (works for clients; the default) or business")
+    o.add_argument("--plan", choices=[p["key"] for p in DEFAULT_PLANS],
+                   help="Start on this plan; without it, a free trial")
+    sp = sub.add_parser("set-plan", help="Assign an organization's plan (until billing exists)")
+    sp.add_argument("--org", required=True, help="The organization's address, e.g. outlogik")
+    sp.add_argument("--plan", required=True, help="e.g. agency_professional, digital_growth")
+    sp.add_argument("--status", choices=STATUSES, default="active")
+    sp.add_argument("--interval", choices=INTERVALS, default="monthly")
+    sp.add_argument("--trial-days", type=int, help="With --status trialing (default 14)")
     g = sub.add_parser("grant-staff", help="Give an existing user access to the admin area")
     g.add_argument("--email", required=True)
     g.add_argument("--role", required=True, choices=PLATFORM_ROLES)
@@ -119,7 +149,9 @@ def main() -> int:
         return create_super_admin(args.email, args.name)
     if args.command == "create-organization":
         return create_organization_cmd(args.name, args.owner_email, args.owner_name,
-                                       args.kind)
+                                       args.kind, args.plan)
+    if args.command == "set-plan":
+        return set_plan_cmd(args.org, args.plan, args.status, args.interval, args.trial_days)
     if args.command == "grant-staff":
         return set_staff_role(args.email, args.role)
     if args.command == "revoke-staff":

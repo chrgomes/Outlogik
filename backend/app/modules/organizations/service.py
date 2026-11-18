@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.modules.organizations.models import Organization, OrganizationMember
+from app.modules.plans.service import set_plan, start_trial
 from app.modules.rbac.catalogue import OWNER
 from app.modules.rbac.service import create_default_roles
 from app.modules.users.models import User
@@ -28,9 +29,10 @@ def unique_slug(db: Session, name: str) -> str:
     return candidate
 
 
-def create_organization(db: Session, name: str, owner: User, *,
-                        kind: str = "agency") -> Organization:
-    """An organization with its default roles, its owner and its own workspace."""
+def create_organization(db: Session, name: str, owner: User, *, kind: str = "agency",
+                        plan: str | None = None) -> Organization:
+    """An organization with its default roles, its owner, its own workspace and a plan: the
+    one given, or a free trial."""
     org = Organization(name=name.strip(), slug=unique_slug(db, name), kind=kind)
     db.add(org)
     db.flush()
@@ -38,4 +40,8 @@ def create_organization(db: Session, name: str, owner: User, *,
     roles = create_default_roles(db, org.id, kind)
     db.add(OrganizationMember(organization_id=org.id, user_id=owner.id, role_id=roles[OWNER].id))
     db.flush()
+    if plan:
+        set_plan(db, org, plan, actor_id=owner.id)
+    else:
+        start_trial(db, org)
     return org

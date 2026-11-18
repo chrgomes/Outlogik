@@ -8,6 +8,7 @@ from app.core.errors import Conflict, NotFound
 from app.core.pagination import PageParams, apply_sort, like_pattern, paginate
 from app.modules.audit.service import record
 from app.modules.clients.service import get_client
+from app.modules.plans.service import check_limit
 from app.modules.websites.models import Website
 from app.modules.websites.schemas import WebsiteOut
 from app.modules.websites.urls import normalize_url
@@ -115,6 +116,10 @@ def workspace_for_client(db: Session, ctx: OrgContext, client_id: uuid.UUID | No
 def create_website(db: Session, ctx: OrgContext, *, workspace: Workspace, url: str,
                    name: str | None, status: str, ip: str | None) -> WebsiteOut:
     workspaces.ensure_writable(ctx, workspace.id)
+    if status != "archived":
+        # The plan of the organization that owns the workspace (a business's, when an agency
+        # adds to a shared workspace).
+        check_limit(db, workspace.organization_id, "limits.websites")
     url, domain = normalize_url(url)
     _ensure_unique(db, workspace.organization_id, url)
     site = Website(organization_id=workspace.organization_id, workspace_id=workspace.id,
@@ -152,6 +157,8 @@ def update_website(db: Session, ctx: OrgContext, website_id: uuid.UUID, data: di
             _ensure_unique(db, site.organization_id, url, exclude=site.id)
             changes["url"] = {"from": site.url, "to": url}
             site.url, site.domain = url, domain
+    if data.get("status") and site.status == "archived" and data["status"] != "archived":
+        check_limit(db, site.organization_id, "limits.websites")  # restoring counts again
     for key in ("name", "status"):
         if data.get(key) and data[key] != getattr(site, key):
             changes[key] = {"from": getattr(site, key), "to": data[key]}

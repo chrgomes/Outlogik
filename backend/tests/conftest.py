@@ -33,7 +33,8 @@ from app.main import app  # noqa: E402
 from app.models import Base  # noqa: E402
 
 BASE_URL = "https://testserver"
-KEEP_TABLES = {"permissions"}
+# Reference data seeded by the migrations
+KEEP_TABLES = {"permissions", "plans", "plan_entitlements"}
 
 
 @pytest.fixture(scope="session", autouse=True)

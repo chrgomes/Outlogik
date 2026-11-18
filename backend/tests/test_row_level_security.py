@@ -18,6 +18,7 @@ from app.models import (
     Organization,
     OrganizationMember,
     Role,
+    Subscription,
     Website,
     Workspace,
 )
@@ -59,7 +60,8 @@ def two_orgs(client, new_client, db):
     return ids
 
 
-TENANT_MODELS = [Client, Website, Workspace, OrganizationMember, Role, Invitation, AuditLog]
+TENANT_MODELS = [Client, Website, Workspace, OrganizationMember, Role, Invitation, AuditLog,
+                 Subscription]
 
 
 def test_each_organization_sees_only_its_own_rows(two_orgs):
