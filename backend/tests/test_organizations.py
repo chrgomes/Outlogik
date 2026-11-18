@@ -1,8 +1,16 @@
 import pytest
 from sqlalchemy import select, update
 
-from app.models import AuditLog, ClientUser, Organization, OrganizationMember
-from tests.conftest import login, register, role_id, seed_client, seed_member, slug_of
+from app.models import AuditLog, Organization, OrganizationMember, WorkspaceAssignment
+from tests.conftest import (
+    link_client,
+    login,
+    register,
+    role_id,
+    seed_client,
+    seed_member,
+    slug_of,
+)
 
 
 @pytest.fixture
@@ -121,9 +129,9 @@ def test_owner_changes_member_role(client, acme, db):
     member = seed_member(db, acme, "bob@acme.example.com", "member")
     res = client.patch(members_url(acme, member.id), json={"role_id": role_id(db, acme, "admin")})
     assert res.status_code == 200
-    assert res.json()["role"]["name"] == "Admin"
+    assert res.json()["role"]["name"] == "Administrator"
     entry = db.scalar(select(AuditLog).where(AuditLog.action == "member.update"))
-    assert entry.meta["role"] == {"from": "Team Member", "to": "Admin"}
+    assert entry.meta["role"] == {"from": "Marketing Manager", "to": "Administrator"}
 
 
 def test_admin_cannot_promote_to_owner_or_touch_owners(new_client, db, acme):
@@ -194,11 +202,10 @@ def test_team_member_cannot_change_roles(new_client, db, acme):
 def test_remove_member_also_removes_client_access(client, new_client, db, acme):
     browser, member = signed_in(new_client, db, acme, "cu@client.example.com", "client")
     c = seed_client(db, acme)
-    db.add(ClientUser(organization_id=c.organization_id, client_id=c.id, user_id=member.user_id))
-    db.commit()
+    link_client(db, member, c)
 
     assert client.delete(members_url(acme, member.id)).status_code == 204
-    assert db.scalar(select(ClientUser)) is None
+    assert db.scalar(select(WorkspaceAssignment)) is None
     assert browser.get(f"/api/v1/orgs/{acme}").status_code == 404
     assert "member.remove" in db.scalars(select(AuditLog.action)).all()
 

@@ -25,6 +25,10 @@ PERMISSIONS: dict[str, str] = {
 }
 
 OWNER, ADMIN, MEMBER, CLIENT = "owner", "admin", "member", "client"
+VIEWER, ACCOUNT_MANAGER = "viewer", "account_manager"
+BUSINESS, AGENCY = "business", "agency"
+# A role sees every workspace in the organization, or only the ones its members are assigned to.
+ALL_WORKSPACES, ASSIGNED_WORKSPACES = "all", "assigned"
 
 _ALL = set(PERMISSIONS)
 
@@ -38,28 +42,63 @@ GROUP_LABELS = {
 def permission_group(code: str) -> str:
     return GROUP_LABELS.get(code.split(".", 1)[0], "Other")
 
+# Built-in roles. `kinds` says which account types get the role. Specialist roles (SEO
+# Specialist, Content Creator, …) are added with the modules whose permissions set them apart.
 DEFAULT_ROLES: dict[str, dict] = {
     OWNER: {
         "name": "Owner",
         "description": "Full control of the organization.",
         "permissions": _ALL,
+        "kinds": {BUSINESS, AGENCY},
+        "scope": ALL_WORKSPACES,
     },
     ADMIN: {
-        "name": "Admin",
-        "description": "Manages the team, clients and websites. Cannot change owners or roles.",
+        "name": "Administrator",
+        "description": "Manages the team, settings and all marketing work. Cannot change owners "
+                       "or roles.",
         "permissions": _ALL - {"roles.manage"},
+        "kinds": {BUSINESS, AGENCY},
+        "scope": ALL_WORKSPACES,
     },
     MEMBER: {
-        "name": "Team Member",
-        "description": "Works on clients and websites.",
+        "name": "Marketing Manager",
+        "description": "Works on websites and marketing in every workspace. Cannot manage the "
+                       "team or settings.",
         "permissions": {
             "organization.read", "members.read", "roles.read", "clients.read", "clients.write",
             "websites.read", "websites.write", "dashboard.read",
         },
+        "kinds": {BUSINESS, AGENCY},
+        "scope": ALL_WORKSPACES,
+    },
+    ACCOUNT_MANAGER: {
+        "name": "Account Manager",
+        "description": "Manages the clients they're assigned to: their websites and "
+                       "client-portal access.",
+        "permissions": {
+            "organization.read", "members.read", "roles.read", "clients.read",
+            "client_users.manage", "websites.read", "websites.write", "dashboard.read",
+        },
+        "kinds": {AGENCY},
+        "scope": ASSIGNED_WORKSPACES,
+    },
+    VIEWER: {
+        "name": "Reporting Viewer",
+        "description": "Read-only access to every workspace's websites and results.",
+        "permissions": {"organization.read", "clients.read", "websites.read", "dashboard.read"},
+        "kinds": {BUSINESS, AGENCY},
+        "scope": ALL_WORKSPACES,
     },
     CLIENT: {
-        "name": "Client",
-        "description": "Client-portal access, limited to the clients they are linked to.",
+        "name": "Client Viewer",
+        "description": "Client-portal access: read-only, limited to the clients they're "
+                       "linked to.",
         "permissions": {"organization.read", "clients.read", "websites.read", "dashboard.read"},
+        "kinds": {AGENCY},
+        "scope": ASSIGNED_WORKSPACES,
     },
 }
+
+
+def roles_for(kind: str) -> dict[str, dict]:
+    return {k: v for k, v in DEFAULT_ROLES.items() if kind in v["kinds"]}

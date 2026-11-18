@@ -23,6 +23,7 @@ from app.modules.site.router import admin as site_admin_router
 from app.modules.site.router import public as site_public_router
 from app.modules.websites.router import router as websites_router
 from app.modules.websites.router import workspace_router as workspace_websites_router
+from app.modules.workspaces.router import members_router as member_workspaces_router
 from app.modules.workspaces.router import router as workspaces_router
 
 logging.basicConfig(level=logging.INFO)
@@ -59,6 +60,7 @@ def create_app() -> FastAPI:
     api.include_router(clients_router)
     api.include_router(websites_router)
     api.include_router(workspaces_router)
+    api.include_router(member_workspaces_router)
     api.include_router(workspace_websites_router)
     api.include_router(dashboard_router)
     api.include_router(site_public_router)

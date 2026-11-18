@@ -14,7 +14,7 @@ from app.modules.websites.urls import normalize_url
 from app.modules.workspaces import service as workspaces
 from app.modules.workspaces.models import Workspace
 from app.tenancy.context import OrgContext
-from app.tenancy.scoped import client_visibility, get_visible
+from app.tenancy.scoped import get_visible, workspace_visibility
 
 # "client" sorts by workspace name, which is the client's name for client workspaces.
 WEBSITE_SORTS = {"name": func.lower(Website.name), "domain": Website.domain,
@@ -33,7 +33,8 @@ def _out(site: Website, ws: Workspace) -> WebsiteOut:
 
 def get_website(db: Session, ctx: OrgContext, website_id: uuid.UUID, *,
                 workspace: Workspace | None = None, for_update: bool = False) -> Website:
-    site = get_visible(db, Website, website_id, ctx, client_id_column=Website.client_id,
+    site = get_visible(db, Website, website_id, ctx,
+                       visibility=workspace_visibility(Website.workspace_id, ctx),
                        label="Website", for_update=for_update)  # 404: "Website not found."
     if workspace is not None and site.workspace_id != workspace.id:
         raise NotFound(WEBSITE_NOT_FOUND)  # the same 404 as a missing website
@@ -49,7 +50,7 @@ def list_websites(db: Session, ctx: OrgContext, params: PageParams, *, q: str | 
                   status: str | None, sort: str | None) -> tuple[list[WebsiteOut], int]:
     stmt = (select(Website, Workspace).join(Workspace, Workspace.id == Website.workspace_id)
             .where(Website.organization_id == ctx.org.id,
-                   client_visibility(Website.client_id, ctx)))
+                   workspace_visibility(Website.workspace_id, ctx)))
     if q:
         like = like_pattern(q)
         stmt = stmt.where(or_(func.lower(Website.name).like(like, escape="\\"),

@@ -35,7 +35,7 @@ def create_organization(db: Session, name: str, owner: User, *,
     db.add(org)
     db.flush()
     create_own_workspace(db, org)
-    roles = create_default_roles(db, org.id)
+    roles = create_default_roles(db, org.id, kind)
     db.add(OrganizationMember(organization_id=org.id, user_id=owner.id, role_id=roles[OWNER].id))
     db.flush()
     return org

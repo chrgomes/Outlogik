@@ -12,9 +12,9 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import NotFound
 from app.modules.clients.models import Client
-from app.modules.organizations.models import Organization
+from app.modules.organizations.models import Organization, OrganizationMember
 from app.modules.websites.models import Website
-from app.modules.workspaces.models import Workspace
+from app.modules.workspaces.models import Workspace, WorkspaceAssignment
 from app.modules.workspaces.schemas import WorkspaceOut
 
 if TYPE_CHECKING:  # tenancy.context imports auth, which creates organizations through here
@@ -55,14 +55,11 @@ def rename_for(db: Session, *, org: Organization | None = None,
 
 
 def visibility(ctx: OrgContext):
-    """WHERE clause: the workspaces the caller may see.
-
-    Team members see every workspace. Client-portal users see only their clients' workspaces,
-    never the agency's own one.
-    """
-    if ctx.client_ids is None:
+    """WHERE clause: the workspaces the caller may see. Roles that see every workspace see
+    them all; others (Account Manager, Client Viewer, …) only the ones they're assigned."""
+    if ctx.workspace_ids is None:
         return true()
-    return Workspace.client_id.in_(ctx.client_ids) if ctx.client_ids else false()
+    return Workspace.id.in_(ctx.workspace_ids) if ctx.workspace_ids else false()
 
 
 def get_workspace(db: Session, ctx: OrgContext, workspace_id: uuid.UUID) -> Workspace:
@@ -96,3 +93,33 @@ def to_out(db: Session, ws: Workspace) -> WorkspaceOut:
     status = db.scalar(select(Client.status).where(Client.id == ws.client_id)) \
         if ws.client_id else None
     return _many_out(db, [(ws, status)])[0]
+
+
+# --- assignments ----------------------------------------------------------------------------
+
+def assign(db: Session, member: OrganizationMember, ws: Workspace) -> bool:
+    """Give a member access to a workspace. False if they already had it."""
+    exists = db.scalar(select(WorkspaceAssignment.id).where(
+        WorkspaceAssignment.member_id == member.id, WorkspaceAssignment.workspace_id == ws.id))
+    if exists:
+        return False
+    db.add(WorkspaceAssignment(organization_id=member.organization_id, member_id=member.id,
+                               workspace_id=ws.id))
+    db.flush()
+    return True
+
+
+def unassign(db: Session, member_id: uuid.UUID, workspace_id: uuid.UUID) -> bool:
+    row = db.scalar(select(WorkspaceAssignment).where(
+        WorkspaceAssignment.member_id == member_id,
+        WorkspaceAssignment.workspace_id == workspace_id))
+    if row is None:
+        return False
+    db.delete(row)
+    db.flush()
+    return True
+
+
+def assigned_workspace_ids(db: Session, member_id: uuid.UUID) -> set[uuid.UUID]:
+    return set(db.scalars(select(WorkspaceAssignment.workspace_id)
+                          .where(WorkspaceAssignment.member_id == member_id)))

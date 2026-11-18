@@ -20,15 +20,15 @@ from app.modules.rbac.models import Role
 from app.modules.users.models import User
 from app.modules.websites.models import Website
 from app.tenancy.context import OrgContext
-from app.tenancy.scoped import client_visibility
+from app.tenancy.scoped import client_visibility, workspace_visibility
 
 ACTIVITY_LIMIT = 10
 
 
-def _by_status(db: Session, model, client_col, ctx: OrgContext) -> dict[str, int]:
+def _by_status(db: Session, model, visible, ctx: OrgContext) -> dict[str, int]:
     rows = db.execute(
         select(model.status, func.count())
-        .where(model.organization_id == ctx.org.id, client_visibility(client_col, ctx))
+        .where(model.organization_id == ctx.org.id, visible)
         .group_by(model.status)
     )
     return dict(rows.all())
@@ -71,8 +71,8 @@ def _activity(db: Session, ctx: OrgContext) -> list[ActivityItem]:
 
 
 def summary(db: Session, ctx: OrgContext) -> DashboardOut:
-    clients = _by_status(db, Client, Client.id, ctx)
-    sites = _by_status(db, Website, Website.client_id, ctx)
+    clients = _by_status(db, Client, client_visibility(Client.id, ctx), ctx)
+    sites = _by_status(db, Website, workspace_visibility(Website.workspace_id, ctx), ctx)
     return DashboardOut(
         clients=ClientCounts(total=sum(clients.values()), active=clients.get("active", 0),
                              archived=clients.get("archived", 0)),

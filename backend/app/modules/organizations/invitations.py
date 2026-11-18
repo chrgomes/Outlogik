@@ -14,7 +14,7 @@ from app.core.models import utcnow
 from app.core.pagination import PageParams, apply_sort, paginate
 from app.core.security import generate_token, hash_password, hash_token
 from app.modules.audit.service import record
-from app.modules.clients.models import Client, ClientUser
+from app.modules.clients.models import Client
 from app.modules.organizations.models import Invitation, Organization, OrganizationMember
 from app.modules.organizations.schemas import InvitationOut, RoleRef
 from app.modules.rbac.catalogue import CLIENT
@@ -82,7 +82,7 @@ def _send(org: Organization, inv: Invitation, token: str, inviter: User,
 def create_invitation(db: Session, ctx: OrgContext, *, email: str, role_id: uuid.UUID,
                       client_id: uuid.UUID | None, ip: str | None) -> InvitationOut:
     role = get_scoped(db, Role, role_id, ctx, label="Role")
-    ensure_can_grant(db, ctx.permissions, ctx.is_owner, role)
+    ensure_can_grant(db, ctx.permissions, ctx.is_owner, role, ctx.role.workspace_scope)
 
     client = None
     if role.system_key == CLIENT:
@@ -131,7 +131,8 @@ def _load_open(db: Session, ctx: OrgContext, invitation_id: uuid.UUID) -> Invita
 def resend_invitation(db: Session, ctx: OrgContext, invitation_id: uuid.UUID,
                       ip: str | None) -> InvitationOut:
     inv = _load_open(db, ctx, invitation_id)
-    ensure_can_grant(db, ctx.permissions, ctx.is_owner, db.get(Role, inv.role_id))
+    ensure_can_grant(db, ctx.permissions, ctx.is_owner, db.get(Role, inv.role_id),
+                     ctx.role.workspace_scope)
     token = _issue_token(inv)
     record(db, "invitation.resend", actor_user_id=ctx.user.id, organization_id=ctx.org.id,
            target_type="invitation", target_id=inv.id, meta={"email": inv.email}, ip=ip)
@@ -219,10 +220,13 @@ def accept(db: Session, token: str, *, current_user: User | None, full_name: str
     member = db.scalar(select(OrganizationMember).where(
         OrganizationMember.organization_id == org.id, OrganizationMember.user_id == user.id))
     if member is None:
-        db.add(OrganizationMember(organization_id=org.id, user_id=user.id, role_id=inv.role_id))
-    if inv.client_id and not db.scalar(select(ClientUser.id).where(
-            ClientUser.client_id == inv.client_id, ClientUser.user_id == user.id)):
-        db.add(ClientUser(organization_id=org.id, client_id=inv.client_id, user_id=user.id))
+        member = OrganizationMember(organization_id=org.id, user_id=user.id, role_id=inv.role_id)
+        db.add(member)
+        db.flush()
+    if inv.client_id:
+        from app.modules.workspaces.service import assign, client_workspace
+
+        assign(db, member, client_workspace(db, inv.client_id))
 
     inv.accepted_at = utcnow()
     record(db, "invitation.accept", actor_user_id=user.id, organization_id=org.id,

@@ -185,8 +185,8 @@ def signed_in_as(new_client, db, org_slug: str, email: str, role_key: str):
 
 
 def link_client(db, member, client) -> None:
-    from app.models import ClientUser
+    """Give a member access to a client's workspace (as the client-portal link does)."""
+    from app.modules.workspaces.service import assign, client_workspace
 
-    db.add(ClientUser(organization_id=client.organization_id, client_id=client.id,
-                      user_id=member.user_id))
+    assign(db, member, client_workspace(db, client.id))
     db.commit()

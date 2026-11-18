@@ -34,11 +34,20 @@ def client_visibility(client_id_column: Any, ctx: OrgContext) -> Any:
     return client_id_column.in_(ctx.client_ids) if ctx.client_ids else false()
 
 
+def workspace_visibility(workspace_id_column: Any, ctx: OrgContext) -> Any:
+    """A WHERE clause limiting rows to the workspaces the caller may see (true when the role
+    sees every workspace)."""
+    if ctx.workspace_ids is None:
+        return true()
+    return workspace_id_column.in_(ctx.workspace_ids) if ctx.workspace_ids else false()
+
+
 def get_visible(db: Session, model: Any, obj_id: uuid.UUID, ctx: OrgContext, *,
-                client_id_column: Any, label: str, for_update: bool = False) -> Any:
-    """get_scoped(), plus the client-portal restriction. Hidden rows are a plain 404."""
+                visibility: Any, label: str, for_update: bool = False) -> Any:
+    """get_scoped(), plus a visibility clause (client_visibility or workspace_visibility).
+    Hidden rows are a plain 404."""
     stmt = select(model).where(model.id == obj_id, model.organization_id == ctx.org.id,
-                               client_visibility(client_id_column, ctx))
+                               visibility)
     if for_update:
         stmt = stmt.with_for_update()
     obj = db.scalar(stmt)

@@ -2,13 +2,12 @@
 
 import uuid
 
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.pagination import PageParams, apply_sort, like_pattern, paginate
 from app.modules.audit.service import record
-from app.modules.clients.models import ClientUser
 from app.modules.organizations.models import OrganizationMember
 from app.modules.organizations.schemas import MemberOut, RoleRef
 from app.modules.rbac.catalogue import CLIENT, OWNER
@@ -25,7 +24,8 @@ MEMBER_SORTS = {"name": User.full_name, "email": User.email,
 def _to_out(member: OrganizationMember, user: User, role: Role, ctx: OrgContext) -> MemberOut:
     return MemberOut(
         id=member.id, user_id=user.id, email=user.email, full_name=user.full_name,
-        role=RoleRef(id=role.id, name=role.name, system_key=role.system_key),
+        role=RoleRef(id=role.id, name=role.name, system_key=role.system_key,
+                     workspace_scope=role.workspace_scope),
         status=member.status, joined_at=member.created_at, is_you=user.id == ctx.user.id,
     )
 
@@ -83,7 +83,7 @@ def update_member(db: Session, ctx: OrgContext, member_id: uuid.UUID, *,
     new_role = role
     if role_id is not None and role_id != role.id:
         new_role = get_scoped(db, Role, role_id, ctx, label="Role")
-        ensure_can_grant(db, ctx.permissions, ctx.is_owner, new_role)
+        ensure_can_grant(db, ctx.permissions, ctx.is_owner, new_role, ctx.role.workspace_scope)
         if (role.system_key == CLIENT) != (new_role.system_key == CLIENT):
             raise Conflict(
                 "Client users and team members can't be switched into each other. "
@@ -109,9 +109,7 @@ def update_member(db: Session, ctx: OrgContext, member_id: uuid.UUID, *,
 
 
 def _delete_membership(db: Session, ctx: OrgContext, member: OrganizationMember) -> None:
-    db.execute(delete(ClientUser).where(ClientUser.organization_id == ctx.org.id,
-                                        ClientUser.user_id == member.user_id))
-    db.delete(member)
+    db.delete(member)  # its workspace assignments cascade in the database
 
 
 def remove_member(db: Session, ctx: OrgContext, member_id: uuid.UUID, ip: str | None) -> None:

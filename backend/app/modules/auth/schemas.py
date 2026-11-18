@@ -64,6 +64,8 @@ class MembershipOut(BaseModel):
     organization_name: str
     organization_status: str
     organization_kind: AccountType
+    # "assigned": this member sees only the workspaces they're assigned to.
+    workspace_scope: Literal["all", "assigned"] = "all"
     role_id: uuid.UUID
     role_name: str
     # Stable key of a built-in role ("owner", "admin", "member", "client"); null for custom roles.

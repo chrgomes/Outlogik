@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import select
 
-from app.models import AuditLog, ClientUser, Invitation, Website
+from app.models import AuditLog, Invitation, Website, Workspace, WorkspaceAssignment
 from tests.conftest import link_client, register, seed_client, signed_in_as, slug_of
 
 
@@ -197,4 +197,6 @@ def test_cannot_reach_another_orgs_clients(client, new_client, db, acme):
 
     db.expire_all()
     assert db.get(type(theirs), theirs.id).name == "Their Client"
-    assert db.scalar(select(ClientUser).where(ClientUser.client_id == theirs.id)) is not None
+    assert db.scalar(select(WorkspaceAssignment).join(
+        Workspace, Workspace.id == WorkspaceAssignment.workspace_id)
+        .where(Workspace.client_id == theirs.id)) is not None

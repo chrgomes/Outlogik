@@ -16,9 +16,8 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.errors import Forbidden, NotFound
 from app.modules.auth.deps import AuthContext, get_auth
-from app.modules.clients.models import ClientUser
 from app.modules.organizations.models import Organization, OrganizationMember
-from app.modules.rbac.catalogue import CLIENT, PERMISSIONS
+from app.modules.rbac.catalogue import ASSIGNED_WORKSPACES, CLIENT, PERMISSIONS
 from app.modules.rbac.models import Role
 from app.modules.rbac.service import role_permission_codes
 from app.modules.users.models import User
@@ -33,12 +32,19 @@ class OrgContext:
     role: Role
     user: User
     permissions: set[str] = field(default_factory=set)
-    # For client-portal users: the only client IDs they may see. None = no client restriction.
+    # For roles limited to assigned workspaces: the workspaces they may see, and the clients of
+    # those workspaces. None = no restriction (the role sees every workspace).
+    workspace_ids: set[uuid.UUID] | None = None
     client_ids: set[uuid.UUID] | None = None
 
     @property
     def is_client_user(self) -> bool:
-        return self.client_ids is not None
+        """An outside client-portal user: sees no internal notes or team details."""
+        return self.role.system_key == CLIENT
+
+    @property
+    def is_restricted(self) -> bool:
+        return self.workspace_ids is not None
 
     @property
     def is_owner(self) -> bool:
@@ -68,12 +74,22 @@ def get_org_context(
     org, member, role = row
     if org.status != "active":
         raise Forbidden("This organization is suspended.", code="org_suspended")
-    client_ids = None
-    if role.system_key == CLIENT:
-        client_ids = set(db.scalars(select(ClientUser.client_id).where(
-            ClientUser.organization_id == org.id, ClientUser.user_id == auth.user.id)))
+    workspace_ids = client_ids = None
+    if role.workspace_scope == ASSIGNED_WORKSPACES:
+        # Imported here: the workspaces module imports this one.
+        from app.modules.workspaces.models import Workspace, WorkspaceAssignment
+
+        rows = db.execute(
+            select(Workspace.id, Workspace.client_id)
+            .join(WorkspaceAssignment, WorkspaceAssignment.workspace_id == Workspace.id)
+            .where(WorkspaceAssignment.member_id == member.id,
+                   Workspace.organization_id == org.id)
+        ).all()
+        workspace_ids = {ws_id for ws_id, _ in rows}
+        client_ids = {client_id for _, client_id in rows if client_id}
     return OrgContext(org=org, member=member, role=role, user=auth.user,
-                      permissions=role_permission_codes(db, role.id), client_ids=client_ids)
+                      permissions=role_permission_codes(db, role.id),
+                      workspace_ids=workspace_ids, client_ids=client_ids)
 
 
 def require(permission: str) -> Callable[..., OrgContext]:

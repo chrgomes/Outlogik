@@ -29,7 +29,8 @@ def _validate_codes(codes: list[str]) -> set[str]:
 def _out(role: Role, perms: set[str], count: int) -> RoleOut:
     return RoleOut(id=role.id, name=role.name, description=role.description,
                    is_system=role.is_system, system_key=role.system_key,
-                   permissions=sorted(perms), member_count=count, created_at=role.created_at)
+                   workspace_scope=role.workspace_scope, permissions=sorted(perms),
+                   member_count=count, created_at=role.created_at)
 
 
 def _counts(db: Session, role_ids: list[uuid.UUID]) -> dict[uuid.UUID, int]:
@@ -73,25 +74,32 @@ def _load_custom(db: Session, ctx: OrgContext, role_id: uuid.UUID) -> Role:
 
 
 def create_role(db: Session, ctx: OrgContext, *, name: str, description: str | None,
-                permissions: list[str], ip: str | None) -> RoleOut:
+                permissions: list[str], ip: str | None,
+                workspace_scope: str = "all") -> RoleOut:
     codes = _validate_codes(permissions)
     _ensure_name_free(db, ctx, name)
-    role = Role(organization_id=ctx.org.id, name=name, description=description or None)
+    role = Role(organization_id=ctx.org.id, name=name, description=description or None,
+                workspace_scope=workspace_scope)
     db.add(role)
     db.flush()
     set_role_permissions(db, role, codes)
     record(db, "role.create", actor_user_id=ctx.user.id, organization_id=ctx.org.id,
            target_type="role", target_id=role.id,
-           meta={"name": name, "permissions": sorted(codes)}, ip=ip)
+           meta={"name": name, "permissions": sorted(codes), "workspace_scope": workspace_scope},
+           ip=ip)
     db.commit()
     return to_out(db, role)
 
 
 def update_role(db: Session, ctx: OrgContext, role_id: uuid.UUID, *, name: str | None,
                 description: str | None, permissions: list[str] | None,
-                ip: str | None) -> RoleOut:
+                ip: str | None, workspace_scope: str | None = None) -> RoleOut:
     role = _load_custom(db, ctx, role_id)
     changes: dict = {}
+    if workspace_scope is not None and workspace_scope != role.workspace_scope:
+        # Members' assignments are kept: switching back to "assigned" restores them.
+        changes["workspace_scope"] = {"from": role.workspace_scope, "to": workspace_scope}
+        role.workspace_scope = workspace_scope
     if name is not None and name != role.name:
         _ensure_name_free(db, ctx, name, exclude=role.id)
         changes["name"] = {"from": role.name, "to": name}

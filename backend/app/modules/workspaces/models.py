@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, String, Uuid, text
+from sqlalchemy import CheckConstraint, ForeignKey, Index, String, UniqueConstraint, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.models import Base, Timestamps, UUIDPrimaryKey
@@ -30,4 +30,24 @@ class Workspace(UUIDPrimaryKey, Timestamps, Base):
     name: Mapped[str] = mapped_column(String(200))
     client_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("clients.id", ondelete="CASCADE"), unique=True
+    )
+
+
+class WorkspaceAssignment(UUIDPrimaryKey, Timestamps, Base):
+    """Which workspaces a member sees, for members whose role is limited to assigned
+    workspaces (Account Manager, Client Viewer, or a custom role with that scope)."""
+
+    __tablename__ = "workspace_assignments"
+    __table_args__ = (UniqueConstraint("member_id", "workspace_id"),)
+
+    # The member's organization (the workspace may belong to another one, through an access
+    # grant).
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("organizations.id", ondelete="CASCADE"), index=True
+    )
+    member_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("organization_members.id", ondelete="CASCADE"), index=True
+    )
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
     )

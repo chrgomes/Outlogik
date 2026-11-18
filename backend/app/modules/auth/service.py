@@ -209,6 +209,7 @@ def memberships_for(db: Session, user: User) -> list[dict]:
             "organization_name": org.name, "organization_status": org.status,
             "organization_kind": org.kind,
             "role_id": role.id, "role_name": role.name, "role_key": role.system_key,
+            "workspace_scope": role.workspace_scope,
             "permissions": sorted(role_permission_codes(db, role.id)),
         }
         for _, org, role in rows

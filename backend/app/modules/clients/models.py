@@ -20,6 +20,9 @@ class Client(UUIDPrimaryKey, Timestamps, Base):
 
 
 class ClientUser(UUIDPrimaryKey, Timestamps, Base):
+    """Replaced by workspace_assignments (migration 0010). Kept, unused and read-only, until a
+    later migration removes it (docs/HYBRID_SAAS_PLAN.md §2)."""
+
     __tablename__ = "client_users"
     __table_args__ = (UniqueConstraint("client_id", "user_id"),)
 

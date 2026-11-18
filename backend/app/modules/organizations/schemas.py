@@ -33,6 +33,7 @@ class RoleRef(BaseModel):
     id: uuid.UUID
     name: str
     system_key: str | None
+    workspace_scope: Literal["all", "assigned"] = "all"
 
 
 class MemberOut(BaseModel):
