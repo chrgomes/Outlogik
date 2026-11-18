@@ -8,9 +8,165 @@ unfinished, security notes, and what's next.
 |---|---|
 | H1-1 Audit and plan | Done, approved 2026-11-18 (decisions D1–D9) |
 | H1-2 Account types and workspaces | **Done** (2026-11-18) |
-| H1-3 Roles, assignments, access grants, RLS | Next |
+| H1-3 Roles, assignments, access grants, RLS | **Done** (2026-11-18) |
 | AI Search addendum | Planned 2026-11-18: GEO checks in H1-6, AI referral traffic in H1-7, monitoring as the first H2 module ([`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) |
-| H1-4 … H1-12 | Not started |
+| H1-4 Entitlements | Next |
+| H1-5 … H1-12 | Not started |
+
+---
+
+## H1-3: Roles, assignments, access grants and row-level security
+
+### 1. What was completed
+
+- **Built-in roles by account type.**
+  - Everyone gets: **Owner**, **Administrator**, **Marketing Manager** (was Team Member),
+    **Reporting Viewer** (new, read-only).
+  - Agencies also get: **Account Manager** (new, works only on assigned clients) and
+    **Client Viewer** (was Client).
+  - Existing organizations got the new roles and names automatically at startup. If a custom
+    role already used one of the new names, the built-in role kept its old name.
+- **Roles that see only assigned workspaces.** Any role, built-in or custom, either sees
+  every workspace or only the ones each person is given. Everything follows it: the workspace
+  switcher, clients, websites and dashboard counts. Assignments are made per person from the
+  Team page ("Choose workspaces…").
+- **Client-portal users are now workspace assignments.** Every existing client-portal link was
+  carried over; linking a client user from a client's page works as before.
+- **Business-to-agency access grants (spec §4.C).**
+  - A business sends access to someone at an agency by email, as "can make changes" or
+    "view only".
+  - That person accepts it into one of their agencies (owners and administrators only). The
+    business then shows in the agency's workspace switcher under **Linked businesses**.
+  - The agency works on the business's websites in place; nothing is copied, and websites stay
+    the business's.
+  - Either side can end it (business: Settings → Agency access; agency: Settings → Linked
+    businesses). Access stops at once.
+  - Every step is in both organizations' activity logs.
+- **Row-level security in Postgres:** a second, independent wall between organizations (see
+  section 6).
+- **An automated cross-organization attack suite** over every route that takes an id.
+- **A bug fixed along the way:** the sidebar links to Organization, Team and Roles had pointed
+  to "Page not found" since Phase 1 (their path's slash was encoded). Found while testing in
+  the browser; fixed, with a test.
+
+**Deliberately left out of H1-3** (no placeholders):
+- Specialist roles (SEO Specialist, Content Creator, …): today they'd have identical
+  permissions. Each comes with the module that sets it apart.
+- Platform staff roles (platform, support, billing admin): moved to H1-11, with the Super
+  Admin area they'd control.
+
+### 2. Files changed
+
+**Backend**
+- `rbac/catalogue.py` (roles per account type, scopes, two new permissions),
+  `rbac/service.py` (account-type role creation; startup sync adds, renames and updates
+  built-in roles; escalation check covers scope), `rbac/models.py`, `rbac/roles.py`,
+  `rbac/router.py`, `rbac/schemas.py`.
+- `tenancy/context.py` (visible workspaces from assignments; linked workspaces; sets the
+  database tenant), `tenancy/scoped.py` (`workspace_visibility`).
+- `core/db.py` (`set_tenant`, per-transaction settings, startup check), `main.py`.
+- New `workspaces/assignments.py`; `workspaces/models.py` (`WorkspaceAssignment`),
+  `service.py`, `context.py` (view-only check), `router.py`, `schemas.py`.
+- New module `grants/` (models, schemas, service, router).
+- `websites/service.py` (linked workspaces, both-organization audit, owner-based URL
+  uniqueness), `clients/service.py` (portal users via assignments),
+  `organizations/members.py`, `organizations/invitations.py`, `organizations/schemas.py`,
+  `dashboard/service.py`, `auth/schemas.py`, `auth/service.py`.
+- Migrations `0010`, `0011`, `0012`.
+- Tests: new `test_workspace_roles.py`, `test_access_grants.py`,
+  `test_row_level_security.py`, `test_cross_tenant.py`; updated role names in existing tests.
+- `.github/workflows/ci.yml`: tests run as an ordinary database user.
+
+**App**
+- New `features/access/` (`agency-access.ts`, `accept-access.ts`, `linked-businesses.ts`,
+  specs), `features/settings/member-workspaces-dialog.ts`.
+- `core/` (types, `current-org.service.ts`, `guards.ts`, `org-api.service.ts`,
+  `workspace.service.ts`), `app.routes.ts`, `layout/` (nav, sidebar, topbar),
+  `features/settings/` (role editor, roles, team, organization), `features/websites/`,
+  `shared/table/table-parts.ts`.
+
+**Docs:** `ARCHITECTURE.md`, `SECURITY.md`, `DEPLOYMENT.md` (§4: ordinary database user),
+`HYBRID_SAAS_PLAN.md`, this tracker.
+
+### 3. Database changes
+
+| Migration | Change | Existing data |
+|---|---|---|
+| `0010` | `roles.workspace_scope` (`all` or `assigned`); new table `workspace_assignments` | Client roles become `assigned`; every client-portal link becomes an assignment; unused Client roles are removed from business accounts. `client_users` is kept, unused, for a later removal |
+| `0011` | New table `workspace_grants` (one active grant per agency and workspace) | None |
+| `0012` | Row-level security: two helper functions and a policy on each tenant table (`organization_members`, `roles`, `invitations`, `clients`, `client_users`, `workspaces`, `websites`, `workspace_assignments`, `workspace_grants`; `audit_logs` for reading) | None (policies only) |
+
+All three were run up, checked, down and up again on the development database, and the
+test suite builds its schema from them on every run.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **337 passed** (was 293) |
+| App (Vitest) | **106 passed** (was 93) |
+| Website (Vitest) | 92 passed (unchanged) |
+| CI | Green for every H1-3 commit, with the tests running as an ordinary database user |
+
+New backend tests:
+- roles per account type; startup sync adding and renaming roles (and respecting a custom
+  role's name)
+- members limited to assigned workspaces: what they see, what's a 404, assignment rules,
+  audit, handing out only what they see, no escalation to a role that sees everything
+- access grants: sending, preview, wrong account, members without permission, accepting,
+  expiry and reuse, working in the business's workspace, view-only refusals, assignments to
+  linked workspaces, revoking, disconnecting, and isolation from the rest of the business
+- row-level security on its own (queries with no organization filter): each organization
+  sees only its rows, writes into another are refused, the setting holds across a request's
+  transactions and never leaks to the next session
+- the cross-organization attack: 26 routes, the victim's ids in the URL and in the body; all
+  refused and the victim unchanged
+
+**Checking the checks:** I deliberately removed the app's own website filter.
+- With row-level security on, every attack still failed: the database alone held.
+- With row-level security also off, the attack suite caught the leak straight away (an
+  attacker could delete another organization's website).
+- Then I restored both.
+
+**Browser check** (Chromium, against the real API):
+- A business sends access, and the agency accepts it from the emailed link (the code is
+  removed from the address bar).
+- The business appears under Linked businesses in the agency's switcher. The agency adds a
+  website there, and the business sees it straight away.
+- The business ends access, and it disappears from the agency.
+- No page errors. An axe scan of Agency access, the accept page, Linked businesses, Roles and
+  the role editor found no problems.
+
+### 5. Unfinished (on purpose)
+
+- **Changing what a grant allows** (manage ↔ view) means ending it and sending a new one.
+- **Agencies' dashboard counts** cover their own organization, not linked businesses. The
+  H1-8 dashboards will add them.
+- **Someone at an agency without an Outlogik account** can't accept until their agency is set
+  up. Sign-up is invitation-only until H1-11.
+- **`client_users`** is still in the database, unused; a later migration removes it once this
+  has run in production.
+
+### 6. Security notes
+
+- **Two independent walls between organizations:** the application's checks (as before), and
+  now Postgres row-level security. Each was shown to stop a cross-organization attack on its
+  own.
+- **Row-level security only works if production connects as an ordinary database user.** The
+  DigitalOcean specs already do (`outlogik`, `outlogik_staging`, not `doadmin`). DEPLOYMENT.md
+  §4 has a one-line check, and the API logs a warning at startup if the database user is one
+  the policies don't apply to.
+- **Docker development** (`docker compose`) connects as Postgres's superuser, so the policies
+  aren't enforced there. The warning appears, and the tests in CI cover it.
+- **A grant link is tied to one email address,** expires after 14 days, and is single-use. Its
+  code is stored only as a hash, and the page removes it from the address bar.
+- **A grant never opens the business's team, roles, invitations or activity log** to the
+  agency. The tests check this in the application and in the database.
+
+### 7. Next: H1-4 entitlements
+
+Plans, entitlements and subscriptions (assigned by hand for now), usage records, and backend
+enforcement of limits (websites, clients, team members, audits). No billing yet (H3).
 
 ---
 

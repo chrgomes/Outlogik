@@ -29,7 +29,8 @@ schemas, service functions and router.
 | `modules/users` | The `User` model |
 | `modules/organizations` | Organizations, members, invitations |
 | `modules/rbac` | Permission catalogue, built-in roles, custom roles, escalation guard |
-| `modules/workspaces` | Workspaces (an organization's own, and one per agency client), the workspace list API, and `require_workspace(...)` for `/orgs/{slug}/workspaces/{id}/…` routes |
+| `modules/workspaces` | Workspaces (an organization's own, and one per agency client), the workspace list API, `require_workspace(...)` for `/orgs/{slug}/workspaces/{id}/…` routes, and member workspace assignments |
+| `modules/grants` | Access grants: a business shares its workspace with an agency (send, accept, revoke, disconnect) |
 | `modules/clients`, `modules/websites` | Clients, client-portal access, websites and URL validation |
 | `modules/dashboard` | Dashboard counts and recent activity |
 | `modules/audit` | The append-only audit log |
@@ -58,11 +59,13 @@ Conventions:
 2. Depend on `require("<permission>")`. Add new permissions to `rbac/catalogue.py` and decide
    which built-in roles get them; startup applies the change to every organization.
 3. Load rows with `get_scoped()` / `scoped_select()`, or `get_visible()` plus
-   `client_visibility()` for anything tied to a client, so client-portal users only see their
-   own. Never query tenant tables by ID alone.
+   `client_visibility()` / `workspace_visibility()` for anything tied to a client or workspace,
+   so members limited to assigned workspaces only see theirs. Never query tenant tables by ID
+   alone. A new tenant table also needs a row-level security policy (see migration 0012).
 4. Record an audit entry for any change.
-5. Add tests: behaviour, a cross-organization attempt (must 404 and change nothing), and a
-   client-portal user where relevant. `test_permission_matrix.py` checks the new route's
+5. Add tests: behaviour, and a member limited to assigned workspaces where relevant.
+   `test_cross_tenant.py` attacks every new route with another organization's ids
+   automatically, and fails until it knows each new kind of id. `test_permission_matrix.py` checks the new route's
    permission automatically.
 
 ### API surfaces
@@ -132,10 +135,10 @@ users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
        └─ organization_members ─┬─ organizations (kind: business | agency)
                                 │    ├─ roles ── role_permissions ── permissions
                                 │    ├─ invitations
-                                │    ├─ clients ─┬─ client_users ── users
-                                │    │           └─ workspaces (kind client, one per client)
-                                │    ├─ workspaces (kind own, exactly one) ─┐
-                                │    │                                       └─ websites
+                                │    ├─ clients ── workspaces (kind client, one per client)
+                                │    ├─ workspaces (kind own, exactly one) ─┬─ websites
+                                │    │                                       ├─ workspace_assignments ── organization_members
+                                │    │                                       └─ workspace_grants ── agency organizations
                                 │    └─ audit_logs
                                 └─ roles
 ```
@@ -149,6 +152,18 @@ users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
   (null in the own workspace) until every reader has moved to `workspace_id`
   (docs/HYBRID_SAAS_PLAN.md §2).
 - Business accounts can't create clients (403 `business_account`).
+- **Roles** are built in per account type (rbac/catalogue.py): Owner, Administrator,
+  Marketing Manager and Reporting Viewer for everyone; agencies also get Account Manager and
+  Client Viewer. A role sees every workspace (`workspace_scope = all`) or only the ones each
+  member is assigned (`assigned`, stored in `workspace_assignments`). The startup sync adds new
+  built-in roles to existing organizations and keeps names and permissions current.
+- **Access grants** (`workspace_grants`) let a business share its own workspace with an
+  agency. The agency's requests then include that workspace (`OrgContext.linked`), with
+  "manage" or "view" access. Websites created there belong to the business.
+- **Row-level security** (migration 0012) backs all of this up in Postgres. `get_org_context`
+  calls `core.db.set_tenant`, which sets `app.org_id` and `app.linked_ws` at the start of each
+  transaction for the rest of the request.
 
 Every tenant-owned table has `organization_id`. Migrations are in `backend/alembic/versions`
-(`0001` initial schema … `0008` account types and workspaces).
+(`0001` initial schema … `0008` account types and workspaces … `0010` role scope and
+assignments, `0011` access grants, `0012` row-level security).

@@ -57,6 +57,29 @@ deployment must add. Each item is covered by backend or frontend tests unless no
 - Rows are always loaded filtered by `organization_id`. Using another organization's IDs for
   any object (member, role, client, workspace, website, invitation, portal user) returns 404
   and changes nothing. Tests try each of these.
+- **Roles limited to assigned workspaces** (Account Manager, Client Viewer, or a custom role)
+  see only the workspaces they're assigned to, everywhere: workspace lists, clients, websites
+  and dashboard counts. Someone limited this way can only hand out workspaces they see
+  themselves, and can't invite or promote anyone to a role that sees every workspace.
+- **Agency access grants:** a business shares its own workspace with an agency without copying
+  data. The grant is emailed to one person and only that account can accept it, into an agency
+  where it's an owner or administrator. Access is "manage" (the agency's own roles apply) or
+  "view only" (every change refused, in the API). Either side can end it; the agency's access
+  and assignments stop at once. Grant, acceptance, changes made by the agency, and ending are
+  recorded in both organizations' activity logs. A grant opens only that workspace: the
+  business's team, roles, invitations and activity stay invisible to the agency.
+- **Row-level security (second line of defence):** Postgres policies on every tenant table
+  (migration 0012). Inside an organization request, each database transaction is told the
+  organization (and any workspaces shared with it); the database then hides every other
+  organization's rows and refuses to write them, even if a query forgot its organization
+  filter. Outside an organization (sign-in, the public site, the CLI, migrations) the policies
+  allow everything. They don't apply to superusers or `BYPASSRLS` users, so production uses
+  an ordinary database user (DEPLOYMENT.md §4); the API warns at startup otherwise, and CI
+  runs the tests as an ordinary user.
+- **Cross-tenant attack suite** (`tests/test_cross_tenant.py`): every organization route that
+  takes an id, found automatically, is called by another organization's owner with the
+  victim's ids, in the URL and in the body. All must fail, and the victim's data must be
+  unchanged. A new route is covered without anyone remembering to add it.
 - **Workspaces:** workspace routes (`/orgs/{slug}/workspaces/{id}/…`) check the organization
   first, then load the workspace within it. A workspace in another organization, or one the
   caller can't see, is a 404. A website is only reachable through its own workspace, and can

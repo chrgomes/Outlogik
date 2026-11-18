@@ -102,6 +102,20 @@ Create both in **Toronto (TOR1)**:
 
 The apps add themselves to the databases' trusted sources when they're created.
 
+**The apps must connect as these ordinary users (`outlogik`, `outlogik_staging`), never as
+`doadmin`.** The database's row-level security (migration 0012) is the second line of tenant
+isolation, and Postgres doesn't apply it to superusers or to users with `BYPASSRLS`. The app
+specs already use the ordinary users. To check, in the cluster's console connected as the app
+user:
+
+```sql
+SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user;  -- both: f
+```
+
+The API also logs a warning at startup ("row-level security is NOT enforced") if it's
+connected as a user the policies don't apply to. If you see it, fix the database user before
+launch.
+
 ## 5. Generate the shared secret
 
 The website forwards form posts to the API and vouches for each visitor's IP address with a

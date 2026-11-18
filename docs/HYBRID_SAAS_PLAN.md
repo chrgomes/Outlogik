@@ -230,7 +230,7 @@ counts as done only when its backend, storage, permissions, error handling and t
 |---|---|---|
 | H1-1 | **This audit and plan:** decisions (section 4) and approval | §2 |
 | H1-2 ✅ | **Account types and workspaces:** the data model and migration above; workspace-scoped API; the app's workspace switcher | §4 |
-| H1-3 | **Roles, assignments and isolation:** business and agency role templates, workspace scope and assignments, platform roles, RLS backstop, cross-tenant test suite | §5, §16, §21 |
+| H1-3 ✅ | **Roles, assignments and isolation:** business and agency role templates, workspace scope and assignments, business-to-agency access grants, RLS backstop, cross-tenant test suite (platform roles moved to H1-11, where the Super Admin area gives them something to control) | §5, §16, §21 |
 | H1-4 | **Entitlements foundation:** plans, entitlements, subscriptions (assigned by hand), usage records, backend enforcement (websites, clients, team, audits) | §12 |
 | H1-5 | **Background jobs:** Celery and beat, the jobs table, retries, duplicate prevention; email moves to the queue | §19 |
 | H1-6 | **SEO crawler and audits:** the crawler, checks, PageSpeed, scheduled audits, history and comparison, prioritized issues. Includes an **AI search readiness** section (GEO technical checks: AI crawler access, structured data, business identity consistency, question-and-answer coverage; see [`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) | §6.1, Addendum §5 |
@@ -238,7 +238,7 @@ counts as done only when its backend, storage, permissions, error handling and t
 | H1-8 | **Business and agency dashboards:** ECharts, real data only, empty states that explain how to connect | §9 |
 | H1-9 | **Basic reporting:** SEO and analytics reports per workspace, PDF and CSV | §10 |
 | H1-10 | **Client portal on workspaces:** Client Viewer sees the dashboard, audits and reports, never agency-wide or internal data | §7 |
-| H1-11 | **Self-serve sign-up and basic Super Admin:** choose business or agency at sign-up (behind an invitation code during beta); Super Admin lists organizations and users, assigns plans, suspends accounts | §13, §23 |
+| H1-11 | **Self-serve sign-up and basic Super Admin:** choose business or agency at sign-up (behind an invitation code during beta); Super Admin lists organizations and users, assigns plans, suspends accounts; platform roles (platform, support and billing admin) | §13, §23 |
 | H1-12 | **H1 review:** security review, isolation tests, staging deployment for an internal alpha | §21 |
 
 **Not in H1, as the audit found:**
