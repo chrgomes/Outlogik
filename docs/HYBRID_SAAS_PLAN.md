@@ -1,6 +1,6 @@
 # Outlogik — Hybrid SaaS plan
 
-Status: **Draft for approval** (2026-11-18). Source: the
+Status: **Draft for approval** (2026-11-18), **revised the same day for simplicity** (section 0). Source: the
 [hybrid SaaS specification](specs/HYBRID_SAAS_SPEC.md). Based on the
 [codebase audit](HYBRID_SAAS_AUDIT.md). Nothing in this plan has been built yet. Section numbers
 (§) refer to the specification.
@@ -9,6 +9,38 @@ Status: **Draft for approval** (2026-11-18). Source: the
 website), both done. To avoid confusion, the specification's phases are called **H1, H1.5, H2
 and H3** here ("hybrid"). Their content is the specification's, adjusted where the audit found
 a reason, and each adjustment is marked.
+
+---
+
+## 0. Keep it simple (decided 2026-11-18)
+
+The specification describes a very broad product. To keep Outlogik simple to use and simple to
+look at, three rules apply to everything below:
+
+1. **A simple core first.** The first version does a few things well:
+   - **SEO**
+   - **website analytics**
+   - **reports**
+   - for agencies, **clients with a workspace switcher, and the client portal**
+
+   Further modules are added **one at a time**, in the order customers ask for them, each one
+   finished before the next starts.
+2. **Only finished features are visible.**
+   - A module appears in the navigation only when it works and the customer's plan includes it.
+   - No "coming soon" tiles, empty sections or buttons that do nothing (this is also §24).
+   - Businesses never see agency vocabulary, and each person sees only what their role allows.
+3. **The website stays as it is, plus two things:**
+   - **one "Platform" section** describing the software
+   - **one pricing page**, with software plans next to agency services by proposal
+
+   The menu stays at about six items, with the same layout and the same black-and-white design.
+   No page per module.
+
+Where the specification lists separate modules that fit inside the core, they become **views
+inside it** rather than new menu items:
+- **competitor comparisons:** inside SEO
+- **conversion and funnel insights:** inside Analytics
+- **AI explanations and summaries:** inside the module they explain, not a separate AI area
 
 ---
 
@@ -215,55 +247,61 @@ counts as done only when its backend, storage, permissions, error handling and t
 - **Keyword tracking** in H1 means the positions Search Console reports for a site's own
   queries. Keyword research and competitor rankings need paid data (H2, optional).
 
-### H1.5 — Operational readiness
+### H1.5 — Ready for customers
+
+The core made usable for real businesses and agencies. No new modules.
 
 - **Getting started:**
-  - guided onboarding for businesses and agencies
-  - a **full integration center**: Bing Webmaster Tools, Microsoft Clarity, Tag Manager,
-    PageSpeed settings, sync history and errors, reconnect
-- **Monitoring and communication:**
-  - dashboard customization (widgets, saved layouts)
-  - SEO monitoring and **alerts**
-  - **notifications** (in-app and email) with preferences
+  - guided onboarding, short, for businesses and for agencies
+  - the integration center: Google connections, plus Bing Webmaster Tools, Microsoft Clarity
+    and PageSpeed, with connection status, sync history, errors and reconnect
+- **Staying informed:**
+  - SEO monitoring and **alerts** for real changes (for example new broken pages or a traffic
+    drop)
+  - **notifications** (in-app and email), with simple preferences
+  - **scheduled reports**; **white-label** basics for agencies (logo, colours, footer)
 - **Agency workflow:**
-  - client invitations and onboarding
+  - client invitations
   - **tasks and approvals**, with clients approving in the portal
-  - **scheduled reports**
-  - **white-label** foundation
-- **Super Admin control center:** overview, organizations, users, plans and entitlements,
-  feature flags, job and integration monitoring, administrative logs
+- **Super Admin control center:** overview, organizations and users, plans and limits,
+  feature flags, job and integration health, administrative logs
 - **Account security and privacy:** optional **MFA**; account **data export and deletion**
   (PIPEDA)
-- **Website:** product pages for businesses and agencies, plans from Super Admin, open
-  sign-up
-- **Beta:** a security and isolation test round, then a closed beta with real businesses and
-  agencies
+- **Website:** the **Platform section** and the **pricing page** (section 0), plus sign-up
+- **Beta:** a security and isolation test round, then a closed beta
 
-### H2 — Advanced marketing intelligence
+Dashboard customization (widgets and saved layouts) waits until beta users ask for it. The
+default dashboards should be good enough without it.
 
-- **Social media module** (built new): account connections, calendar, drafts, media library,
-  approvals, scheduling, and publishing **only where the platform's API allows it** (§6.3), plus
-  analytics. Order: Facebook and Instagram, then LinkedIn, then YouTube, Pinterest and TikTok.
-  X only if paid API access is approved.
-- **Paid ads, read-only:** Google Ads, Meta Ads, LinkedIn Ads.
-- **Marketing work:**
-  - content marketing: calendar, briefs, workflow, performance
-  - **campaign management** across channels
-  - email marketing: Listmonk, CASL consent, unsubscribe
-- **Insight:**
-  - conversion optimization: funnels and forms from GA4 data
-  - competitor intelligence, with estimated and verified data clearly labelled
-  - the **AI layer**: summaries, explanations, recommendations, questions about your data;
-    usage and cost limits
-- **Reporting and automation:** advanced reports, automated workflows, agency collaboration
-  (internal discussions, client messages)
+### H2 — More modules, one at a time
+
+Each module is planned, built, tested and released on its own, and appears in the app only when
+it's done. The proposed order, to be adjusted to what beta customers ask for:
+
+1. **Social media** (built new; see D2): account connections, calendar, drafts, approvals,
+   scheduling, and publishing **only where the platform's API allows it** (§6.3), plus
+   analytics. Facebook and Instagram first, then LinkedIn, then others; X only if paid API
+   access is worth it.
+2. **Campaigns and content:** one place to plan a campaign across channels, with a content
+   calendar, briefs and approvals.
+3. **Paid ads (read-only):** Google Ads, Meta Ads, LinkedIn Ads results next to the rest.
+4. **Email marketing:** Listmonk, with CASL consent and unsubscribe. Only if customers want it
+   inside Outlogik rather than in their existing email tool.
+
+Within the existing modules, in H2:
+- **AI explanations and summaries,** with usage and cost limits (§6.9), added inside SEO,
+  Analytics and Reports
+- **Competitor comparisons** in SEO, clearly labelled as estimated or verified
+- **Conversion and funnel views** in Analytics
+- Keyword research and competitor rankings need paid data. They'd be optional add-ons, only
+  with a clear business case (§11).
 
 ### H3 — Commercial expansion
 
-- **Billing:** full subscription billing (payment provider, invoices, taxes, dunning).
-- **Branding:** advanced white-labeling and custom agency domains; an advanced client portal.
-- **Platform reach:** integration marketplace, more AI providers, enterprise permissions,
-  advanced automation, a public API for customers, enterprise reporting.
+- **Billing:** full subscription billing (payment provider, invoices, taxes, failed payments).
+- **Branding:** advanced white-labeling and custom agency domains.
+- **Later, only on demand:** a public API for customers, enterprise permissions and
+  reporting, more integrations and AI providers.
 
 ---
 
@@ -272,9 +310,9 @@ counts as done only when its backend, storage, permissions, error handling and t
 | # | Decision | Recommendation |
 |---|---|---|
 | D1 | **Phase names.** Call the specification's phases H1, H1.5, H2, H3. | Yes, to avoid confusion with the finished Phase 1 and 1.5. |
-| D2 | **Social media.** There's no existing module (audit). Where does it go? | **H2**, as built-new. Publishing depends on Meta, LinkedIn and others approving the app, which takes weeks, so **apply for those approvals during H1**. If social is commercially urgent, it could move to H1.5. |
+| D2 | **Social media.** There's no existing module (audit). Where does it go? | **The first H2 module**, built new. Publishing depends on Meta, LinkedIn and others approving the app, which takes weeks, so **apply for those approvals during H1**. |
 | D3 | **Docker** (§3: "not a requirement"). Local development already runs without it; deployment uses Dockerfiles that DigitalOcean builds. | **Keep the Dockerfiles** for DigitalOcean (you never need Docker installed). Also document a Docker-free deployment (a plain server, or DigitalOcean's buildpacks) so nothing depends on Docker. |
-| D4 | **The agency website.** It's ready to launch and sells Outlogik as an agency. | **Launch it now.** The agency is the business today, and H1 takes a while. Product pages and plans are added in H1.5, when there's a product to sign up for. |
+| D4 | **The agency website.** It's ready to launch and sells Outlogik as an agency. | **Launch it now.** The agency is the business today, and H1 takes a while. In H1.5 it gains only the **Platform section** and the **pricing page** (section 0). |
 | D5 | **Outlogik's own account.** | Outlogik becomes an **agency tenant** on its own platform, and its clients become client workspaces. You use the product you sell. |
 | D6 | **The workspace design** (section 1.1). | Approve as described: workspaces under organizations, access grants for business-to-agency links, no copied data. |
 | D7 | **Beta sign-up.** | Open sign-up behind an **invitation code** at the end of H1; open to everyone in H1.5. |
@@ -298,7 +336,7 @@ counts as done only when its backend, storage, permissions, error handling and t
 | 9 reports for businesses and agency clients | H1-9 |
 | 10 entitlements enforced in the backend | H1-4 |
 | 11 Super Admin manages organizations, users, subscriptions, configuration | H1-11 (basic), H1.5 (complete) |
-| 12 "existing social media functionality remains operational" | **Not applicable as written:** there's none. Replaced by the social module in H2 (D2). |
+| 12 "existing social media functionality remains operational" | **Not applicable as written:** there's none. Replaced by the social module, the first H2 module (D2). |
 | 13 reliable integration connections and syncs | H1-7, H1.5 |
 | 14 reliable background jobs | H1-5, H1.5 (monitoring) |
 | 15 cross-tenant tests pass | From H1-3, every step |
