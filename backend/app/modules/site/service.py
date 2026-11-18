@@ -18,8 +18,6 @@ DEFAULT_FEATURES = [
      "Your monthly results, ready to read online or download as PDF."),
     ("analytics-dashboards", "Analytics dashboards", "in_development",
      "Traffic and search performance from Google Analytics and Search Console."),
-    ("social-approvals", "Social calendar approvals", "in_development",
-     "Review and approve social posts before they go out."),
     ("seo-health", "SEO health checks", "in_development",
      "Technical issues found on your sites, and when they were fixed."),
 ]

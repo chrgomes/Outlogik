@@ -115,10 +115,10 @@ export const SERVICE_CONTENT: Record<string, ServiceContent> = {
       { title: 'Create and approve', text: 'We write and design; you approve or ask for changes.' },
       { title: 'Publish and report', text: 'We post on schedule and report on results each month.' },
     ],
-    portalFeatures: ['client-portal', 'activity-history', 'social-approvals', 'monthly-reports'],
+    portalFeatures: ['client-portal', 'activity-history', 'monthly-reports'],
     questions: [
       { q: 'Which platforms do you manage?', a: 'The ones where your customers are, typically Facebook, Instagram and LinkedIn. We agree the channels in your proposal.' },
-      { q: 'Do I approve posts before they go out?', a: 'Yes, always. Today approvals happen by email or a shared document; approving posts in your client portal is in development.' },
+      { q: 'Do I approve posts before they go out?', a: 'Yes, always. You approve the plan and each post by email or a shared document before anything goes out.' },
       { q: 'Do you run paid social ads?', a: 'Our social media service covers organic posting and community management. If you’re interested in paid ads, mention it in your consultation.' },
       { q: 'Who owns the social accounts?', a: 'You do. We work through access you grant, which you can remove at any time.' },
     ],

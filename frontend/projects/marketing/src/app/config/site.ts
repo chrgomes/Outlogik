@@ -119,8 +119,6 @@ export const DEFAULT_PORTAL_FEATURES: PortalFeature[] = [
     summary: 'Your monthly results, ready to read online or download as PDF.' },
   { slug: 'analytics-dashboards', name: 'Analytics dashboards', status: 'in_development',
     summary: 'Traffic and search performance from Google Analytics and Search Console.' },
-  { slug: 'social-approvals', name: 'Social calendar approvals', status: 'in_development',
-    summary: 'Review and approve social posts before they go out.' },
   { slug: 'seo-health', name: 'SEO health checks', status: 'in_development',
     summary: 'Technical issues found on your sites, and when they were fixed.' },
 ];
