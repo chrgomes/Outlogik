@@ -9,7 +9,9 @@ tests, jobs run inline instead (JOBS_MODE=inline), so no worker is needed.
 """
 
 import ssl
+import tempfile
 import uuid
+from pathlib import Path
 
 from celery import Celery
 from celery.schedules import crontab
@@ -27,6 +29,8 @@ celery.conf.update(
     worker_prefetch_multiplier=1,
     broker_connection_retry_on_startup=True,
     timezone="America/Toronto",
+    # The schedule's state file goes where the (non-root) container can always write.
+    beat_schedule_filename=str(Path(tempfile.gettempdir()) / "outlogik-celerybeat-schedule"),
     beat_schedule={
         "recover-jobs": {"task": "app.worker.scheduled", "schedule": 300.0,
                          "args": ["jobs.recover"]},
