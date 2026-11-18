@@ -4,6 +4,8 @@ import { firstValueFrom } from 'rxjs';
 
 import {
   AccessGrant,
+  Audit,
+  AuditFrequency,
   Client,
   ClientUser,
   Invitation,
@@ -87,6 +89,14 @@ export class OrgApi {
   }
   deleteWebsite(id: string) {
     return this.send<void>('DELETE', `websites/${id}`);
+  }
+
+  // Website audits
+  startAudit(workspaceId: string, websiteId: string) {
+    return this.send<Audit>('POST', `workspaces/${workspaceId}/audits`, { website_id: websiteId });
+  }
+  setAuditFrequency(websiteId: string, frequency: AuditFrequency) {
+    return this.send<Website>('PATCH', `websites/${websiteId}`, { audit_frequency: frequency });
   }
 
   // Workspace assignments (members whose role is limited to assigned workspaces)

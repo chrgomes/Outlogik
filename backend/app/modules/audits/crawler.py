@@ -41,9 +41,15 @@ class CrawlResult:
     home: CrawledPage | None = None
 
 
-def _hosts(host: str) -> set[str]:
-    bare = host.removeprefix("www.")
-    return {bare, f"www.{bare}"}
+DEFAULT_PORTS = {"http": 80, "https": 443}
+
+
+def _site(url: str) -> tuple[str, int | None]:
+    """The site a URL belongs to: its host (with or without www) and its port. http and
+    https on their default ports count as the same site; another port is another site."""
+    p = urlsplit(url)
+    port = p.port if p.port not in (None, DEFAULT_PORTS.get(p.scheme)) else None
+    return (p.hostname or "").removeprefix("www."), port
 
 
 def normalize(url: str) -> str:
@@ -63,12 +69,11 @@ def crawl(start_url: str, *, max_pages: int, max_seconds: int = 40 * 60) -> Craw
     started = time.monotonic()
     home = normalize(start_url)
     origin = urlsplit(home)
-    allowed = _hosts(origin.hostname or "")
+    this_site = _site(home)
     result = CrawlResult(start_url=home)
 
     def on_site(url: str) -> bool:
-        p = urlsplit(url)
-        return p.scheme in ("http", "https") and (p.hostname or "") in allowed
+        return urlsplit(url).scheme in ("http", "https") and _site(url) == this_site
 
     with client() as c:
         base = f"{origin.scheme}://{origin.netloc}"

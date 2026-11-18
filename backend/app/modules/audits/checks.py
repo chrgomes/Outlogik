@@ -251,6 +251,7 @@ def run_checks(r: CrawlResult) -> tuple[list[Found], dict[str, Any]]:
     # each page
     titles: dict[str, list[str]] = {}
     descriptions: dict[str, list[str]] = {}
+    checked: set[str] = set()
     for p in r.pages:
         got = p.fetched
         where = {"linked_from": p.found_on} if p.found_on else {}
@@ -268,22 +269,26 @@ def run_checks(r: CrawlResult) -> tuple[list[Found], dict[str, Any]]:
         if got.elapsed_ms > SLOW_MS:
             found.append(Found("slow_page", p.url, {"seconds": round(got.elapsed_ms / 1000, 1)}))
         page = p.page
-        if page is None:
-            continue
+        if page is None or normalize(got.final_url) in checked:
+            continue  # several addresses can redirect to the same page: check it once
         url = got.final_url
+        checked.add(normalize(url))
         if not page.has_viewport:
             found.append(Found("viewport_missing", url))
         if page.noindex:
             found.append(Found("noindex", url))
+        points_elsewhere = False
         if page.canonical:
             canonical = normalize(urljoin(url, page.canonical))
             if canonical != normalize(url):
+                points_elsewhere = True
                 found.append(Found("canonical_elsewhere", url, {"canonical": canonical}))
         title = page.title or ""
         if not title:
             found.append(Found("title_missing", url))
         else:
-            titles.setdefault(title.lower(), []).append(url)
+            if not points_elsewhere:  # a declared duplicate isn't a duplicate problem
+                titles.setdefault(title.lower(), []).append(url)
             if len(title) > 60:
                 found.append(Found("title_too_long", url, {"title": title, "length": len(title)}))
             elif len(title) < 10:
@@ -292,7 +297,8 @@ def run_checks(r: CrawlResult) -> tuple[list[Found], dict[str, Any]]:
         if not desc:
             found.append(Found("meta_description_missing", url))
         else:
-            descriptions.setdefault(desc.lower(), []).append(url)
+            if not points_elsewhere:
+                descriptions.setdefault(desc.lower(), []).append(url)
             if len(desc) > 160:
                 found.append(Found("meta_description_too_long", url, {"length": len(desc)}))
         if not page.h1:

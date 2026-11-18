@@ -192,3 +192,12 @@ def test_crawl_without_robots_or_sitemap(site):
     result = crawl(site, max_pages=5)
     assert result.robots.status == 404 and not result.sitemap_found
     assert [p.url for p in result.pages] == [f"{site}/"]
+
+
+def test_another_port_is_another_site(site):
+    """Locally, the website and the client portal differ only by port."""
+    PAGES["/"] = html("Home", "<a href='http://127.0.0.1:9/login'>Log in</a> "
+                              f"<a href='{site}/about'>About</a>")
+    PAGES["/about"] = html("About")
+    result = crawl(site, max_pages=10)
+    assert [p.url.removeprefix(site) for p in result.pages] == ["/", "/about"]

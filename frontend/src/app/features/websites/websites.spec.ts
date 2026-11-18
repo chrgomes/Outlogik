@@ -17,7 +17,8 @@ const bakery: Workspace = { ...own, id: 'w-1', kind: 'client', name: 'Bakery', c
 const site: Website = {
   id: 's1', workspace_id: 'w-own', workspace_name: 'Acme', client_id: null, client_name: null,
   name: 'acme.example.com', url: 'https://acme.example.com', domain: 'acme.example.com',
-  status: 'active', created_at: '2026-11-18T00:00:00Z', updated_at: '2026-11-18T00:00:00Z',
+  status: 'active', audit_frequency: 'off', created_at: '2026-11-18T00:00:00Z',
+  updated_at: '2026-11-18T00:00:00Z',
 };
 
 function asKind(kind: 'agency' | 'business') {

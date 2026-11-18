@@ -121,6 +121,20 @@ export const routes: Routes = [
         loadComponent: () => import('./features/settings/roles').then((m) => m.Roles),
       },
       {
+        path: 'audits',
+        canActivate: [permissionGuard],
+        data: { permission: 'audits.read' },
+        title: 'Audits · Outlogik',
+        loadComponent: () => import('./features/audits/audits-list').then((m) => m.AuditsList),
+      },
+      {
+        path: 'audits/:workspaceId/:auditId',
+        canActivate: [permissionGuard],
+        data: { permission: 'audits.read' },
+        title: 'Audit · Outlogik',
+        loadComponent: () => import('./features/audits/audit-detail').then((m) => m.AuditDetailPage),
+      },
+      {
         path: 'settings/plan',
         canActivate: [permissionGuard],
         data: { permission: 'plan.read' },

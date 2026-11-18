@@ -202,7 +202,7 @@ describe('Websites in a view-only linked workspace', () => {
     http.expectOne((r) => r.url === '/api/v1/orgs/acme/workspaces/w9/websites').flush(page([{
       id: 's1', workspace_id: 'w9', workspace_name: 'Corner Shop', client_id: null, client_name: null,
       name: 'cornershop.example.com', url: 'https://cornershop.example.com', domain: 'cornershop.example.com',
-      status: 'active', created_at: '2026-11-18T00:00:00Z', updated_at: '2026-11-18T00:00:00Z' }]));
+      status: 'active', audit_frequency: 'off', created_at: '2026-11-18T00:00:00Z', updated_at: '2026-11-18T00:00:00Z' }]));
     await flushPending();
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;

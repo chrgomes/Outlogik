@@ -278,3 +278,15 @@ def test_an_agency_audits_a_shared_workspace_on_the_business_plan(client, new_cl
     assert len(client.get(audits_url(business)).json()) == 1
     overview = agency.get(f"{API}/{agency_slug}/audits/websites").json()
     assert overview[0]["latest"]["status"] == "completed"
+
+
+def test_redirects_and_declared_duplicates_arent_reported_as_duplicates(client, business):
+    PAGES["/"] = page("Corner Bakery home", "<a href='/home'>Home</a> <a href='/book'>Book</a> "
+                      "<a href='/book?service=bread'>Bread</a>")
+    PAGES["/home"] = (301, "text/html", "/")
+    PAGES["/book"] = page("Book a visit")
+    PAGES["/book?service=bread"] = page("Book a visit",
+                                        head="<link rel='canonical' href='/book'>")
+    found = groups(client, business, run_audit(client, business))
+    assert "title_duplicate" not in found and "meta_description_duplicate" not in found
+    assert found["canonical_elsewhere"]["count"] == 1
