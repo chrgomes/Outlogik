@@ -173,6 +173,18 @@ python -m app.cli grant-staff --email you@outlogik.com --role site_admin
 
 Sign in at `https://app.staging.outlogik.com`. Invite colleagues and clients from the app.
 
+**Plans.** New organizations start on a 14-day free trial. Organizations created with the
+command above get one too, unless you add `--plan agency_business` (or another plan). To give
+an organization a plan (until billing exists), in the same console:
+
+```bash
+python -m app.cli set-plan --org their-address --plan digital_growth --interval annual
+```
+
+Plans: `digital_starter`, `digital_growth`, `digital_professional`, `agency_starter`,
+`agency_professional`, `agency_business`. `--status` can also be `trialing` (with
+`--trial-days`), `past_due` or `cancelled`. `their-address` is the part after `/o/` in the app.
+
 ## 8. Check staging
 
 - [ ] `https://app.staging.outlogik.com/api/v1/health/ready` shows database **ok** and redis **ok**

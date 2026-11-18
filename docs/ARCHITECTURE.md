@@ -30,6 +30,7 @@ schemas, service functions and router.
 | `modules/organizations` | Organizations, members, invitations |
 | `modules/rbac` | Permission catalogue, built-in roles, custom roles, escalation guard |
 | `modules/workspaces` | Workspaces (an organization's own, and one per agency client), the workspace list API, `require_workspace(...)` for `/orgs/{slug}/workspaces/{id}/…` routes, and member workspace assignments |
+| `modules/plans` | Plans, their limits, subscriptions and trials; `check_limit(...)`, called by the services that add websites, clients and team members |
 | `modules/grants` | Access grants: a business shares its workspace with an agency (send, accept, revoke, disconnect) |
 | `modules/clients`, `modules/websites` | Clients, client-portal access, websites and URL validation |
 | `modules/dashboard` | Dashboard counts and recent activity |
@@ -160,6 +161,13 @@ users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
 - **Access grants** (`workspace_grants`) let a business share its own workspace with an
   agency. The agency's requests then include that workspace (`OrgContext.linked`), with
   "manage" or "view" access. Websites created there belong to the business.
+- **Plans** (`plans`, `plan_entitlements`, `subscriptions`; migration 0013): limit keys are
+  defined in `plans/catalogue.py`, values in the database. Each organization has one
+  subscription: a 14-day trial of the top plan at sign-up, or a plan set by staff. Limits are
+  checked by the services when something is added (never by the interface), against live
+  counts. After a trial ends, or when cancelled, nothing new can be added; nothing is removed.
+  A new limit (for example, audits per month) is a catalogue entry, a migration adding values
+  to the plans, and a `check_limit` call where the thing is created.
 - **Row-level security** (migration 0012) backs all of this up in Postgres. `get_org_context`
   calls `core.db.set_tenant`, which sets `app.org_id` and `app.linked_ws` at the start of each
   transaction for the rest of the request.

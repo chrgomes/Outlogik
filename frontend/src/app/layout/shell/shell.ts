@@ -6,6 +6,7 @@ import { filter } from 'rxjs';
 import { LayoutService } from '../../core/layout.service';
 import { Sidebar } from '../sidebar/sidebar';
 import { Topbar } from '../topbar/topbar';
+import { PlanBanner } from '../plan-banner/plan-banner';
 import { VerifyBanner } from '../verify-banner/verify-banner';
 import { ToastHost } from '../../shared/toast/toast';
 
@@ -13,7 +14,7 @@ import { ToastHost } from '../../shared/toast/toast';
 @Component({
   selector: 'ol-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, Sidebar, Topbar, VerifyBanner, ToastHost],
+  imports: [RouterOutlet, Sidebar, Topbar, VerifyBanner, PlanBanner, ToastHost],
   host: { '(document:keydown.escape)': 'layout.closeMobile()' },
   template: `
     <a class="skip-link" href="#main" (click)="skipToContent($event)">Skip to content</a>
@@ -24,6 +25,7 @@ import { ToastHost } from '../../shared/toast/toast';
     <div class="main-col">
       <ol-topbar />
       <ol-verify-banner />
+      <ol-plan-banner />
       <main id="main" tabindex="-1">
         <router-outlet />
       </main>

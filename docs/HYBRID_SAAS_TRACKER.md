@@ -10,8 +10,137 @@ unfinished, security notes, and what's next.
 | H1-2 Account types and workspaces | **Done** (2026-11-18) |
 | H1-3 Roles, assignments, access grants, RLS | **Done** (2026-11-18) |
 | AI Search addendum | Planned 2026-11-18: GEO checks in H1-6, AI referral traffic in H1-7, monitoring as the first H2 module ([`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) |
-| H1-4 Entitlements | Next |
-| H1-5 … H1-12 | Not started |
+| H1-4 Plans and limits | **Done** (2026-11-18) |
+| H1-5 Background jobs | Next |
+| H1-6 … H1-12 | Not started |
+
+---
+
+## H1-4: Plans and limits
+
+### 1. What was completed
+
+- **Plans.** The six approved plans, in CAD:
+  - Digital Starter, Growth and Professional, for businesses
+  - Agency Starter, Professional and Business, for agencies
+  - Monthly and annual (20% off, paid upfront) prices, with limits on websites, clients and
+    team members, exactly as approved.
+- **14-day free trial** for every new sign-up, on the top plan for its account type
+  (Digital Professional or Agency Business), until sign-up lets people choose a plan
+  (H1-11). Existing organizations, all set up by Outlogik, start on the top plan.
+- **Limits enforced by the server** when something is added:
+  - **Websites and clients:** archived ones don't count, and restoring one counts again.
+  - **Team members:** active members plus open invitations count. Client-portal users and
+    disabled members don't; re-enabling someone counts again.
+  - **An agency adding a website to a business's shared workspace** counts against the
+    business's plan.
+  - **The message names the plan and its limit,** e.g. "The Digital Starter plan includes 1
+    website. Contact Outlogik to move to a bigger plan."
+- **After a trial ends (or if cancelled),** nothing is deleted and everything can still be
+  viewed and edited; only adding new things is refused, with a clear message.
+- **Settings → Plan** (owners and administrators) shows:
+  - the plan, its status and its price (monthly, or the annual amount with its monthly
+    equivalent)
+  - the trial's end date
+  - usage against each limit, with bars
+- **A banner** in a trial's last week, and after it has ended.
+- **Plans assigned by hand** with `python -m app.cli set-plan` (and `create-organization
+  --plan`), until the Super Admin area (H1-11) and billing (H3).
+- **Two small display fixes found in the browser check:** a missing icon, and the status
+  badge's colours.
+
+**Deliberately not in H1-4:**
+- Monthly usage records for metered limits (SEO audits, AI Search). They come with the
+  first module that needs them (H1-6), so there's no unused table. Websites, clients and
+  team members are counted live.
+- Billing, invoices and payment (H3).
+- Subscription terms on the website (H1.5, with the pricing page).
+
+### 2. Files changed
+
+**Backend:**
+- New module `plans/` (`catalogue.py`, `models.py`, `service.py`, `schemas.py`,
+  `router.py`).
+- Limit checks in `websites/service.py`, `clients/service.py`,
+  `organizations/invitations.py` and `organizations/members.py`.
+- `organizations/service.py` (trial or plan at creation), `rbac/catalogue.py` (`plan.read`),
+  `cli.py` (`set-plan`, `--plan`), `main.py`, `models.py`.
+- Migration `0013`.
+- Tests: new `test_plans.py`; `test_row_level_security.py` covers subscriptions;
+  `conftest.py` keeps the seeded plans between tests.
+
+**App:**
+- New `core/plan.service.ts`, `features/settings/plan.ts` (and spec),
+  `layout/plan-banner/plan-banner.ts`.
+- `core/api.types.ts`, `layout/nav.ts`, `layout/shell/shell.ts`, `app.routes.ts`, and the
+  app icon set (`scripts/build-icons.mjs`, `brand/icon/`).
+
+**Docs:** `ARCHITECTURE.md`, `DEPLOYMENT.md` (§7: giving an organization a plan),
+`README.md`, `HYBRID_SAAS_PLAN.md`, this tracker.
+
+### 3. Database changes (migration `0013`)
+
+| Change | Existing data |
+|---|---|
+| `plans`: key, name, account type, currency, monthly and annual price (cents) | The six approved plans |
+| `plan_entitlements`: plan, limit key, value (a number, or null for unlimited) | Websites, clients and team-member limits for each plan |
+| `subscriptions`: one per organization; plan, status, monthly/annual, trial end, source (manual) | Every existing organization: active, top plan for its type |
+| Row-level security on `subscriptions` (an agency can also read the plan of a business that shared a workspace with it) | None |
+
+The migration was run up, checked, down and up again; the test suite builds from it.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **353 passed** (was 337) |
+| App (Vitest) | **113 passed** (was 106) |
+| Website (Vitest) | 92 passed (unchanged) |
+
+The new tests cover:
+- the trial (plan and length)
+- the Plan endpoint (prices, limits, usage; hidden from roles without it)
+- each limit, including archived items not counting and restoring counting again
+- team counting (open invitations count, client-portal users don't, a counted invitation can
+  still be accepted, re-enabling counts)
+- unlimited values, trial ended and cancelled
+- plan changes recorded and checked against the account type, and the command line
+- a shared workspace counting against the business's plan
+- subscriptions under row-level security
+- in the app: the Plan page (usage, at-limit, annual price, trial dates) and the banner
+  (shown only in a trial's last week or after it, and only to people who can see the plan)
+
+**Browser check** (Chromium, against the real API):
+- A new business sees its trial on the Plan page.
+- After `set-plan` to Digital Starter (annual), a second website is refused in the dialog,
+  with the plan's message.
+- The Plan page shows "1 of 1" in red and $278.40 a year ($23.20 a month).
+- The banner appears with 3 trial days left, and changes once the trial has ended.
+- No page errors. An axe scan of the Plan page found no problems in light or dark mode.
+
+### 5. Unfinished (on purpose)
+
+- **Changing plans is done by Outlogik staff** (command line) until the Super Admin area
+  (H1-11); customers email sales@outlogik.com.
+- **Nothing reminds anyone by email** before a trial ends. That comes with notifications
+  (H1.5).
+- **Lowering a plan below current usage is allowed:** nothing is removed, but nothing more
+  can be added until usage is under the new limit.
+
+### 6. Security notes
+
+- **Limits are enforced only in the backend services;** the app just shows them.
+- **Only owners and administrators can see the plan and its prices** (`plan.read`). Client
+  Viewers, Account Managers and Marketing Managers can't.
+- **Subscriptions are under row-level security** like the other tenant tables.
+- **Plans can't be changed through the API yet:** only staff, with the command line.
+
+### 7. Next: H1-5 background jobs
+
+Celery and beat with Redis:
+- a jobs table, retries, and duplicate prevention
+- email moved onto the queue
+- the base for scheduled audits (H1-6) and syncs (H1-7)
 
 ---
 

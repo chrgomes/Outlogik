@@ -146,8 +146,8 @@ customers at checkout (H3). Annual billing is 20% off and paid upfront.
 | Agency Professional | agency | $149 | $1,430.40 ($119.20) | 30 | 15 | 8 |
 | Agency Business | agency | $299 | $2,870.40 ($239.20) | 100 | 40 | 20 |
 
-- These are the starting values seeded in H1-4. Super Admin can change any of them without
-  code changes.
+- These are the starting values seeded in H1-4. They live in the database: staff change them
+  without code changes (from the Super Admin area once it exists, H1-11).
 - Limits for SEO audits, AI Search monitoring and other modules are added to each plan when
   the module exists, so no plan lists a feature that isn't built.
 - **Free trial: 14 days** with the full plan, no card needed during beta. Until billing exists
@@ -257,7 +257,7 @@ counts as done only when its backend, storage, permissions, error handling and t
 | H1-1 | **This audit and plan:** decisions (section 4) and approval | §2 |
 | H1-2 ✅ | **Account types and workspaces:** the data model and migration above; workspace-scoped API; the app's workspace switcher | §4 |
 | H1-3 ✅ | **Roles, assignments and isolation:** business and agency role templates, workspace scope and assignments, business-to-agency access grants, RLS backstop, cross-tenant test suite (platform roles moved to H1-11, where the Super Admin area gives them something to control) | §5, §16, §21 |
-| H1-4 | **Entitlements foundation:** plans, entitlements, subscriptions (assigned by hand), usage records, backend enforcement (websites, clients, team, audits) | §12 |
+| H1-4 ✅ | **Entitlements foundation:** plans, entitlements, subscriptions (assigned by hand), 14-day trials, backend enforcement (websites, clients, team). Metered usage records (audits, AI Search) move to H1-6, with the first metered limit | §12 |
 | H1-5 | **Background jobs:** Celery and beat, the jobs table, retries, duplicate prevention; email moves to the queue | §19 |
 | H1-6 | **SEO crawler and audits:** the crawler, checks, PageSpeed, scheduled audits, history and comparison, prioritized issues. Includes an **AI search readiness** section (GEO technical checks: AI crawler access, structured data, business identity consistency, question-and-answer coverage; see [`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) | §6.1, Addendum §5 |
 | H1-7 | **Integration framework and Google:** encrypted credentials, Google OAuth, GA4 and Search Console syncs into snapshots, including **AI referral traffic** (visits from ChatGPT, Perplexity, Gemini, Copilot). **Google's app verification is applied for at the start of H1**, because it takes weeks. | §6.2, §11, Addendum §2 |

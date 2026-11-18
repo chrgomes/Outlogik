@@ -33,6 +33,7 @@ export const NAV: NavSection[] = [
         permission: 'organization.read' },
       { label: 'Team', icon: 'people', path: 'settings/members', permission: 'members.read' },
       { label: 'Roles', icon: 'shield-lock', path: 'settings/roles', permission: 'roles.read' },
+      { label: 'Plan', icon: 'speedometer2', path: 'settings/plan', permission: 'plan.read' },
       { label: 'Agency access', icon: 'people', path: 'settings/agency-access',
         permission: 'access_grants.manage', businessOnly: true },
       { label: 'Linked businesses', icon: 'link-45deg', path: 'settings/linked-businesses',

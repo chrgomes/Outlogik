@@ -121,6 +121,13 @@ export const routes: Routes = [
         loadComponent: () => import('./features/settings/roles').then((m) => m.Roles),
       },
       {
+        path: 'settings/plan',
+        canActivate: [permissionGuard],
+        data: { permission: 'plan.read' },
+        title: 'Plan · Outlogik',
+        loadComponent: () => import('./features/settings/plan').then((m) => m.Plan),
+      },
+      {
         path: 'settings/agency-access',
         canActivate: [businessGuard, permissionGuard],
         data: { permission: 'access_grants.manage' },

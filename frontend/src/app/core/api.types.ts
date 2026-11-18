@@ -127,6 +127,23 @@ export interface GrantPreview {
   agencies: { organization_id: string; slug: string; name: string }[];
 }
 
+export interface Subscription {
+  plan: {
+    key: string;
+    name: string;
+    account_kind: AccountType;
+    currency: string;
+    monthly_price_cents: number;
+    annual_price_cents: number;
+  };
+  status: 'trialing' | 'active' | 'past_due' | 'cancelled' | 'trial_ended';
+  billing_interval: 'monthly' | 'annual';
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  /** limit null: unlimited. */
+  limits: { key: string; label: string; limit: number | null; used: number }[];
+}
+
 export interface Website {
   id: string;
   workspace_id: string;
