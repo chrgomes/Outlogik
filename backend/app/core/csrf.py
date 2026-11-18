@@ -14,6 +14,9 @@ from app.core.config import get_settings
 from app.core.errors import error_body
 
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS", "TRACE"}
+# Website forms never use the session cookie, so CSRF doesn't apply. They're protected instead
+# by an Origin check, spam checks and rate limits (app.modules.leads.router).
+EXEMPT_PREFIX = "/api/v1/public/"
 
 
 def set_csrf_cookie(response, token: str) -> None:
@@ -29,7 +32,9 @@ def install_csrf(app: FastAPI) -> None:
     async def csrf_middleware(request: Request, call_next):
         s = get_settings()
         cookie = request.cookies.get(s.csrf_cookie_name)
-        if request.method not in SAFE_METHODS and request.url.path.startswith("/api/"):
+        path = request.url.path
+        if (request.method not in SAFE_METHODS and path.startswith("/api/")
+                and not path.startswith(EXEMPT_PREFIX)):
             header = request.headers.get(s.csrf_header_name)
             if not cookie or not header or not secrets.compare_digest(cookie, header):
                 response = JSONResponse(

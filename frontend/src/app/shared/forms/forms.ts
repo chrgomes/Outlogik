@@ -7,6 +7,7 @@ const MESSAGES: Record<string, (e: unknown) => string> = {
   minlength: (e) => `Use at least ${(e as { requiredLength: number }).requiredLength} characters.`,
   maxlength: (e) => `Use at most ${(e as { requiredLength: number }).requiredLength} characters.`,
   mismatch: () => "The passwords don't match.",
+  pattern: () => "This doesn't look right. Check the format.",
   server: (e) => String(e),
 };
 

@@ -1,0 +1,37 @@
+# DigitalOcean App Platform: the Outlogik website on outlogik.com (www redirects to it).
+# Region: Toronto. See docs/DEPLOYMENT.md before creating it:
+#   doctl apps create --spec .do/production/site.yaml
+name: outlogik-site
+region: tor
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+domains:
+  - domain: outlogik.com
+    type: PRIMARY
+    zone: outlogik.com
+  - domain: www.outlogik.com
+    type: ALIAS
+    zone: outlogik.com
+
+services:
+  - name: site
+    github:
+      repo: chrgomes/Outlogik
+      branch: main
+      deploy_on_push: false   # production deploys are started by hand, after staging is checked
+    source_dir: frontend
+    dockerfile_path: frontend/Dockerfile.marketing
+    http_port: 8080
+    instance_size_slug: apps-s-1vcpu-1gb
+    instance_count: 1
+    health_check:
+      http_path: /healthz
+    envs:
+      - { key: OL_SITE_URL, scope: BUILD_TIME, value: "https://outlogik.com" }
+      - { key: OL_APP_URL, scope: BUILD_TIME, value: "https://app.outlogik.com" }
+      - { key: CANONICAL_HOST, value: outlogik.com }
+      # The website reads settings and sends forms through the API's public address.
+      - { key: API_INTERNAL_URL, value: "https://app.outlogik.com" }
+      - { key: CLIENT_IP_HEADER, value: do-connecting-ip }
+      - { key: SITE_PROXY_SECRET, scope: RUN_TIME, type: SECRET, value: CHANGE_ME }

@@ -32,7 +32,9 @@ schemas, service functions and router.
 | `modules/clients`, `modules/websites` | Clients, client-portal access, websites and URL validation |
 | `modules/dashboard` | Dashboard counts and recent activity |
 | `modules/audit` | The append-only audit log |
-| `cli.py` | Admin commands (create a Super Admin, sync permissions) |
+| `modules/site` | Marketing site settings and product module statuses (public and admin API) |
+| `platform.py` | Outlogik staff roles (`content_editor`, `site_admin`) and `require_staff(...)` for `/api/v1/admin/...` |
+| `cli.py` | Admin commands (create a Super Admin, grant or revoke staff roles, sync permissions) |
 
 Conventions:
 
@@ -59,6 +61,14 @@ Conventions:
    client-portal user where relevant. `test_permission_matrix.py` checks the new route's
    permission automatically.
 
+### API surfaces
+
+| Prefix | Who | Notes |
+|---|---|---|
+| `/api/v1/auth`, `/api/v1/organizations`, `/api/v1/orgs/{slug}/…` | Signed-in users | Organization permissions, tenant isolation |
+| `/api/v1/public/…` | Anyone (the marketing site) | No sign-in; only data meant to be public; cacheable |
+| `/api/v1/admin/…` | Outlogik staff | `require_staff(...)`; everyone else gets 404; a test checks every route |
+
 ## Frontend workspace (`frontend/`)
 
 One Angular workspace with two projects that build and deploy separately:
@@ -66,7 +76,7 @@ One Angular workspace with two projects that build and deploy separately:
 | Project | Path | What it is |
 |---|---|---|
 | `frontend` | `src/` | The signed-in app (single-page app) |
-| `marketing` | `projects/marketing/src/` | The public website: server-rendered and prerendered with `@angular/ssr`, served by Express (`src/server.ts`) |
+| `marketing` | `projects/marketing/src/` | The public website: server-rendered per request with `@angular/ssr` (cached 60 s), served by Express (`src/server.ts`), which also forwards `/api/public/*` to the API (`API_INTERNAL_URL`) |
 
 Shared brand code lives in `brand/` and is imported as `@brand/...`: the palette
 (`brand/scss/_palette.scss`), logo and icon components, and logo and icon assets. Each site

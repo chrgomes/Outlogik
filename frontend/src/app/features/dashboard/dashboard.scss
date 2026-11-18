@@ -137,6 +137,6 @@
 
 .not-connected {
   background: var(--ol-surface-active);
-  color: var(--ol-text-muted);
+  color: var(--ol-text); // muted grey on this background is too faint (WCAG contrast)
   font-weight: 500;
 }

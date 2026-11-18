@@ -1,0 +1,81 @@
+<mk-page-hero [crumbs]="crumbs" [eyebrow]="audience.name" [title]="content.headline" [lead]="content.lead">
+  <div class="mk-hero__actions">
+    <a [routerLink]="consultationPath" class="btn btn-primary btn-lg">{{ settings().consultation_cta_label }}</a>
+    <a routerLink="." fragment="how-we-help" class="btn btn-outline-dark btn-lg">How we help</a>
+  </div>
+</mk-page-hero>
+
+<!-- Sound familiar? -->
+<section class="mk-section" aria-labelledby="challenges-title">
+  <div class="mk-container mk-split mk-split--even">
+    <div>
+      <p class="mk-eyebrow">Sound familiar?</p>
+      <h2 class="mk-h2" id="challenges-title">What we often hear.</h2>
+    </div>
+    <ul class="mk-challenges">
+      @for (c of content.challenges; track c) { <li>{{ c }}</li> }
+    </ul>
+  </div>
+</section>
+
+<!-- How we help -->
+<section class="mk-section mk-section--muted" id="how-we-help" aria-labelledby="help-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">How we help</p>
+      <h2 class="mk-h2" id="help-title">The services that make the difference.</h2>
+      <p class="mk-lead">We recommend the right mix in your proposal. You don’t need all four.</p>
+    </div>
+    <div class="mk-cards mk-cards--4">
+      @for (h of help; track h.slug) {
+        <a class="mk-card" [routerLink]="['/services', h.slug]">
+          <span class="mk-ico-box"><ol-icon [name]="h.icon" /></span>
+          <h3>{{ h.name }}</h3>
+          <p>{{ h.text }}</p>
+          <span class="mk-arrow-link">Learn more <ol-icon name="arrow-right" /></span>
+        </a>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Our approach -->
+<section class="mk-section mk-section--dark" aria-labelledby="approach-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">Our approach</p>
+      <h2 class="mk-h2" id="approach-title">How we work with {{ audience.name.toLowerCase() }}.</h2>
+    </div>
+    <div class="mk-points mk-points--3">
+      @for (p of content.approach; track p.title) {
+        <div class="mk-point"><h3>{{ p.title }}</h3><p>{{ p.text }}</p></div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Questions -->
+<section class="mk-section" aria-labelledby="faq-title">
+  <div class="mk-container mk-split mk-split--faq">
+    <div>
+      <p class="mk-eyebrow">Questions</p>
+      <h2 class="mk-h2" id="faq-title">Common questions</h2>
+      <p><a routerLink="/how-we-work" class="mk-arrow-link">How we work <ol-icon name="arrow-right" /></a></p>
+    </div>
+    <mk-faq [items]="content.questions" />
+  </div>
+</section>
+
+<!-- Other business types -->
+<section class="mk-section mk-section--muted mk-section--tight" aria-labelledby="others-title">
+  <div class="mk-container">
+    <h2 class="mk-h3" id="others-title">We also work with</h2>
+    <ul class="mk-link-row">
+      @for (a of others; track a.slug) {
+        <li><a [routerLink]="['/who-we-help', a.slug]" class="mk-arrow-link">{{ a.name }} <ol-icon name="arrow-right" /></a></li>
+      }
+    </ul>
+  </div>
+</section>
+
+<mk-cta-band />

@@ -95,6 +95,12 @@ h1, h2, h3, h4, h5, h6 {
   .ol-menu-check {
     margin-left: auto;
   }
+
+  // Keyboard focus needs more than the faint hover background (WCAG 2.4.7 / 1.4.11).
+  &:focus-visible {
+    outline: 2px solid var(--ol-accent);
+    outline-offset: -2px;
+  }
 }
 
 .ol-menu-label {

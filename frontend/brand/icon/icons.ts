@@ -6,6 +6,7 @@ export type IconName =
   | 'arrow-up-right'
   | 'bar-chart-line'
   | 'box-arrow-right'
+  | 'box-arrow-up-right'
   | 'briefcase'
   | 'building'
   | 'check-circle-fill'
@@ -17,6 +18,7 @@ export type IconName =
   | 'circle-half'
   | 'clock-history'
   | 'diagram-3'
+  | 'download'
   | 'envelope'
   | 'exclamation-triangle'
   | 'file-earmark-bar-graph'
@@ -44,9 +46,11 @@ export type IconName =
   | 'shield-lock'
   | 'shield-x'
   | 'shop'
+  | 'sliders'
   | 'speedometer2'
   | 'sun'
   | 'three-dots'
+  | 'trash'
   | 'window-stack'
   | 'x-lg';
 

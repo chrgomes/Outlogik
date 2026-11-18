@@ -1,0 +1,90 @@
+<mk-page-hero [crumbs]="[{ label: 'Contact' }]" eyebrow="Contact"
+  title="Get in touch."
+  lead="Questions about our services, help as an existing client, partnerships or press: send us a message and we’ll reply as soon as we can." />
+
+<section class="mk-section mk-section--muted">
+  <div class="mk-container mk-form-layout">
+    <div class="mk-form-card">
+      @if (sentTo(); as email) {
+        <div class="mk-form-done" tabindex="-1" #done>
+          <span class="mk-ico-box"><ol-icon name="check2" /></span>
+          <h2 class="mk-h3">Thank you. We’ve received your message.</h2>
+          <p>We’ll reply to <strong>{{ email }}</strong> as soon as we can. We’ve also sent you a confirmation email.</p>
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="submit()" (focusin)="proof.prepare()" novalidate aria-labelledby="form-title">
+          <h2 class="mk-h3" id="form-title">Send us a message</h2>
+          <p class="mk-form-note">Fields marked <span aria-hidden="true">*</span><span class="visually-hidden">with an asterisk</span> are required.</p>
+
+          <div class="mk-form-grid">
+            <div class="mk-field">
+              <label for="m-name">Name <span aria-hidden="true">*</span></label>
+              <input id="m-name" type="text" formControlName="name" autocomplete="name" required
+                [attr.aria-invalid]="invalid('name')" [attr.aria-describedby]="invalid('name') ? 'm-name-err' : null" />
+              @if (invalid('name')) { <p class="mk-field__error" id="m-name-err">Please enter your name.</p> }
+            </div>
+            <div class="mk-field">
+              <label for="m-email">Email <span aria-hidden="true">*</span></label>
+              <input id="m-email" type="email" formControlName="email" autocomplete="email" required
+                [attr.aria-invalid]="invalid('email')" [attr.aria-describedby]="invalid('email') ? 'm-email-err' : null" />
+              @if (invalid('email')) { <p class="mk-field__error" id="m-email-err">Please enter a valid email address.</p> }
+            </div>
+            <div class="mk-field">
+              <label for="m-company">Company</label>
+              <input id="m-company" type="text" formControlName="company" autocomplete="organization" />
+            </div>
+            <div class="mk-field">
+              <label for="m-topic">What’s it about?</label>
+              <select id="m-topic" formControlName="topic">
+                @for (t of topics; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+              </select>
+            </div>
+          </div>
+
+          <div class="mk-field">
+            <label for="m-message">Message <span aria-hidden="true">*</span></label>
+            <textarea id="m-message" rows="6" formControlName="message" required
+              [attr.aria-invalid]="invalid('message')" [attr.aria-describedby]="invalid('message') ? 'm-message-err' : null"></textarea>
+            @if (invalid('message')) { <p class="mk-field__error" id="m-message-err">Please enter a message.</p> }
+          </div>
+
+          <mk-honeypot>
+            <label for="m-nickname">Leave this field empty</label>
+            <input id="m-nickname" type="text" formControlName="nickname" tabindex="-1" autocomplete="off" />
+          </mk-honeypot>
+
+          <mk-form-error [message]="error()" />
+          <button type="submit" class="btn btn-primary btn-lg" [disabled]="sending()">
+            {{ sending() ? 'Sending…' : 'Send message' }}
+          </button>
+          <p class="mk-form-note">We’ll only use these details to reply to your message.@if (site.legalReady()) { See our <a routerLink="/privacy-policy">privacy policy</a>.}</p>
+        </form>
+      }
+    </div>
+
+    <aside class="mk-form-aside">
+      <div class="mk-aside-card">
+        <h2 class="mk-h3">Thinking about working with us?</h2>
+        <p>Book a free consultation instead. We’ll talk about your business and how we can help.</p>
+        <a [routerLink]="consultationPath" class="btn btn-primary">{{ settings().consultation_cta_label }}</a>
+      </div>
+      @if (settings().contact_email || settings().phone || settings().address) {
+        <div class="mk-contact-details">
+          <h2 class="mk-h3">Other ways to reach us</h2>
+          <dl>
+            @if (settings().contact_email; as email) {
+              <dt>Email</dt><dd><a [href]="'mailto:' + email">{{ email }}</a></dd>
+            }
+            @if (settings().phone; as phone) {
+              <dt>Phone</dt><dd><a [href]="'tel:' + phone">{{ phone }}</a></dd>
+            }
+            @if (settings().address; as address) {
+              <dt>Address</dt><dd class="mk-pre">{{ address }}</dd>
+            }
+          </dl>
+        </div>
+      }
+      <p class="mk-form-aside__alt">Existing client? You can also <a [href]="loginUrl">log in to your client portal</a>.</p>
+    </aside>
+  </div>
+</section>

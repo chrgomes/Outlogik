@@ -1,0 +1,101 @@
+<mk-page-hero [crumbs]="[{ label: 'Book a free consultation' }]" eyebrow="Free consultation"
+  title="Let’s talk about your marketing."
+  lead="Tell us a little about your business and what you’re looking for. We’ll reply to arrange a time that suits you. It’s free, and there’s no obligation." />
+
+<section class="mk-section mk-section--muted">
+  <div class="mk-container mk-form-layout">
+    <div class="mk-form-card">
+      @if (sentTo(); as email) {
+        <div class="mk-form-done" tabindex="-1" #done>
+          <span class="mk-ico-box"><ol-icon name="check2" /></span>
+          <h2 class="mk-h3">Thank you. We’ve received your request.</h2>
+          <p>We’ll reply to <strong>{{ email }}</strong> to arrange your consultation. We’ve also sent you a confirmation email.</p>
+          <p><a routerLink="/how-we-work" class="mk-arrow-link">What happens next <ol-icon name="arrow-right" /></a></p>
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="submit()" (focusin)="proof.prepare()" novalidate aria-labelledby="form-title">
+          <h2 class="mk-h3" id="form-title">Your details</h2>
+          <p class="mk-form-note">Fields marked <span aria-hidden="true">*</span><span class="visually-hidden">with an asterisk</span> are required.</p>
+
+          <div class="mk-form-grid">
+            <div class="mk-field">
+              <label for="c-name">Name <span aria-hidden="true">*</span></label>
+              <input id="c-name" type="text" formControlName="name" autocomplete="name" required
+                [attr.aria-invalid]="invalid('name')" [attr.aria-describedby]="invalid('name') ? 'c-name-err' : null" />
+              @if (invalid('name')) { <p class="mk-field__error" id="c-name-err">Please enter your name.</p> }
+            </div>
+            <div class="mk-field">
+              <label for="c-email">Email <span aria-hidden="true">*</span></label>
+              <input id="c-email" type="email" formControlName="email" autocomplete="email" required
+                [attr.aria-invalid]="invalid('email')" [attr.aria-describedby]="invalid('email') ? 'c-email-err' : null" />
+              @if (invalid('email')) { <p class="mk-field__error" id="c-email-err">Please enter a valid email address.</p> }
+            </div>
+            <div class="mk-field">
+              <label for="c-company">Company</label>
+              <input id="c-company" type="text" formControlName="company" autocomplete="organization" />
+            </div>
+            <div class="mk-field">
+              <label for="c-website">Website</label>
+              <input id="c-website" type="text" formControlName="website" autocomplete="url" inputmode="url" placeholder="example.com" />
+            </div>
+            <div class="mk-field">
+              <label for="c-phone">Phone</label>
+              <input id="c-phone" type="tel" formControlName="phone" autocomplete="tel" />
+            </div>
+            <div class="mk-field">
+              <label for="c-when">Best time to reach you</label>
+              <input id="c-when" type="text" formControlName="preferred_contact" placeholder="For example, weekday mornings" />
+            </div>
+          </div>
+
+          <fieldset class="mk-field mk-choices" formArrayName="services"
+            [attr.aria-invalid]="invalid('services')" [attr.aria-describedby]="invalid('services') ? 'c-services-err' : null">
+            <legend>Which services are you interested in? <span aria-hidden="true">*</span></legend>
+            @for (o of serviceOptions; track o.value; let i = $index) {
+              <label class="mk-check"><input type="checkbox" [formControlName]="i" /> {{ o.label }}</label>
+            }
+            @if (invalid('services')) { <p class="mk-field__error" id="c-services-err">Please choose at least one, or “Not sure yet”.</p> }
+          </fieldset>
+
+          <div class="mk-field">
+            <label for="c-budget">Monthly budget <span class="mk-optional">(optional)</span></label>
+            <select id="c-budget" formControlName="budget" aria-describedby="c-budget-help">
+              <option value="">Prefer not to say</option>
+              @for (o of budgetOptions; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+            </select>
+            <p class="mk-field__help" id="c-budget-help">A rough range helps us suggest what will make the most difference.</p>
+          </div>
+
+          <div class="mk-field">
+            <label for="c-message">Tell us about your business and goals</label>
+            <textarea id="c-message" rows="5" formControlName="message"
+              placeholder="What do you do, who are your customers, and what would you like marketing to achieve?"></textarea>
+          </div>
+
+          <mk-honeypot>
+            <label for="c-nickname">Leave this field empty</label>
+            <input id="c-nickname" type="text" formControlName="nickname" tabindex="-1" autocomplete="off" />
+          </mk-honeypot>
+
+          <mk-form-error [message]="error()" />
+          <button type="submit" class="btn btn-primary btn-lg" [disabled]="sending()">
+            {{ sending() ? 'Sending…' : 'Request my free consultation' }}
+          </button>
+          <p class="mk-form-note">We’ll only use these details to reply to your request.@if (site.legalReady()) { See our <a routerLink="/privacy-policy">privacy policy</a>.}</p>
+        </form>
+      }
+    </div>
+
+    <aside class="mk-form-aside" aria-labelledby="next-title">
+      <h2 class="mk-h3" id="next-title">What happens next</h2>
+      <ol class="mk-mini-steps">
+        <li><strong>We reply</strong> to arrange a time that suits you.</li>
+        <li><strong>We talk</strong> about your business, your customers and your goals.</li>
+        <li><strong>You get a proposal</strong> if we’re a good fit, with what’s included and what it costs. No obligation.</li>
+      </ol>
+      @if (settings().sales_email || settings().contact_email; as email) {
+        <p class="mk-form-aside__alt">Prefer email? Write to <a [href]="'mailto:' + email">{{ email }}</a>.</p>
+      }
+    </aside>
+  </div>
+</section>

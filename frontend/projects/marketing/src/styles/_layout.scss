@@ -350,6 +350,15 @@
   max-width: 22rem;
 }
 
+.mk-footer__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
 .mk-footer__cols {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
@@ -396,4 +405,79 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.mk-footer__link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #{$ol-grey-400};
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: #fff;
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Cookie banner (only when an analytics tool is switched on)
+// ---------------------------------------------------------------------------------------------
+.mk-cookies {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 1060;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 60rem;
+  margin-inline: auto;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--mk-border);
+  border-radius: var(--bs-border-radius-lg);
+  background: #fff;
+  box-shadow: var(--mk-shadow);
+  outline: none;
+
+  p {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--mk-text-2);
+  }
+}
+
+.mk-cookies__text {
+  flex: 1 1 28rem;
+}
+
+.mk-cookies__title {
+  margin-bottom: 0.375rem;
+  font-size: 1rem;
+}
+
+.mk-cookies__current {
+  margin-top: 0.5rem !important;
+  color: var(--mk-black) !important;
+}
+
+.mk-cookies__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+// Accept and Reject deliberately look identical.
+.mk-cookies__btn {
+  border: 1px solid var(--mk-black);
+  background: #fff;
+  color: var(--mk-black);
+
+  &:hover {
+    background: var(--mk-black);
+    color: #fff;
+  }
 }

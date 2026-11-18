@@ -212,16 +212,65 @@ def test_csrf_cookie_is_readable_by_javascript(client):
 
 # --- rate limiting --------------------------------------------------------------------------
 
-def test_login_is_rate_limited_per_email(client, new_client):
+def test_login_locks_an_account_after_5_failed_attempts(client, new_client):
     register(client, "user@example.com")
     attacker = new_client()
-    max_hits = get_settings().rate_limit_login[0]
-    for _ in range(max_hits):
+    max_failures = get_settings().rate_limit_login_failures_email[0]
+    assert max_failures == 5
+    for _ in range(max_failures):
         assert login(attacker, "user@example.com", "wrong password!").status_code == 401
+    # Locked now, even with the right password, until the 15-minute window passes.
     res = login(attacker, "user@example.com", PASSWORD)
     assert res.status_code == 429
     assert res.json()["error"]["code"] == "rate_limited"
-    assert int(res.headers["Retry-After"]) > 0
+    assert 0 < int(res.headers["Retry-After"]) <= 900
+
+
+def test_successful_sign_ins_do_not_count_and_clear_failures(client, new_client):
+    register(client, "user@example.com")
+    browser = new_client()
+    for _ in range(4):
+        assert login(browser, "user@example.com", "wrong password!").status_code == 401
+    assert login(browser, "user@example.com", PASSWORD).status_code == 200  # clears the count
+    for _ in range(4):
+        assert login(browser, "user@example.com", "wrong password!").status_code == 401
+    # Signing in often is fine.
+    for _ in range(12):
+        assert login(new_client(), "user@example.com", PASSWORD).status_code == 200
+
+
+def test_one_ip_address_guessing_many_accounts_is_locked(new_client):
+    attacker = new_client()
+    max_failures = get_settings().rate_limit_login_failures_ip[0]
+    for i in range(max_failures):
+        assert login(attacker, f"victim{i}@example.com", "guess").status_code == 401
+    assert login(attacker, "another@example.com", "guess").status_code == 429
+
+
+def test_sign_in_forms_need_the_browser_check(client, new_client, monkeypatch):
+    import hashlib
+
+    register(client, "user@example.com")
+    monkeypatch.setattr(get_settings(), "auth_challenge_required", True)
+    monkeypatch.setattr(get_settings(), "form_challenge_max_number", 500)
+    browser = new_client()
+    res = login(browser, "user@example.com", PASSWORD)  # no proof
+    assert res.status_code == 400 and res.json()["error"]["code"] == "bot_check_failed"
+    res = browser.post("/api/v1/auth/forgot-password", json={"email": "user@example.com"})
+    assert res.status_code == 400
+
+    ch = browser.get("/api/v1/public/challenge").json()
+    number = next(n for n in range(501) if hashlib.sha256(
+        f"{ch['salt']}{n}".encode()).hexdigest() == ch["challenge"])
+    proof = {**{k: ch[k] for k in ("algorithm", "challenge", "salt", "signature")},
+             "number": number}
+    res = browser.post("/api/v1/auth/login", json={"email": "user@example.com",
+                                                   "password": PASSWORD, "pow": proof})
+    assert res.status_code == 200
+    # Each check works once.
+    res = new_client().post("/api/v1/auth/login", json={"email": "user@example.com",
+                                                        "password": PASSWORD, "pow": proof})
+    assert res.status_code == 400
 
 
 # --- password reset -------------------------------------------------------------------------

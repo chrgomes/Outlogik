@@ -1,0 +1,91 @@
+<mk-legal-page title="Payment and subscription policy">
+  <p class="mk-legal__lead">
+    This policy explains how {{ s().legal_name }} ({{ s().legal_name === 'Outlogik' ? '“we”' : '“Outlogik”, “we”' }})
+    bills for its services: when we invoice, when payment is due, and how to change or cancel an
+    ongoing service. Your proposal or agreement with us can set different terms; where it does,
+    it applies instead of this policy.
+  </p>
+
+  <h2 id="proposals">1. Proposals and prices</h2>
+  <p>
+    We don’t publish fixed prices. Before any work starts, we send a written proposal setting out
+    the services, what’s included and the price. Work starts once you accept it.
+  </p>
+  <ul>
+    <li><strong>Ongoing services</strong> (for example monthly SEO, social media or reporting) continue month to month until cancelled.</li>
+    <li><strong>One-off projects</strong> (for example an SEO audit or an analytics setup) have a fixed scope and price.</li>
+  </ul>
+  <p>
+    Prices are in Canadian dollars and don’t include sales tax. Applicable taxes, such as HST,
+    are added to invoices where the law requires. Your client portal is included at no extra cost.
+  </p>
+
+  <h2 id="billing">2. When we invoice</h2>
+  <ul>
+    <li><strong>Ongoing services</strong> are invoiced monthly, at the end of each month, for the work done that month.</li>
+    <li><strong>One-off projects</strong> are invoiced when the project is complete. Longer projects may be invoiced in stages, as set out in the proposal.</li>
+    <li>
+      <strong>Third-party costs</strong> you’ve agreed to, such as paid tools or stock images, are
+      passed on at cost and shown separately on the invoice. We don’t buy anything on your behalf
+      without your approval.
+    </li>
+  </ul>
+
+  <h2 id="payment">3. Paying invoices</h2>
+  <p>
+    Invoices are due <strong>15 days</strong> after the invoice date. The ways to pay are listed on
+    each invoice. We don’t charge interest on late payments.
+  </p>
+  <p>
+    If an invoice is more than <strong>30 days</strong> overdue, we may pause work until it’s paid.
+    We’ll tell you before we do. Work resumes once the account is up to date.
+  </p>
+  <p>
+    If you think an invoice is wrong, tell us as soon as you can. We’ll look into it, and you
+    only need to pay the part that isn’t in question while we sort it out.
+  </p>
+
+  <h2 id="changes">4. Changing a service or its price</h2>
+  <ul>
+    <li>You can ask to change what’s included in an ongoing service at any time. We’ll confirm any change to the price in writing before it applies.</li>
+    <li>If we change the price of an ongoing service ourselves, we’ll give you at least 30 days’ written notice. You can cancel before the new price applies.</li>
+  </ul>
+
+  <h2 id="cancelling">5. Cancelling an ongoing service</h2>
+  <p>
+    There’s no long-term contract unless your proposal says so. You can cancel an ongoing service
+    at any time with <strong>30 days’ written notice</strong>; email is fine. We’ll confirm the
+    end date.
+  </p>
+  <ul>
+    <li>We carry on the agreed work until the end date, and invoice for it as usual. The final invoice covers the work up to the end date.</li>
+    <li>Your accounts (such as Google Analytics, Search Console and social media) stay yours. We hand back or remove our access by the end date.</li>
+    <li>Work you’ve paid for, such as articles, reports and website copy, is yours to keep.</li>
+  </ul>
+  <p>
+    We may also end a service with 30 days’ written notice, or sooner if invoices remain unpaid
+    after we’ve paused work, or if these terms or our <a routerLink="/terms">terms and conditions</a>
+    are seriously broken.
+  </p>
+
+  <h2 id="refunds">6. Refunds</h2>
+  <p>
+    Because we invoice after the work is done, you normally pay only for work already delivered.
+    Fees for work already done aren’t refundable. If a proposal includes a payment in advance and
+    we end the service before doing that work, we’ll refund the part that covers work not done.
+  </p>
+  <p>Nothing in this policy limits rights you have under consumer protection law.</p>
+
+  <h2 id="contact">7. Questions about billing</h2>
+  <p>Questions about an invoice or this policy:</p>
+  <address class="mk-legal__address">
+    {{ s().legal_name }}<br />
+    <span class="mk-pre">{{ s().address }}</span><br />
+    @if (s().billing_email || s().contact_email; as email) {
+      <a [href]="'mailto:' + email">{{ email }}</a>
+    } @else {
+      <a [href]="'mailto:' + s().privacy_email">{{ s().privacy_email }}</a>
+    }
+  </address>
+  <p>Thinking about working with us? <a [routerLink]="consultationPath">Book a free consultation</a>.</p>
+</mk-legal-page>

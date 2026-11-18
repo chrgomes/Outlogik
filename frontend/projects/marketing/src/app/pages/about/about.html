@@ -1,0 +1,75 @@
+<mk-page-hero [crumbs]="[{ label: 'About' }]" eyebrow="About Outlogik"
+  title="A digital marketing agency built on straight answers."
+  lead="Outlogik helps businesses get found, stay visible and understand what’s working, with one team for search, social, content and analytics, and a client portal that keeps everything in view." />
+
+<!-- Why Outlogik exists -->
+<section class="mk-section mk-section--tight" aria-labelledby="why-title">
+  <div class="mk-container mk-intro">
+    <h2 class="mk-h3" id="why-title">Why we work this way</h2>
+    <div>
+      <p>
+        Too many businesses pay for marketing without really knowing what’s being done, or whether
+        it’s working. Reports arrive full of numbers and jargon, and the work itself stays out of view.
+      </p>
+      <p>
+        We think it should be the other way round. So we do the work, explain it clearly, and give
+        every client their own portal where they can see it for themselves.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Values -->
+<section class="mk-section mk-section--dark" aria-labelledby="values-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">What we believe</p>
+      <h2 class="mk-h2" id="values-title">How we work, in four ideas.</h2>
+    </div>
+    <div class="mk-points">
+      @for (v of values; track v.title) {
+        <div class="mk-point"><h3>{{ v.title }}</h3><p>{{ v.text }}</p></div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- What we won't do -->
+<section class="mk-section" aria-labelledby="wont-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">What we won’t do</p>
+      <h2 class="mk-h2" id="wont-title">Some promises are easier to keep than others.</h2>
+    </div>
+    <ul class="mk-included mk-included--4">
+      @for (w of wont; track w.title) {
+        <li><h3>{{ w.title }}</h3><p>{{ w.text }}</p></li>
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- Team and story: added once provided (decision C). Nothing invented. -->
+
+<!-- What we do -->
+<section class="mk-section mk-section--muted" aria-labelledby="services-title">
+  <div class="mk-container">
+    <div class="mk-head">
+      <p class="mk-eyebrow">What we do</p>
+      <h2 class="mk-h2" id="services-title">Four services, one team.</h2>
+    </div>
+    <div class="mk-cards mk-cards--4">
+      @for (s of services; track s.slug) {
+        <a class="mk-card" [routerLink]="['/services', s.slug]">
+          <span class="mk-ico-box"><ol-icon [name]="s.icon" /></span>
+          <h3>{{ s.name }}</h3>
+          <p>{{ s.summary }}</p>
+          <span class="mk-arrow-link">Learn more <ol-icon name="arrow-right" /></span>
+        </a>
+      }
+    </div>
+    <p class="mk-more"><a routerLink="/how-we-work" class="mk-arrow-link">How we work <ol-icon name="arrow-right" /></a></p>
+  </div>
+</section>
+
+<mk-cta-band title="Let’s see if we’re a good fit." />

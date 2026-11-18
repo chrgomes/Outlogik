@@ -118,6 +118,10 @@
             "assets": [
               {
                 "glob": "**/*",
+                "input": "projects/marketing/public"
+              },
+              {
+                "glob": "**/*",
                 "input": "brand/assets/logo",
                 "output": "brand"
               },
@@ -134,7 +138,9 @@
             "outputMode": "server",
             "security": {
               "allowedHosts": [
-                "localhost"
+                "localhost",
+                "outlogik.com",
+                "staging.outlogik.com"
               ]
             },
             "ssr": {
@@ -155,8 +161,8 @@
               }
             },
             "define": {
-              "OL_APP_URL": "'http://localhost:4200'",
-              "OL_SITE_URL": "'http://localhost:4300'"
+              "OL_APP_URL": "'https://app.outlogik.com'",
+              "OL_SITE_URL": "'https://outlogik.com'"
             }
           },
           "configurations": {
@@ -164,7 +170,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "400kB",
+                  "maximumWarning": "450kB",
                   "maximumError": "600kB"
                 },
                 {
@@ -178,7 +184,11 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "define": {
+                "OL_APP_URL": "'http://localhost:4200'",
+                "OL_SITE_URL": "'http://localhost:4300'"
+              }
             }
           },
           "defaultConfiguration": "production"
@@ -195,7 +205,8 @@
           },
           "defaultConfiguration": "development",
           "options": {
-            "port": 4300
+            "port": 4300,
+            "proxyConfig": "projects/marketing/proxy.conf.json"
           }
         },
         "test": {

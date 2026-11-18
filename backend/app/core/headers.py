@@ -1,8 +1,8 @@
 """Security headers on every API response.
 
 The API only returns JSON, so it can be strict: no framing, no MIME sniffing, no referrer,
-and nothing cached (responses are per-user). Headers for the Angular app itself (CSP, HSTS)
-belong to the web server that serves it in production; see docs/SECURITY.md.
+and nothing cached (responses are per-user). Headers for the Angular app itself (CSP)
+are set by the web server that serves it (frontend/docker/app/nginx.conf).
 """
 
 from fastapi import FastAPI, Request
@@ -14,6 +14,10 @@ API_HEADERS = {
     "Cross-Origin-Resource-Policy": "same-origin",
     "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
     "Cache-Control": "no-store",
+    # HTTPS only from now on (browsers ignore this over plain HTTP, e.g. local development).
+    "Strict-Transport-Security": "max-age=31536000",
+    # API responses never belong in search results.
+    "X-Robots-Tag": "noindex, nofollow",
 }
 # The interactive API docs page loads its own script and styles, so it can't use the strict CSP.
 DOCS_PATHS = {"/api/docs", "/api/docs/oauth2-redirect"}

@@ -16,7 +16,7 @@ import { ToastHost } from '../../shared/toast/toast';
   imports: [RouterOutlet, Sidebar, Topbar, VerifyBanner, ToastHost],
   host: { '(document:keydown.escape)': 'layout.closeMobile()' },
   template: `
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main" (click)="skipToContent($event)">Skip to content</a>
     <ol-sidebar />
     @if (layout.isMobile() && layout.mobileOpen()) {
       <div class="backdrop" (click)="layout.closeMobile()" aria-hidden="true"></div>
@@ -41,6 +41,12 @@ import { ToastHost } from '../../shared/toast/toast';
 })
 export class Shell {
   protected readonly layout = inject(LayoutService);
+
+  /** With <base href="/">, a plain "#main" link would leave the page; focus the content instead. */
+  protected skipToContent(event: Event): void {
+    event.preventDefault();
+    document.getElementById('main')?.focus();
+  }
 
   constructor() {
     inject(Router).events

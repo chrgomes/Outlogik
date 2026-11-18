@@ -58,7 +58,7 @@ import { RoleEditorDialog } from './role-editor-dialog';
       <ol-loading-state label="Loading roles…" />
     }
   `,
-  styles: `.builtin { margin-left: 0.375rem; background: var(--ol-surface-active); color: var(--ol-text-muted); font-weight: 500; }`,
+  styles: `.builtin { margin-left: 0.375rem; background: var(--ol-surface-active); color: var(--ol-text); font-weight: 500; }`,
 })
 export class Roles {
   protected readonly org = inject(CurrentOrgService);

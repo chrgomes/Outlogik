@@ -9,6 +9,8 @@ const APP = [
   'three-dots', 'arrow-left', 'exclamation-triangle', 'inbox', 'shield-x', 'plug',
   'person-circle', 'arrow-repeat', 'graph-up', 'heart-pulse', 'link-45deg', 'check-circle-fill',
   'circle', 'clock-history', 'envelope', 'arrow-right',
+  // website admin
+  'window-stack', 'sliders', 'download', 'trash', 'box-arrow-up-right', 'megaphone',
 ];
 
 const MARKETING = [
@@ -20,7 +22,7 @@ const MARKETING = [
   'building', 'search-heart', 'person', 'people', 'shop',
   // page content
   'globe2', 'shield-check', 'diagram-3', 'window-stack', 'lightning-charge', 'heart-pulse',
-  'link-45deg', 'clock-history', 'envelope',
+  'link-45deg', 'clock-history', 'envelope', 'arrow-repeat', 'check-circle-fill',
 ];
 
 const svg = (name) => readFileSync(

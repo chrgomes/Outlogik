@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { apiProblem, safeReturnUrl } from '../../core/api-errors';
 import { AuthService } from '../../core/auth.service';
+import { SignupStatus } from '../../core/signup-status';
 import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
 
 @Component({
@@ -24,7 +25,7 @@ import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
       <div class="alert alert-danger" role="alert">{{ error() }}</div>
     }
 
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <form [formGroup]="form" (ngSubmit)="submit()" (focusin)="proof.prepare()" novalidate>
       <div class="mb-3">
         <label for="email" class="form-label">Email</label>
         <input id="email" type="email" class="form-control" formControlName="email"
@@ -32,12 +33,13 @@ import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
         <ol-field-error [control]="form.controls.email" />
       </div>
       <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-baseline">
-          <label for="password" class="form-label">Password</label>
-          <a routerLink="/forgot-password" class="small">Forgot password?</a>
-        </div>
+        <label for="password" class="form-label">Password</label>
         <ol-password-input [control]="form.controls.password" inputId="password" />
         <ol-field-error [control]="form.controls.password" />
+        <!-- After the password field, so Tab goes from email straight to password. -->
+        <div class="text-end mt-2">
+          <a routerLink="/forgot-password" class="small">Forgot password?</a>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary w-100" [disabled]="busy()">
         @if (busy()) {<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>}
@@ -46,12 +48,19 @@ import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
     </form>
 
     <p class="text-center text-muted small mt-4 mb-0">
-      New to Outlogik? <a routerLink="/register">Create an account</a>
+      @if (signup.open()) {
+        New to Outlogik? <a routerLink="/register">Create an account</a>
+      } @else {
+        Need access? Ask your Outlogik contact for an invitation.
+      }
     </p>
   `,
 })
 export class Login {
   private readonly auth = inject(AuthService);
+  /** The invisible browser check; solved while the person types. */
+  protected readonly proof = this.auth.proof();
+  protected readonly signup = inject(SignupStatus);
   private readonly router = inject(Router);
   protected readonly form = inject(NonNullableFormBuilder).group({
     email: ['', [Validators.required, Validators.email]],
@@ -77,7 +86,7 @@ export class Login {
     this.busy.set(true);
     try {
       const { email, password } = this.form.getRawValue();
-      await this.auth.login(email, password);
+      await this.auth.login(email, password, this.proof);
       await this.router.navigateByUrl(safeReturnUrl(this.returnUrl()));
     } catch (err) {
       this.error.set(apiProblem(err).message);

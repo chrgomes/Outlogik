@@ -1,46 +1,61 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { Logo } from '@brand/logo/logo';
 import {
   AUDIENCES,
   COMPANY,
-  DESCRIPTION,
+  CONSULTATION_PATH,
   LEGAL,
-  MODULES,
+  LOGIN_URL,
   RESOURCES,
-  TAGLINE,
-  appLink,
+  SERVICES,
+  SOCIAL_LABELS,
 } from '../../config/site';
+import { SiteData } from '../../config/site-data';
+import { Newsletter } from './newsletter';
+import { Consent } from '../../consent/consent';
 
 @Component({
   selector: 'mk-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Logo],
-  host: { class: 'mk-footer' },
+  imports: [RouterLink, Logo, Newsletter],
+  host: { class: 'mk-footer', role: 'contentinfo' },
   template: `
     <div class="mk-container">
       <div class="mk-footer__top">
         <div class="mk-footer__brand">
           <a routerLink="/" aria-label="Outlogik home" class="mk-footer__logo"><ol-logo /></a>
-          <p class="mk-footer__tagline">{{ tagline }}</p>
-          <p class="mk-footer__desc">{{ description }}</p>
+          <p class="mk-footer__tagline">{{ settings().tagline }}</p>
+          <p class="mk-footer__desc">{{ settings().company_description }}</p>
+          @if (settings().contact_email; as email) {
+            <p class="mk-footer__contact"><a [href]="'mailto:' + email">{{ email }}</a></p>
+          }
+          @if (settings().phone; as phone) {
+            <p class="mk-footer__contact"><a [href]="'tel:' + phone">{{ phone }}</a></p>
+          }
+          @if (settings().social_links.length) {
+            <ul class="mk-footer__social" aria-label="Outlogik on social media">
+              @for (s of settings().social_links; track s.url) {
+                <li><a [href]="s.url" rel="noopener me" target="_blank">{{ socialLabels[s.network] ?? s.network }}</a></li>
+              }
+            </ul>
+          }
         </div>
         <nav class="mk-footer__cols" aria-label="Footer">
           <div>
-            <h2 class="mk-footer__heading">Platform</h2>
+            <h2 class="mk-footer__heading">Services</h2>
             <ul>
-              <li><a routerLink="/platform">Overview</a></li>
-              @for (m of modules; track m.slug) {
-                <li><a [routerLink]="['/platform', m.slug]">{{ m.name }}</a></li>
+              @for (s of services; track s.slug) {
+                <li><a [routerLink]="['/services', s.slug]">{{ s.name }}</a></li>
               }
             </ul>
           </div>
           <div>
-            <h2 class="mk-footer__heading">Solutions</h2>
+            <h2 class="mk-footer__heading">Who we help</h2>
             <ul>
               @for (a of audiences; track a.slug) {
-                <li><a [routerLink]="['/solutions', a.slug]">{{ a.name }}</a></li>
+                <li><a [routerLink]="['/who-we-help', a.slug]">{{ a.name }}</a></li>
               }
             </ul>
           </div>
@@ -55,19 +70,33 @@ import {
           <div>
             <h2 class="mk-footer__heading">Company</h2>
             <ul>
-              @for (c of company; track c.path) { <li><a [routerLink]="c.path">{{ c.label }}</a></li> }
+              <li><a routerLink="/how-we-work">How we work</a></li>
               <li><a routerLink="/pricing">Pricing</a></li>
-              <li><a [href]="loginUrl">Log in</a></li>
-              <li><a [href]="registerUrl">Create an account</a></li>
+              @for (c of company; track c.path) { <li><a [routerLink]="c.path">{{ c.label }}</a></li> }
+              <li><a [routerLink]="consultationPath">{{ settings().consultation_cta_label }}</a></li>
+              <li><a [href]="loginUrl">Client log in</a></li>
             </ul>
           </div>
         </nav>
       </div>
+      <div class="mk-footer__newsletter">
+        <!-- Loaded when the footer comes into view, so its code isn't part of every page load. -->
+        @defer (on viewport) {
+          <mk-newsletter />
+        } @placeholder {
+          <div class="mk-newsletter__placeholder"><h2 class="mk-footer__heading">Newsletter</h2></div>
+        }
+      </div>
       <div class="mk-footer__bottom">
         <p>© {{ year }} Outlogik. All rights reserved.</p>
-        @if (legal.length) {
+        @if (site.legalReady() || consent.needed()) {
           <ul class="mk-footer__legal">
-            @for (l of legal; track l.path) { <li><a [routerLink]="l.path">{{ l.label }}</a></li> }
+            @if (site.legalReady()) {
+              @for (l of legal; track l.path) { <li><a [routerLink]="l.path">{{ l.label }}</a></li> }
+            }
+            @if (consent.needed()) {
+              <li><button type="button" class="mk-footer__link-btn" (click)="consent.open()">Cookie settings</button></li>
+            }
           </ul>
         }
       </div>
@@ -75,14 +104,16 @@ import {
   `,
 })
 export class Footer {
-  protected readonly modules = MODULES;
+  protected readonly site = inject(SiteData);
+  protected readonly settings = this.site.settings;
+  protected readonly consent = inject(Consent);
+  protected readonly services = SERVICES;
   protected readonly audiences = AUDIENCES;
   protected readonly resources = RESOURCES;
   protected readonly company = COMPANY;
   protected readonly legal = LEGAL;
-  protected readonly tagline = TAGLINE;
-  protected readonly description = DESCRIPTION;
-  protected readonly loginUrl = appLink('/login');
-  protected readonly registerUrl = appLink('/register');
+  protected readonly socialLabels = SOCIAL_LABELS;
+  protected readonly loginUrl = LOGIN_URL;
+  protected readonly consultationPath = CONSULTATION_PATH;
   protected readonly year = new Date().getFullYear();
 }

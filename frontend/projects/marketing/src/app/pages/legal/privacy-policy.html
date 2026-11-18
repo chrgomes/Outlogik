@@ -1,0 +1,188 @@
+<mk-legal-page title="Privacy policy">
+  <p class="mk-legal__lead">
+    This policy explains what personal information {{ s().legal_name }} ({{ s().legal_name === 'Outlogik' ? '“we”' : '“Outlogik”, “we”' }}) collects
+    through this website and the Outlogik client portal, why, and the choices you have. We’ve
+    written it in plain English. If anything is unclear, <a routerLink="." fragment="contact">contact us</a>.
+  </p>
+
+  <nav class="mk-legal__toc" aria-label="On this page">
+    <ol>
+      <li><a routerLink="." fragment="collect">What we collect</a></li>
+      <li><a routerLink="." fragment="use">How we use it</a></li>
+      <li><a routerLink="." fragment="consent">Your consent</a></li>
+      <li><a routerLink="." fragment="cookies">Cookies</a></li>
+      <li><a routerLink="." fragment="sharing">Who we share it with</a></li>
+      <li><a routerLink="." fragment="storage">Where it’s stored, and for how long</a></li>
+      <li><a routerLink="." fragment="security">How we protect it</a></li>
+      <li><a routerLink="." fragment="rights">Your rights</a></li>
+      <li><a routerLink="." fragment="changes">Changes to this policy</a></li>
+      <li><a routerLink="." fragment="contact">Contact us</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="collect">1. What we collect</h2>
+
+  <h3>When you book a consultation or send us a message</h3>
+  <p>
+    The details you enter: your name, email address, and, if you give them, your company,
+    website, phone number, the services you’re interested in, a budget range, the best time to
+    reach you and your message.
+  </p>
+
+  <h3>When you subscribe to our newsletter</h3>
+  <p>
+    Your email address, a record of your consent (the wording you agreed to and when), when you
+    confirmed your subscription, and when you unsubscribe if you do.
+  </p>
+
+  <h3>When you use the client portal</h3>
+  <p>
+    If you’re a client, or work for one, and we invite you to the client portal: your name, email
+    address and password (stored only in a scrambled form that can’t be reversed), your sign-in
+    sessions, and the information about your business and websites that we or you keep there. We
+    keep a record of changes made in the portal, with who made them and when.
+  </p>
+
+  <h3>Information collected automatically</h3>
+  <ul>
+    <li>
+      <strong>Where your visit came from.</strong> The first page you visit, the website that
+      linked to us, and any campaign tags in the link (such as <code>utm_source</code>). This is kept
+      in your browser only for that visit, and sent to us only if you submit one of our forms.
+    </li>
+    <li>
+      <strong>Your IP address and browser type</strong>, when you submit a form or sign in to the
+      portal. We use these to prevent spam and abuse, and to keep accounts secure.
+    </li>
+    @if (consent.needed()) {
+      <li>
+        <strong>Analytics</strong>, only if you accept analytics cookies: see <a routerLink="." fragment="cookies">Cookies</a>.
+      </li>
+    }
+  </ul>
+
+  <h2 id="use">2. How we use it</h2>
+  <ul>
+    <li>To reply to your request or message, arrange a consultation, and prepare a proposal.</li>
+    <li>To provide our services and the client portal to our clients.</li>
+    <li>To send you our newsletter, if you’ve asked for it and confirmed.</li>
+    <li>To send you emails about something you did, such as confirming we received your request.</li>
+    <li>To understand which of our marketing works, using where enquiries came from.</li>
+    <li>To keep our website and portal secure, and to prevent spam and abuse.</li>
+    <li>To meet our legal obligations.</li>
+  </ul>
+  <p>We don’t sell your personal information, and we don’t use it to make automated decisions about you.</p>
+
+  <h2 id="consent">3. Your consent</h2>
+  <p>
+    By sending us a form, you agree to us using the details you provide to respond to you. We send
+    our newsletter only to people who ticked the box to ask for it and then confirmed by email.
+    Every newsletter includes a link to unsubscribe. You can withdraw your consent at any time by
+    unsubscribing or <a routerLink="." fragment="contact">contacting us</a>. If you do, we may no longer be able
+    to provide some services.
+  </p>
+
+  <h2 id="cookies">4. Cookies</h2>
+  <p>Cookies are small files a website stores in your browser.</p>
+  <ul>
+    <li>
+      <strong>Necessary cookies.</strong> If you make a choice about analytics cookies, we
+      store it in a cookie called <code>ol_consent</code> for one year, so we don’t ask again. The
+      client portal uses a sign-in cookie and a security cookie that protects against forged
+      requests; it doesn’t work without them.
+    </li>
+    @if (consent.needed()) {
+      <li>
+        <strong>Analytics cookies, only if you accept them.</strong> We use {{ toolList() }} to
+        understand how people use this website so we can improve it. These tools set their own
+        cookies and receive information about your visit, such as the pages you view, your browser
+        and device, and your approximate location from your IP address. We report when someone
+        sends one of our forms, but not what they wrote. You can change your choice at any time
+        from “Cookie settings” at the bottom of every page.
+      </li>
+    } @else {
+      <li><strong>No analytics or advertising cookies.</strong> We don’t use them at present.</li>
+    }
+  </ul>
+  <p>The visit details described in section 1 are kept in your browser’s session storage, not in a cookie, and are deleted when you close the tab.</p>
+
+  <h2 id="sharing">5. Who we share it with</h2>
+  <p>We share personal information only with:</p>
+  <ul>
+    <li>
+      <strong>Service providers</strong> that work for us under agreements requiring them to
+      protect it and use it only on our behalf: DigitalOcean, which hosts our website, client
+      portal and database; Google Workspace, our email; and Resend, which delivers the emails
+      our website and portal send.
+    </li>
+    @if (consent.needed()) {
+      <li><strong>{{ toolList() }}</strong>, as described under Cookies, only if you accept analytics cookies.</li>
+    }
+    <li><strong>Authorities</strong>, when the law requires it.</li>
+    <li>
+      <strong>A buyer or successor</strong>, if our business is sold or reorganised, who must
+      continue to protect it as this policy describes.
+    </li>
+  </ul>
+
+  <h2 id="storage">6. Where it’s stored, and for how long</h2>
+  <p>
+    Our website, client portal and database are hosted in Toronto, Canada. Some of our service
+    providers (Google Workspace and Resend for email{{ consent.needed() ? ', and the analytics tools if you accept them' : '' }})
+    may process personal information outside {{ s().province }} and outside Canada, mainly in the
+    United States. When they do, it’s subject to the laws of those places, and may be accessible
+    to authorities there.
+  </p>
+  <p>
+    We keep personal information only for as long as we need it for the purposes above, or as the
+    law requires. Enquiries are kept so we can follow up and keep a record of our work; you can
+    ask us to delete yours at any time. We keep a newsletter subscriber’s consent record for as
+    long as we need to show that consent was given.
+  </p>
+
+  <h2 id="security">7. How we protect it</h2>
+  <p>
+    We use safeguards suited to the sensitivity of the information, including encrypted
+    connections (HTTPS), passwords stored only in scrambled form, access limited to the Outlogik
+    staff who need it, records of who changed what in our systems, and protection against spam
+    and repeated sign-in attempts. No system is perfectly secure; if a breach creates a real risk
+    of significant harm to you, we’ll tell you and the regulator as the law requires.
+  </p>
+
+  <h2 id="rights">8. Your rights</h2>
+  <p>You can ask us to:</p>
+  <ul>
+    <li>tell you what personal information we hold about you, and give you a copy;</li>
+    <li>correct anything that’s inaccurate or incomplete;</li>
+    <li>delete your information, unless we have to keep it by law;</li>
+    <li>stop sending you our newsletter (or use the unsubscribe link in any newsletter).</li>
+  </ul>
+  <p>
+    Email us at <a [href]="'mailto:' + s().privacy_email">{{ s().privacy_email }}</a>. We’ll
+    reply within 30 days, and may need to confirm your identity first.
+  </p>
+  <p>
+    If you’re not satisfied with our answer, you can complain to the
+    <a [href]="federal.url" rel="noopener" target="_blank">{{ federal.name }}</a>
+    @if (provincial(); as p) {
+      or, under {{ p.law }}, to the <a [href]="p.url" rel="noopener" target="_blank">{{ p.name }}</a>
+    }.
+  </p>
+  <p>Our website and services are for businesses. We don’t knowingly collect information from children.</p>
+
+  <h2 id="changes">9. Changes to this policy</h2>
+  <p>
+    We’ll update this policy when what we do changes, and show the date of the latest version at
+    the top. If a change is significant, we’ll make it clear on this website, and tell clients
+    and newsletter subscribers by email.
+  </p>
+
+  <h2 id="contact">10. Contact us</h2>
+  <p>Questions or requests about your personal information go to the person responsible for privacy at Outlogik:</p>
+  <address class="mk-legal__address">
+    {{ s().legal_name }}<br />
+    <span class="mk-pre">{{ s().address }}</span><br />
+    <a [href]="'mailto:' + s().privacy_email">{{ s().privacy_email }}</a>
+  </address>
+  <p>See also our <a routerLink="/terms">terms and conditions</a>.</p>
+</mk-legal-page>

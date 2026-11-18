@@ -65,13 +65,15 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      - name: No "#section" links (with <base href="/"> they load the homepage; use routerLink + fragment)
+        run: "! grep -rn 'href=\"#' src projects --include=*.html --include=*.ts | grep -v 'href=\"#main\" (click)' | grep -v '.spec.ts'"
       - name: App unit tests
         run: npx ng test frontend --watch=false
       - name: Marketing site unit tests
         run: npx ng test marketing --watch=false
       - name: App production build (fails over the bundle budget)
         run: npx ng build frontend
-      - name: Marketing site production build (prerenders static pages)
+      - name: Marketing site production build (server-rendered pages)
         run: npx ng build marketing
       - name: Marketing site serves server-rendered HTML
         run: |
@@ -79,3 +81,43 @@ jobs:
           for i in $(seq 1 20); do curl -sf localhost:4310/ -o home.html && break; sleep 1; done
           grep -q '<h1' home.html
           test "$(curl -s -o /dev/null -w '%{http_code}' localhost:4310/does-not-exist)" = 404
+          # Search metadata is in the HTML before any JavaScript runs (no API in CI: defaults).
+          curl -sf localhost:4310/services/seo -o seo.html
+          grep -q '<link rel="canonical" href="https://outlogik.com/services/seo">' seo.html
+          grep -q 'property="og:image"' seo.html
+          grep -q '"@type":"Service"' seo.html
+          curl -sf localhost:4310/robots.txt | grep -q 'Sitemap:'
+          test "$(curl -sf localhost:4310/sitemap.xml | grep -c '<loc>')" -ge 16
+          # Pages carry a nonce-based Content-Security-Policy, and every script has the nonce.
+          curl -sfD headers.txt localhost:4310/ -o home.html
+          grep -qi "content-security-policy: .*script-src 'nonce-" headers.txt
+          test "$(grep -o '<script' home.html | wc -l)" = "$(grep -o '<script nonce=' home.html | wc -l)"
+
+  docker:
+    name: Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the API image
+        run: docker build -t outlogik-api backend
+      - name: Build the website image
+        run: docker build -t outlogik-site -f frontend/Dockerfile.marketing frontend
+      - name: Build the client portal image
+        run: docker build -t outlogik-app -f frontend/Dockerfile.app frontend
+      - name: The website and portal containers start and serve pages
+        run: |
+          docker run -d --name site -p 8091:8080 -e CANONICAL_HOST=outlogik.com outlogik-site
+          docker run -d --name app -p 8092:8080 outlogik-app
+          for i in $(seq 1 20); do curl -sf localhost:8091/healthz && break; sleep 1; done
+          # The real host name renders (Angular refuses host names it doesn't know)...
+          curl -sf -H 'Host: outlogik.com' localhost:8091/ -o site.html
+          grep -q '<link rel="canonical" href="https://outlogik.com/">' site.html
+          # ...and www (or any other host) redirects to it.
+          test "$(curl -s -o /dev/null -w '%{redirect_url}' -H 'Host: www.outlogik.com' localhost:8091/pricing)" = https://outlogik.com/pricing
+          curl -sf localhost:8092/admin/leads | grep -q '<app-root'
+          curl -sfI localhost:8092/ | grep -qi "content-security-policy: default-src 'self'; script-src 'self' 'sha256-"
+          # The portal is private: robots.txt keeps crawlers out, and every page says noindex.
+          curl -sf localhost:8092/robots.txt | grep -q 'Disallow: /'
+          curl -sfI localhost:8092/login | grep -qi 'x-robots-tag: noindex'
+      - name: The API image runs as a non-root user
+        run: test "$(docker run --rm outlogik-api whoami)" = outlogik

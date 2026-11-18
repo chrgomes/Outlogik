@@ -9,6 +9,13 @@ os.environ["REDIS_URL"] = os.environ.get("TEST_REDIS_URL", "redis://localhost:63
 os.environ["APP_ENV"] = "test"
 os.environ["EMAIL_BACKEND"] = "memory"
 os.environ["FRONTEND_URL"] = "https://app.test"
+# Production default is invite-only; tests create accounts through open sign-up.
+os.environ["SIGNUP_MODE"] = "open"
+# No DNS lookups in tests (example.com accepts no email); tests of the check switch it on.
+os.environ["EMAIL_DOMAIN_CHECK"] = "false"
+# Form tests don't solve proof-of-work puzzles; tests of the check switch it on.
+os.environ["FORM_CHALLENGE_REQUIRED"] = "false"
+os.environ["AUTH_CHALLENGE_REQUIRED"] = "false"
 
 import re  # noqa: E402
 

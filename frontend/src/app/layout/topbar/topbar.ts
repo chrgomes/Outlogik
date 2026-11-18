@@ -14,6 +14,7 @@ import { IconName } from '@brand/icon/icons';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CdkMenuTrigger, CdkMenu, CdkMenuItem, CdkMenuItemRadio, Icon],
   templateUrl: './topbar.html',
+  host: { role: 'banner' },
   styleUrl: './topbar.scss',
 })
 export class Topbar {
@@ -39,5 +40,9 @@ export class Topbar {
 
   protected switchTo(slug: string): void {
     void this.router.navigate(['/o', slug]);
+  }
+
+  protected openAdmin(): void {
+    void this.router.navigate(['/admin']);
   }
 }

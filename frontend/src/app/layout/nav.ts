@@ -32,3 +32,28 @@ export const NAV: NavSection[] = [
     ],
   },
 ];
+
+export interface AdminNavItem {
+  label: string;
+  icon: IconName;
+  /** Path below /admin */
+  path: string;
+}
+
+/** Sidebar navigation in the website admin area (/admin), for Outlogik site admins. */
+export const ADMIN_NAV: { label?: string; items: AdminNavItem[] }[] = [
+  {
+    label: 'Leads',
+    items: [
+      { label: 'Inbox', icon: 'inbox', path: 'leads' },
+      { label: 'Newsletter', icon: 'envelope', path: 'newsletter' },
+    ],
+  },
+  {
+    label: 'Website',
+    items: [
+      { label: 'Settings', icon: 'sliders', path: 'settings' },
+      { label: 'Portal features', icon: 'window-stack', path: 'portal-features' },
+    ],
+  },
+];

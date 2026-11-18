@@ -79,3 +79,20 @@
   border-color: var(--ol-text-muted);
   box-shadow: 0 0 0 0.2rem var(--ol-focus-ring);
 }
+
+// Dark mode: Bootstrap's base red and green are too dark to read on dark surfaces (WCAG
+// contrast), so text-like uses switch to its lighter "text emphasis" shades.
+[data-bs-theme='dark'] {
+  .text-success {
+    color: var(--bs-success-text-emphasis) !important;
+  }
+
+  .text-danger {
+    color: var(--bs-danger-text-emphasis) !important;
+  }
+
+  .btn-outline-danger {
+    --bs-btn-color: var(--bs-danger-text-emphasis);
+    --bs-btn-border-color: var(--bs-danger-text-emphasis);
+  }
+}

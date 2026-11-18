@@ -5,27 +5,27 @@
 
   <nav class="mk-nav" aria-label="Main">
     <ul class="mk-nav__list">
-      <li class="mk-nav__item" (focusout)="onFocusOut($event, 'platform')">
-        <button type="button" id="menu-button-platform" class="mk-nav__trigger"
-          [attr.aria-expanded]="open() === 'platform'" aria-controls="menu-platform"
-          (click)="toggle('platform')">
-          Platform <ol-icon name="chevron-down" size="0.75rem" />
+      <li class="mk-nav__item" (focusout)="onFocusOut($event, 'services')">
+        <button type="button" id="menu-button-services" class="mk-nav__trigger"
+          [attr.aria-expanded]="open() === 'services'" aria-controls="menu-services"
+          (click)="toggle('services')">
+          Services <ol-icon name="chevron-down" size="0.75rem" />
         </button>
-        <div id="menu-platform" class="mk-mega" [hidden]="open() !== 'platform'">
+        <div id="menu-services" class="mk-mega" [hidden]="open() !== 'services'">
           <div class="mk-container mk-mega__inner">
             <div class="mk-mega__intro">
-              <p class="mk-eyebrow">Platform</p>
-              <p>One workspace for clients, websites and marketing performance.</p>
-              <a routerLink="/platform" class="mk-arrow-link">Platform overview <ol-icon name="arrow-right" /></a>
+              <p class="mk-eyebrow">Services</p>
+              <p>One team for SEO, social media, content and analytics.</p>
+              <a routerLink="/services" class="mk-arrow-link">All services <ol-icon name="arrow-right" /></a>
             </div>
             <ul class="mk-mega__grid">
-              @for (m of modules; track m.slug) {
+              @for (s of services; track s.slug) {
                 <li>
-                  <a [routerLink]="['/platform', m.slug]" class="mk-mega__link">
-                    <ol-icon [name]="m.icon" size="1.125rem" />
+                  <a [routerLink]="['/services', s.slug]" class="mk-mega__link">
+                    <ol-icon [name]="s.icon" size="1.125rem" />
                     <span>
-                      <span class="mk-mega__title">{{ m.name }} <mk-status-badge [status]="m.status" /></span>
-                      <span class="mk-mega__desc">{{ m.summary }}</span>
+                      <span class="mk-mega__title">{{ s.name }}</span>
+                      <span class="mk-mega__desc">{{ s.short }}</span>
                     </span>
                   </a>
                 </li>
@@ -35,23 +35,23 @@
         </div>
       </li>
 
-      <li class="mk-nav__item" (focusout)="onFocusOut($event, 'solutions')">
-        <button type="button" id="menu-button-solutions" class="mk-nav__trigger"
-          [attr.aria-expanded]="open() === 'solutions'" aria-controls="menu-solutions"
-          (click)="toggle('solutions')">
-          Solutions <ol-icon name="chevron-down" size="0.75rem" />
+      <li class="mk-nav__item" (focusout)="onFocusOut($event, 'who')">
+        <button type="button" id="menu-button-who" class="mk-nav__trigger"
+          [attr.aria-expanded]="open() === 'who'" aria-controls="menu-who"
+          (click)="toggle('who')">
+          Who we help <ol-icon name="chevron-down" size="0.75rem" />
         </button>
-        <div id="menu-solutions" class="mk-mega" [hidden]="open() !== 'solutions'">
+        <div id="menu-who" class="mk-mega" [hidden]="open() !== 'who'">
           <div class="mk-container mk-mega__inner">
             <div class="mk-mega__intro">
-              <p class="mk-eyebrow">Solutions</p>
-              <p>How Outlogik fits the way you work.</p>
-              <a routerLink="/solutions" class="mk-arrow-link">All solutions <ol-icon name="arrow-right" /></a>
+              <p class="mk-eyebrow">Who we help</p>
+              <p>Marketing shaped around your kind of business.</p>
+              <a routerLink="/who-we-help" class="mk-arrow-link">Who we work with <ol-icon name="arrow-right" /></a>
             </div>
             <ul class="mk-mega__grid">
               @for (a of audiences; track a.slug) {
                 <li>
-                  <a [routerLink]="['/solutions', a.slug]" class="mk-mega__link">
+                  <a [routerLink]="['/who-we-help', a.slug]" class="mk-mega__link">
                     <ol-icon [name]="a.icon" size="1.125rem" />
                     <span>
                       <span class="mk-mega__title">{{ a.name }}</span>
@@ -63,6 +63,10 @@
             </ul>
           </div>
         </div>
+      </li>
+
+      <li class="mk-nav__item">
+        <a routerLink="/how-we-work" routerLinkActive="is-active" ariaCurrentWhenActive="page" class="mk-nav__link">How we work</a>
       </li>
 
       @if (resources.length) {
@@ -107,7 +111,7 @@
 
   <div class="mk-header__actions">
     <a [href]="loginUrl" class="mk-header__login">Log in</a>
-    <a [href]="registerUrl" class="btn btn-primary mk-header__cta">Get started</a>
+    <a [routerLink]="consultationPath" class="btn btn-primary mk-header__cta">{{ settings().consultation_cta_label }}</a>
     <button type="button" class="mk-header__menu-btn" (click)="openDrawer()" aria-label="Open menu"
       aria-haspopup="dialog">
       <ol-icon name="list" size="1.375rem" />
@@ -126,19 +130,20 @@
     </div>
     <nav aria-label="Main" class="mk-drawer__nav">
       <details>
-        <summary>Platform <ol-icon name="chevron-down" size="0.75rem" /></summary>
-        <a routerLink="/platform">Platform overview</a>
-        @for (m of modules; track m.slug) {
-          <a [routerLink]="['/platform', m.slug]">{{ m.name }} <mk-status-badge [status]="m.status" /></a>
+        <summary>Services <ol-icon name="chevron-down" size="0.75rem" /></summary>
+        <a routerLink="/services">All services</a>
+        @for (s of services; track s.slug) {
+          <a [routerLink]="['/services', s.slug]">{{ s.name }}</a>
         }
       </details>
       <details>
-        <summary>Solutions <ol-icon name="chevron-down" size="0.75rem" /></summary>
-        <a routerLink="/solutions">All solutions</a>
+        <summary>Who we help <ol-icon name="chevron-down" size="0.75rem" /></summary>
+        <a routerLink="/who-we-help">Who we work with</a>
         @for (a of audiences; track a.slug) {
-          <a [routerLink]="['/solutions', a.slug]">{{ a.name }}</a>
+          <a [routerLink]="['/who-we-help', a.slug]">{{ a.name }}</a>
         }
       </details>
+      <a routerLink="/how-we-work" class="mk-drawer__top-link">How we work</a>
       @if (resources.length) {
         <details>
           <summary>Resources <ol-icon name="chevron-down" size="0.75rem" /></summary>
@@ -152,8 +157,8 @@
       </details>
     </nav>
     <div class="mk-drawer__actions">
-      <a [href]="registerUrl" class="btn btn-primary btn-lg">Get started</a>
-      <a [href]="loginUrl" class="btn btn-outline-dark btn-lg">Log in</a>
+      <a [routerLink]="consultationPath" class="btn btn-primary btn-lg">{{ settings().consultation_cta_label }}</a>
+      <a [href]="loginUrl" class="btn btn-outline-dark btn-lg">Client log in</a>
     </div>
   </div>
 </dialog>

@@ -1,0 +1,8 @@
+{
+  "/api/public": {
+    "target": "http://localhost:8000",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": { "^/api/public": "/api/v1/public" }
+  }
+}

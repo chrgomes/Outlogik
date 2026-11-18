@@ -5,6 +5,7 @@ import { provideRouter, Router, withComponentInputBinding } from '@angular/route
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { me, membership } from '../../../testing/fixtures';
+import { answerChallenge } from '../../../testing/org-setup';
 import { AuthService } from '../../core/auth.service';
 import { AcceptInvite } from './accept-invite';
 import { Login } from './login';
@@ -47,8 +48,11 @@ describe('Login page', () => {
     type(el, '#email', 'olive@acme.example.com');
     type(el, '#password', 'correct horse battery');
     el.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await answerChallenge(http);
     const req = http.expectOne(`${API}/login`);
-    expect(req.request.body).toEqual({ email: 'olive@acme.example.com', password: 'correct horse battery' });
+    // The invisible browser check goes with the sign-in.
+    expect(req.request.body.pow).toMatchObject({ number: 7, signature: 'sig' });
+    expect(req.request.body).toMatchObject({ email: 'olive@acme.example.com', password: 'correct horse battery' });
     req.flush(me());
     await settle();
     expect(TestBed.inject(Router).url).toBe('/o/acme/clients');
@@ -63,6 +67,7 @@ describe('Login page', () => {
     type(el, '#email', 'olive@acme.example.com');
     type(el, '#password', 'x');
     el.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await answerChallenge(http);
     http.expectOne(`${API}/login`).flush(me());
     await settle();
     expect(TestBed.inject(Router).url).toBe('/');
@@ -76,6 +81,7 @@ describe('Login page', () => {
     type(el, '#email', 'olive@acme.example.com');
     type(el, '#password', 'wrong');
     el.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await answerChallenge(http);
     http.expectOne(`${API}/login`).flush(
       { error: { code: 'invalid_credentials', message: 'Incorrect email or password.', details: null } },
       { status: 401, statusText: 'Unauthorized' });
@@ -96,11 +102,37 @@ describe('Login page', () => {
   });
 });
 
+describe('Invite-only sign-up', () => {
+  it('sign-in page asks for an invitation instead of offering sign-up', async () => {
+    const http = setup();
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/login');
+    http.expectOne('/api/v1/public/site').flush({ signup_open: false });
+    harness.detectChanges();
+    const el = harness.routeNativeElement!;
+    expect(el.querySelector('a[href="/register"]')).toBeNull();
+    expect(el.textContent).toContain('Ask your Outlogik contact for an invitation');
+  });
+
+  it('register page explains accounts are by invitation', async () => {
+    const http = setup();
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/register');
+    http.expectOne('/api/v1/public/site').flush({ signup_open: false });
+    harness.detectChanges();
+    const el = harness.routeNativeElement!;
+    expect(el.querySelector('form')).toBeNull();
+    expect(el.textContent).toContain('Accounts are by invitation');
+  });
+});
+
 describe('Register page', () => {
   it('shows "email taken" on the email field with a sign-in link', async () => {
     const http = setup();
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/register');
+    http.expectOne('/api/v1/public/site').flush({ signup_open: true });
+    harness.detectChanges();
     const el = harness.routeNativeElement!;
     type(el, '#full_name', 'Olive');
     type(el, '#organization_name', 'Acme');
@@ -121,6 +153,8 @@ describe('Register page', () => {
     const http = setup();
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/register');
+    http.expectOne('/api/v1/public/site').flush({ signup_open: true });
+    harness.detectChanges();
     const el = harness.routeNativeElement!;
     type(el, '#full_name', 'Olive');
     type(el, '#organization_name', 'Acme');
@@ -185,8 +219,9 @@ describe('Accept invitation page', () => {
     type(el, '#full_name', 'Nina New');
     type(el, '#password', 'correct horse battery');
     el.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await answerChallenge(http);
     const req = http.expectOne(`${API}/accept-invite`);
-    expect(req.request.body).toEqual({ token: 'tok-1', full_name: 'Nina New',
+    expect(req.request.body).toMatchObject({ token: 'tok-1', full_name: 'Nina New',
       password: 'correct horse battery' });
     req.flush(me());
     await settle();
@@ -214,7 +249,8 @@ describe('Accept invitation page', () => {
     const button = harness.routeNativeElement!.querySelector<HTMLButtonElement>('button.btn-primary')!;
     expect(button.textContent).toContain('Accept invitation');
     button.click();
-    expect(http.expectOne(`${API}/accept-invite`).request.body).toEqual({ token: 'tok-1' });
+    await answerChallenge(http);
+    expect(http.expectOne(`${API}/accept-invite`).request.body).toMatchObject({ token: 'tok-1', pow: { number: 7 } });
   });
 
   it('explains an invalid or expired invitation', async () => {
