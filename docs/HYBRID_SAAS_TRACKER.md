@@ -9,6 +9,7 @@ unfinished, security notes, and what's next.
 | H1-1 Audit and plan | Done, approved 2026-11-18 (decisions D1–D9) |
 | H1-2 Account types and workspaces | **Done** (2026-11-18) |
 | H1-3 Roles, assignments, access grants, RLS | Next |
+| AI Search addendum | Planned 2026-11-18: GEO checks in H1-6, AI referral traffic in H1-7, monitoring as the first H2 module ([`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) |
 | H1-4 … H1-12 | Not started |
 
 ---

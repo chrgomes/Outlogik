@@ -233,8 +233,8 @@ counts as done only when its backend, storage, permissions, error handling and t
 | H1-3 | **Roles, assignments and isolation:** business and agency role templates, workspace scope and assignments, platform roles, RLS backstop, cross-tenant test suite | §5, §16, §21 |
 | H1-4 | **Entitlements foundation:** plans, entitlements, subscriptions (assigned by hand), usage records, backend enforcement (websites, clients, team, audits) | §12 |
 | H1-5 | **Background jobs:** Celery and beat, the jobs table, retries, duplicate prevention; email moves to the queue | §19 |
-| H1-6 | **SEO crawler and audits:** the crawler, checks, PageSpeed, scheduled audits, history and comparison, prioritized issues | §6.1 |
-| H1-7 | **Integration framework and Google:** encrypted credentials, Google OAuth, GA4 and Search Console syncs into snapshots. **Google's app verification is applied for at the start of H1**, because it takes weeks. | §6.2, §11 |
+| H1-6 | **SEO crawler and audits:** the crawler, checks, PageSpeed, scheduled audits, history and comparison, prioritized issues. Includes an **AI search readiness** section (GEO technical checks: AI crawler access, structured data, business identity consistency, question-and-answer coverage; see [`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) | §6.1, Addendum §5 |
+| H1-7 | **Integration framework and Google:** encrypted credentials, Google OAuth, GA4 and Search Console syncs into snapshots, including **AI referral traffic** (visits from ChatGPT, Perplexity, Gemini, Copilot). **Google's app verification is applied for at the start of H1**, because it takes weeks. | §6.2, §11, Addendum §2 |
 | H1-8 | **Business and agency dashboards:** ECharts, real data only, empty states that explain how to connect | §9 |
 | H1-9 | **Basic reporting:** SEO and analytics reports per workspace, PDF and CSV | §10 |
 | H1-10 | **Client portal on workspaces:** Client Viewer sees the dashboard, audits and reports, never agency-wide or internal data | §7 |
@@ -278,14 +278,19 @@ default dashboards should be good enough without it.
 Each module is planned, built, tested and released on its own, and appears in the app only when
 it's done. The proposed order, to be adjusted to what beta customers ask for:
 
-1. **Social media** (built new; see D2): account connections, calendar, drafts, approvals,
+1. **AI Search** (decided 2026-11-18, A1; see [`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)):
+   monitoring of brand mentions and citations in AI answers through official APIs only,
+   history, and the AI Visibility page; then competitor AI visibility, AEO recommendations
+   and recommendations turned into tasks. Bing's AI citation report joins here or in the
+   H1.5 integration center.
+2. **Social media** (built new; see D2): account connections, calendar, drafts, approvals,
    scheduling, and publishing **only where the platform's API allows it** (§6.3), plus
    analytics. Facebook and Instagram first, then LinkedIn, then others; X only if paid API
    access is worth it.
-2. **Campaigns and content:** one place to plan a campaign across channels, with a content
-   calendar, briefs and approvals.
-3. **Paid ads (read-only):** Google Ads, Meta Ads, LinkedIn Ads results next to the rest.
-4. **Email marketing:** Listmonk, with CASL consent and unsubscribe. Only if customers want it
+3. **Campaigns and content:** one place to plan a campaign across channels, with a content
+   calendar, briefs and approvals. AI search content briefs and optimization come with it.
+4. **Paid ads (read-only):** Google Ads, Meta Ads, LinkedIn Ads results next to the rest.
+5. **Email marketing:** Listmonk, with CASL consent and unsubscribe. Only if customers want it
    inside Outlogik rather than in their existing email tool.
 
 Within the existing modules, in H2:

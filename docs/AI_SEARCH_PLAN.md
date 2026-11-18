@@ -5,7 +5,7 @@ AI search visibility), received 2026-11-18. The main plan is
 [`HYBRID_SAAS_PLAN.md`](HYBRID_SAAS_PLAN.md). Provider facts were checked on 2026-11-18; they
 change often and are checked again before each part is built.
 
-**Status:** proposal. The decisions in section 5 are waiting for approval.
+**Status:** approved 2026-11-18 (A1–A4 as recommended). D8, the AI model, stays open until H2.
 
 ---
 
@@ -93,9 +93,9 @@ Following the addendum's list, every row carries `organization_id` and `workspac
 Raw responses are kept for the plan's retention period, then deleted; snapshots stay.
 Provider keys are encrypted, as in the integration framework.
 
-## 5. Decisions needed
+## 5. Decisions (approved 2026-11-18)
 
-| # | Question | Recommendation |
+| # | Question | Decision |
 |---|---|---|
 | A1 | When does monitoring come? | **First H2 module, before social media.** Social media waits on Meta and LinkedIn app reviews anyway; monitoring needs no reviews. The free GEO audit and AI traffic views come earlier, in H1-6 and H1-7 |
 | A2 | Which sources? | **Official ones only** (section 2). Leave out Google AI Overview scraping vendors and, unless the terms allow it, Gemini grounding. Say so in the app |
