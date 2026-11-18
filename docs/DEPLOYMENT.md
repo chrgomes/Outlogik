@@ -159,6 +159,16 @@ python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 validated against a real account yet. If the validator or the import complains (for example
 about the `VALKEY` engine name or a field), tell me the message and I'll adjust the file.
 
+### Page speed in audits (optional)
+
+Audits include Google PageSpeed scores once a key is set; until then they say "not connected".
+In a Google Cloud project, enable the **PageSpeed Insights API**, create an API key restricted to
+that API, and add it as a secret `PAGESPEED_API_KEY` on the **worker** component (it runs the
+audits). It's free within Google's daily quota.
+
+Never set `CRAWLER_ALLOW_PRIVATE` on staging or production: it would let audits reach internal
+addresses (the API refuses to start in production if it's set).
+
 ### Background jobs (the worker)
 
 The api records each piece of background work in the database and hands it to the worker through

@@ -12,8 +12,174 @@ unfinished, security notes, and what's next.
 | AI Search addendum | Planned 2026-11-18: GEO checks in H1-6, AI referral traffic in H1-7, monitoring as the first H2 module ([`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) |
 | H1-4 Plans and limits | **Done** (2026-11-18) |
 | H1-5 Background jobs | **Done** (2026-11-18) |
-| H1-6 SEO crawler and audits | Next |
-| H1-7 … H1-12 | Not started |
+| H1-6 SEO crawler and audits | **Done** (2026-11-18) |
+| H1-7 Integrations and Google | Next |
+| H1-8 … H1-12 | Not started |
+
+---
+
+## H1-6: Website crawler and audits
+
+### 1. What was completed
+
+- **A safe, polite crawler** that only fetches public websites:
+  - **Public addresses only:** every connection checks the real address it's about to
+    connect to, and refuses private networks, the server itself and cloud metadata.
+  - **Redirects:** each hop is checked again.
+  - **Limits:** no proxies; size and time limits.
+  - **Polite:** it obeys robots.txt, reads the sitemap, stays on the site, and waits between
+    requests.
+- **Website audits with 29 checks in three areas,** each with plain "why it matters" and "how
+  to fix it" text:
+  - **Technical:**
+    - broken pages, with the page linking to them
+    - server errors, HTTPS, redirect chains, slow pages
+    - robots.txt, sitemap, the mobile viewport, pages hidden from search
+  - **SEO:**
+    - titles and meta descriptions (missing, too long, duplicated)
+    - headings, image alt text, thin pages, canonicals, the page language
+  - **AI search readiness** (from the addendum):
+    - AI search crawlers blocked by robots.txt
+    - structured data, and business details in it
+    - the same name, phone and address across pages
+    - questions without FAQ markup
+  - **AI training crawlers** (GPTBot and others) are shown as information. Blocking them is
+    the site owner's choice and doesn't affect AI search.
+- **Page speed** from Google PageSpeed (mobile, home page) once a key is set. Until then,
+  audits say "not connected".
+- **Results:**
+  - a summary, and what's new or fixed since the previous audit
+  - issues grouped by check, most serious first, filtered by area
+  - every page checked
+- **Plan limits you approved:** audits a month (counted per calendar month) and pages per
+  audit.
+  - An agency's audit of a business's shared workspace counts against the business's plan.
+  - Both show on the Plan page.
+- **Schedules:** each website can be audited weekly or monthly, started at night within the
+  plan's limits.
+- **Permissions:**
+  - **View audits:** everyone except custom roles without it, including Client Viewers, so
+    clients will see audits in their portal (H1-10).
+  - **Run audits and set schedules:** owners, administrators, Marketing Managers and Account
+    Managers.
+  - **View-only shared workspaces** can't run audits.
+
+**Audited Outlogik's own website as a real test.** It found three false alarms, all now fixed
+and covered by tests:
+- the crawler wandered from the website onto the client portal's login page (same host
+  locally, different port)
+- the home page was counted twice through a redirect
+- the booking page's `?service=…` variants were reported as duplicates, although they
+  already point search engines to the main version
+
+What's left on your site is accurate:
+- **About page:** its meta description is 164 characters, just over the ~160 shown in search
+  results.
+- **Booking-page variants:** informational notices for the four `?service=…` addresses.
+- **HTTPS:** reported only because the local copy runs without it.
+
+### 2. Files changed
+
+**Backend:**
+- New module `audits/`: `fetch.py`, `parse.py`, `crawler.py`, `checks.py`, `pagespeed.py`,
+  `models.py`, `schemas.py`, `service.py`, `router.py`.
+- `jobs/handlers.py` (`audit.run`, `audits.schedule`), `jobs/registry.py` and `service.py`
+  (a time limit per job kind).
+- `worker.py` (nightly scheduled audits).
+- `plans/` (audit limits, monthly usage, caps), `websites/` (audit schedule),
+  `rbac/catalogue.py` (`audits.read`, `audits.run`).
+- `core/config.py` (crawler and PageSpeed settings; private crawling refused in
+  production).
+- Migration `0015`.
+- Tests: new `test_crawler.py` and `test_audits.py`; updated cross-tenant, plans and role
+  tests.
+
+**App:**
+- New `features/audits/` (Audits list, audit page, shared parts, tests).
+- The Plan page shows caps; navigation, routes, types, API calls.
+
+**Docs:** `ARCHITECTURE.md`, `SECURITY.md` (fetching safely), `DEPLOYMENT.md` (the optional
+PageSpeed key), `HYBRID_SAAS_PLAN.md` (audit limits in the plans table), `.env.example`, this
+tracker.
+
+### 3. Database changes (migration `0015`)
+
+| Change | Existing data |
+|---|---|
+| `audits` (status, trigger, page limit, counts, site-level facts, timings) | None |
+| `audit_pages` and `audit_issues` (check, severity, area, page, details) | None |
+| `usage_records` (organization, metric, month, count) | None |
+| `websites.audit_frequency` (off, weekly, monthly) | All off |
+| Plan limits `limits.audits_per_month` and `limits.pages_per_audit` | The approved values for all six plans |
+| Row-level security on the new tables (an agency can write audits and usage for a business that shared its workspace) | None |
+
+Run up, checked, down and up again; the test suite builds from it.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **414 passed** (was 367) |
+| App (Vitest) | **121 passed** (was 113) |
+| Website (Vitest) | 92 passed (unchanged) |
+
+The new backend tests cover:
+- **Safety:**
+  - 15 address types allowed or refused
+  - private addresses refused at connection time, including through a redirect
+  - only http and https; size caps; proxies never used
+- **Crawling and reading:**
+  - reading pages, including broken HTML
+  - robots.txt, sitemaps, page limits, another port as another site
+- **Full audits** against a local test site with known problems:
+  - each finding, and new or fixed against the previous audit
+  - an unreachable site
+  - one audit at a time
+  - PageSpeed parsing
+- **Limits, schedules and access:**
+  - the monthly limit and the page cap
+  - schedules, including when the plan's limit is used up
+  - who can view or run audits; another workspace's website
+  - an agency auditing a shared workspace on the business's plan
+- **The cross-organization attack suite** found the new routes by itself, and every attempt
+  failed.
+
+**Browser check** against the real API:
+- A real audit of the Outlogik website ran: 24 pages checked.
+- Results, AI search readiness and issues displayed correctly. No page errors.
+- An axe scan of both pages found no problems in light or dark mode.
+
+### 5. Unfinished (on purpose)
+
+- **Links to other websites aren't checked yet;** only the site's own pages are. External link
+  checks can come later, with rate limits.
+- **No email when an audit finishes or finds new errors.** That comes with alerts and
+  notifications (H1.5).
+- **Pages that need JavaScript to show their content** are read as the server sends them. The
+  crawler doesn't run JavaScript. Most business sites (and Outlogik's, which is rendered on
+  the server) are fine.
+- **Page speed waits for a Google API key** (DEPLOYMENT.md has the steps).
+
+### 6. Security notes
+
+- **Server-side request forgery** is the main risk of a crawler, and it's handled at
+  connection time, not just when a website is added. The tests include a redirect to an
+  internal address.
+- **`CRAWLER_ALLOW_PRIVATE`** exists only for tests. The API refuses to start with it in
+  production.
+- **Untrusted pages and sitemaps** are read as text: no XML parser, no JavaScript, size-capped.
+- **Audit results** are under row-level security, and the cross-organization suite covers the
+  new routes.
+
+### 7. Next: H1-7 integrations and Google
+
+Encrypted credentials for connected services:
+- Google sign-in for connecting accounts
+- Google Analytics 4 and Search Console data synced into history, including the AI referral
+  traffic view from the addendum
+
+Google's app verification can take weeks, so it's worth applying as soon as the Google Cloud
+project exists.
 
 ---
 

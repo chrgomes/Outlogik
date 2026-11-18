@@ -76,6 +76,24 @@ deployment must add. Each item is covered by backend or frontend tests unless no
   allow everything. They don't apply to superusers or `BYPASSRLS` users, so production uses
   an ordinary database user (DEPLOYMENT.md §4); the API warns at startup otherwise, and CI
   runs the tests as an ordinary user.
+- **Fetching customers' websites (audits) safely:**
+  - All fetching goes through `audits/fetch.py`, which resolves each host itself and refuses
+    to connect unless every address it resolves to is on the public internet. That excludes
+    private, loopback, link-local (including the cloud metadata address 169.254.169.254),
+    carrier-grade NAT, multicast, reserved, and IPv4-mapped IPv6 addresses.
+  - It connects to the exact address it checked, so a DNS answer can't change between check
+    and connection.
+  - Redirects are followed by hand, each hop checked again; only http and https.
+  - No proxies; responses capped at 2 MB, 10 seconds per request, 40 minutes per audit.
+  - Addresses are also checked when a website is added. `CRAWLER_ALLOW_PRIVATE` exists only
+    for the test suite's local site, and the API refuses to start with it in production.
+  - The crawler is polite: it identifies itself (`OutlogikBot`), obeys robots.txt, stays on
+    the site's own host and port, waits between requests, and stops at the plan's page
+    limit.
+  - Sitemaps and pages are read as text (no XML parser), so a hostile file can't exploit
+    one.
+  - Audit results are under row-level security; an agency's audit of a shared workspace
+    belongs to the business.
 - **Background jobs:** emails are sent by a job, and their text (which can contain a sign-in,
   reset or invitation link) is erased from the job record as soon as the email is sent or gives
   up. Errors are stored without the payload. Finished jobs are deleted after 30 days, and

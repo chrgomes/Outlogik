@@ -31,6 +31,7 @@ schemas, service functions and router.
 | `modules/rbac` | Permission catalogue, built-in roles, custom roles, escalation guard |
 | `modules/workspaces` | Workspaces (an organization's own, and one per agency client), the workspace list API, `require_workspace(...)` for `/orgs/{slug}/workspaces/{id}/…` routes, and member workspace assignments |
 | `jobs/` and `worker.py` | Background jobs: the `jobs` table, `enqueue()`, retries, recovery, the job kinds (`jobs/handlers.py`), and the Celery worker with its schedule |
+| `modules/audits` | Website audits: the safe fetcher (`fetch.py`), page reader (`parse.py`), crawler, the check catalogue (`checks.py`), PageSpeed, the audit job, schedules and comparison |
 | `modules/plans` | Plans, their limits, subscriptions and trials; `check_limit(...)`, called by the services that add websites, clients and team members |
 | `modules/grants` | Access grants: a business shares its workspace with an agency (send, accept, revoke, disconnect) |
 | `modules/clients`, `modules/websites` | Clients, client-portal access, websites and URL validation |
@@ -185,6 +186,19 @@ users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
   - **To add a kind:** a function with `@handler("area.thing")` in `jobs/handlers.py` (or the
     module's own file, imported there), then `enqueue("area.thing", {...})` where it's needed.
     Handlers get a session with no organization set, so they filter by organization themselves.
+- **Website audits** (`audits`, `audit_pages`, `audit_issues`, `usage_records`; migration 0015):
+  - An audit runs as a background job (`audit.run`, up to 50 minutes): crawl, then checks,
+    then PageSpeed if a key is set. One at a time per website.
+  - Each check in `checks.py` has a severity, an area (technical, SEO, AI search readiness),
+    and the "why it matters" and "how to fix it" text shown in the app.
+  - An audit belongs to the organization that owns the website, and counts against that
+    organization's plan (`limits.audits_per_month`, metered per UTC month in
+    `usage_records`; `limits.pages_per_audit` caps each crawl).
+  - Websites can be audited weekly or monthly (`audits.schedule`, nightly).
+  - **To add a check:** an entry in `CHECKS` and the code that appends `Found(...)` in
+    `run_checks()`, with a test page in `tests/test_audits.py`.
+  - **Anything that fetches another website goes through `audits/fetch.py`**, never a plain
+    HTTP client (see SECURITY.md).
 - **Row-level security** (migration 0012) backs all of this up in Postgres. `get_org_context`
   calls `core.db.set_tenant`, which sets `app.org_id` and `app.linked_ws` at the start of each
   transaction for the rest of the request.

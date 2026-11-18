@@ -137,19 +137,20 @@ customers at checkout (H3). Annual billing is 20% off and paid upfront.
   manage their own marketing (business accounts).
 - **"Agency" plans** are for marketing agencies managing their clients (agency accounts).
 
-| Plan | Account type | Monthly | Annual, upfront (per month) | Websites | Clients | Team members |
-|---|---|---|---|---|---|---|
-| Digital Starter | business | $29 | $278.40 ($23.20) | 1 | – | 2 |
-| Digital Growth | business | $59 | $566.40 ($47.20) | 3 | – | 5 |
-| Digital Professional | business | $99 | $950.40 ($79.20) | 10 | – | 10 |
-| Agency Starter | agency | $79 | $758.40 ($63.20) | 10 | 5 | 3 |
-| Agency Professional | agency | $149 | $1,430.40 ($119.20) | 30 | 15 | 8 |
-| Agency Business | agency | $299 | $2,870.40 ($239.20) | 100 | 40 | 20 |
+| Plan | Account type | Monthly | Annual, upfront (per month) | Websites | Clients | Team members | Audits a month | Pages per audit |
+|---|---|---|---|---|---|---|---|---|
+| Digital Starter | business | $29 | $278.40 ($23.20) | 1 | – | 2 | 4 | 100 |
+| Digital Growth | business | $59 | $566.40 ($47.20) | 3 | – | 5 | 10 | 500 |
+| Digital Professional | business | $99 | $950.40 ($79.20) | 10 | – | 10 | 30 | 1,000 |
+| Agency Starter | agency | $79 | $758.40 ($63.20) | 10 | 5 | 3 | 20 | 500 |
+| Agency Professional | agency | $149 | $1,430.40 ($119.20) | 30 | 15 | 8 | 60 | 1,000 |
+| Agency Business | agency | $299 | $2,870.40 ($239.20) | 100 | 40 | 20 | 150 | 2,000 |
 
 - These are the starting values seeded in H1-4. They live in the database: staff change them
   without code changes (from the Super Admin area once it exists, H1-11).
-- Limits for SEO audits, AI Search monitoring and other modules are added to each plan when
-  the module exists, so no plan lists a feature that isn't built.
+- Audit limits (audits a month, pages per audit) were added with the audits in H1-6
+  (approved 2026-11-18). AI Search monitoring and other modules add theirs when they exist,
+  so no plan lists a feature that isn't built.
 - **Free trial: 14 days** with the full plan, no card needed during beta. Until billing exists
   (H3), plans are assigned by hand.
 - **Before selling subscriptions,** the website needs subscription terms: annual upfront
@@ -259,7 +260,7 @@ counts as done only when its backend, storage, permissions, error handling and t
 | H1-3 ✅ | **Roles, assignments and isolation:** business and agency role templates, workspace scope and assignments, business-to-agency access grants, RLS backstop, cross-tenant test suite (platform roles moved to H1-11, where the Super Admin area gives them something to control) | §5, §16, §21 |
 | H1-4 ✅ | **Entitlements foundation:** plans, entitlements, subscriptions (assigned by hand), 14-day trials, backend enforcement (websites, clients, team). Metered usage records (audits, AI Search) move to H1-6, with the first metered limit | §12 |
 | H1-5 ✅ | **Background jobs:** Celery and beat, the jobs table, retries, duplicate prevention; email moves to the queue | §19 |
-| H1-6 | **SEO crawler and audits:** the crawler, checks, PageSpeed, scheduled audits, history and comparison, prioritized issues. Includes an **AI search readiness** section (GEO technical checks: AI crawler access, structured data, business identity consistency, question-and-answer coverage; see [`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) | §6.1, Addendum §5 |
+| H1-6 ✅ | **SEO crawler and audits:** the crawler, checks, PageSpeed, scheduled audits, history and comparison, prioritized issues. Includes an **AI search readiness** section (GEO technical checks: AI crawler access, structured data, business identity consistency, question-and-answer coverage; see [`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) | §6.1, Addendum §5 |
 | H1-7 | **Integration framework and Google:** encrypted credentials, Google OAuth, GA4 and Search Console syncs into snapshots, including **AI referral traffic** (visits from ChatGPT, Perplexity, Gemini, Copilot). **Google's app verification is applied for at the start of H1**, because it takes weeks. | §6.2, §11, Addendum §2 |
 | H1-8 | **Business and agency dashboards:** ECharts, real data only, empty states that explain how to connect | §9 |
 | H1-9 | **Basic reporting:** SEO and analytics reports per workspace, PDF and CSV | §10 |
