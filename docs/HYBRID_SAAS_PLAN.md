@@ -132,8 +132,10 @@ Platform
 - **Billing provider later (H3),** behind an adapter. Stripe supports Canada.
 
 **Plans and prices (decided 2026-11-18).** In Canadian dollars; HST is added for Canadian
-customers at checkout (H3). Annual billing is 20% off and paid upfront. "Digital" plans are
-for business accounts, "Agency" plans for agency accounts.
+customers at checkout (H3). Annual billing is 20% off and paid upfront.
+- **"Digital" plans** are for clients: businesses that sign up to Outlogik directly and
+  manage their own marketing (business accounts).
+- **"Agency" plans** are for marketing agencies managing their clients (agency accounts).
 
 | Plan | Account type | Monthly | Annual, upfront (per month) | Websites | Clients | Team members |
 |---|---|---|---|---|---|---|
