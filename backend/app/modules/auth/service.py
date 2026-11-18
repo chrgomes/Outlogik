@@ -76,7 +76,7 @@ def revoke_all_sessions(db: Session, user_id: uuid.UUID) -> int:
 # --- registration / login -------------------------------------------------------------------
 
 def register(db: Session, *, email: str, password: str, full_name: str, organization_name: str,
-             ip: str | None) -> tuple[User, Organization]:
+             ip: str | None, account_type: str = "agency") -> tuple[User, Organization]:
     if get_settings().signup_mode != "open":
         raise Forbidden("Sign-up is by invitation only.", code="signup_disabled")
     if db.scalar(select(User.id).where(User.email == email)):
@@ -89,11 +89,12 @@ def register(db: Session, *, email: str, password: str, full_name: str, organiza
     except IntegrityError:  # lost a race with a concurrent sign-up for the same email
         db.rollback()
         raise Conflict("An account with this email already exists.", code="email_taken") from None
-    org = create_organization(db, organization_name, owner=user)
+    org = create_organization(db, organization_name, owner=user, kind=account_type)
     record(db, "auth.register", actor_user_id=user.id, target_type="user", target_id=user.id,
            ip=ip)
     record(db, "organization.create", actor_user_id=user.id, organization_id=org.id,
-           target_type="organization", target_id=org.id, meta={"name": org.name}, ip=ip)
+           target_type="organization", target_id=org.id,
+           meta={"name": org.name, "kind": org.kind}, ip=ip)
     send_verification_email(db, user)
     return user, org
 
@@ -206,6 +207,7 @@ def memberships_for(db: Session, user: User) -> list[dict]:
         {
             "organization_id": org.id, "organization_slug": org.slug,
             "organization_name": org.name, "organization_status": org.status,
+            "organization_kind": org.kind,
             "role_id": role.id, "role_name": role.name, "role_key": role.system_key,
             "permissions": sorted(role_permission_codes(db, role.id)),
         }

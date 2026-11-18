@@ -48,7 +48,8 @@ def create_super_admin(email: str, name: str) -> int:
     return 0
 
 
-def create_organization_cmd(name: str, owner_email: str, owner_name: str | None) -> int:
+def create_organization_cmd(name: str, owner_email: str, owner_name: str | None,
+                            kind: str = "agency") -> int:
     """Create an organization with its owner. With invite-only sign-up, this is how Outlogik's
     own workspace (or any organization) is set up; everyone else is then invited from the app."""
     owner_email = owner_email.strip().lower()
@@ -67,12 +68,13 @@ def create_organization_cmd(name: str, owner_email: str, owner_name: str | None)
                         password_hash=hash_password(password), email_verified_at=utcnow())
             db.add(user)
             db.flush()
-        org = create_organization(db, name, owner=user)
+        org = create_organization(db, name, owner=user, kind=kind)
         record(db, "organization.create", actor_user_id=user.id, organization_id=org.id,
                target_type="organization", target_id=org.id,
-               meta={"name": org.name, "via": "cli"})
+               meta={"name": org.name, "kind": org.kind, "via": "cli"})
         db.commit()
-        print(f"Created organization {org.name!r} (/o/{org.slug}) owned by {owner_email}.")
+        print(f"Created {org.kind} organization {org.name!r} (/o/{org.slug}) "
+              f"owned by {owner_email}.")
     return 0
 
 
@@ -104,6 +106,8 @@ def main() -> int:
     o.add_argument("--name", required=True)
     o.add_argument("--owner-email", required=True)
     o.add_argument("--owner-name", help="Needed only if the owner has no account yet")
+    o.add_argument("--kind", choices=("agency", "business"), default="agency",
+                   help="agency (works for clients; the default) or business")
     g = sub.add_parser("grant-staff", help="Give an existing user access to the admin area")
     g.add_argument("--email", required=True)
     g.add_argument("--role", required=True, choices=PLATFORM_ROLES)
@@ -114,7 +118,8 @@ def main() -> int:
     if args.command == "create-super-admin":
         return create_super_admin(args.email, args.name)
     if args.command == "create-organization":
-        return create_organization_cmd(args.name, args.owner_email, args.owner_name)
+        return create_organization_cmd(args.name, args.owner_email, args.owner_name,
+                                       args.kind)
     if args.command == "grant-staff":
         return set_staff_role(args.email, args.role)
     if args.command == "revoke-staff":

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 
@@ -12,11 +12,16 @@ Password = Annotated[str, Field(min_length=10, max_length=128)]
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 
 
+AccountType = Literal["business", "agency"]
+
+
 class RegisterIn(BaseModel):
     email: Email
     password: Password
     full_name: Name
     organization_name: Name
+    # business: markets itself. agency: also manages clients' marketing.
+    account_type: AccountType = "agency"
 
 
 class LoginIn(BaseModel):
@@ -58,6 +63,7 @@ class MembershipOut(BaseModel):
     organization_slug: str
     organization_name: str
     organization_status: str
+    organization_kind: AccountType
     role_id: uuid.UUID
     role_name: str
     # Stable key of a built-in role ("owner", "admin", "member", "client"); null for custom roles.

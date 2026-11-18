@@ -10,6 +10,7 @@ from app.modules.rbac.models import Permission, Role, RolePermission
 from app.modules.site.models import PortalFeature, SiteSettings
 from app.modules.users.models import User
 from app.modules.websites.models import Website
+from app.modules.workspaces.models import Workspace
 
 __all__ = [
     "AuditLog",
@@ -31,4 +32,5 @@ __all__ = [
     "User",
     "UserSession",
     "Website",
+    "Workspace",
 ]

@@ -99,7 +99,7 @@ def test_update_and_move_website(client, acme, db):
     assert (body["client_name"], body["url"], body["name"], body["status"]) == (
         "B", "https://example.com/new", "Main site", "paused")
     entry = db.scalar(select(AuditLog).where(AuditLog.action == "website.update"))
-    assert entry.meta["client"] == {"from": "A", "to": "B"}
+    assert entry.meta["workspace"] == {"from": "A", "to": "B"}
 
 
 def test_list_websites_filters(client, acme, db):

@@ -45,7 +45,8 @@ def register(body: RegisterIn, request: Request, response: Response, db: DB) -> 
     hit("register", ip or "unknown", get_settings().rate_limit_register)
     user, _ = service.register(db, email=body.email, password=body.password,
                                full_name=body.full_name,
-                               organization_name=body.organization_name, ip=ip)
+                               organization_name=body.organization_name,
+                               account_type=body.account_type, ip=ip)
     token = service.create_session(db, user, ip, user_agent(request))
     db.commit()
     set_session_cookie(response, token)

@@ -16,6 +16,7 @@ class OrganizationOut(BaseModel):
     name: str
     slug: str
     status: str
+    kind: Literal["business", "agency"]
     created_at: datetime
 
 

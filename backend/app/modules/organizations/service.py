@@ -9,6 +9,7 @@ from app.modules.organizations.models import Organization, OrganizationMember
 from app.modules.rbac.catalogue import OWNER
 from app.modules.rbac.service import create_default_roles
 from app.modules.users.models import User
+from app.modules.workspaces.service import create_own_workspace
 
 RESERVED_SLUGS = {"admin", "api", "app", "auth", "login", "register", "settings", "new", "o"}
 
@@ -27,10 +28,13 @@ def unique_slug(db: Session, name: str) -> str:
     return candidate
 
 
-def create_organization(db: Session, name: str, owner: User) -> Organization:
-    org = Organization(name=name.strip(), slug=unique_slug(db, name))
+def create_organization(db: Session, name: str, owner: User, *,
+                        kind: str = "agency") -> Organization:
+    """An organization with its default roles, its owner and its own workspace."""
+    org = Organization(name=name.strip(), slug=unique_slug(db, name), kind=kind)
     db.add(org)
     db.flush()
+    create_own_workspace(db, org)
     roles = create_default_roles(db, org.id)
     db.add(OrganizationMember(organization_id=org.id, user_id=owner.id, role_id=roles[OWNER].id))
     db.flush()

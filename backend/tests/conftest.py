@@ -99,11 +99,12 @@ PASSWORD = "correct horse battery"
 
 
 def register(client: TestClient, email: str = "owner@agency.example.com", *,
-             org: str = "Acme Agency",
+             org: str = "Acme Agency", account_type: str | None = None,
              name: str = "Olive Owner", password: str = PASSWORD):
-    res = client.post("/api/v1/auth/register", json={
-        "email": email, "password": password, "full_name": name, "organization_name": org,
-    })
+    body = {"email": email, "password": password, "full_name": name, "organization_name": org}
+    if account_type:
+        body["account_type"] = account_type
+    res = client.post("/api/v1/auth/register", json=body)
     assert res.status_code == 201, res.text
     return res.json()
 
@@ -149,10 +150,13 @@ def seed_client(db, org_slug: str, name: str = "Client Co"):
     from sqlalchemy import select as _select
 
     from app.models import Client, Organization
+    from app.modules.workspaces.service import create_client_workspace
 
     org = db.scalar(_select(Organization).where(Organization.slug == org_slug))
     client = Client(organization_id=org.id, name=name)
     db.add(client)
+    db.flush()
+    create_client_workspace(db, client)
     db.commit()
     return client
 

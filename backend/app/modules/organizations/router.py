@@ -18,6 +18,7 @@ from app.modules.organizations.schemas import (
     OrganizationDetailOut,
     OrganizationUpdateIn,
 )
+from app.modules.workspaces.service import rename_for
 from app.tenancy.context import OrgContext, get_org_context, require
 
 router = APIRouter(tags=["organizations"])
@@ -35,7 +36,7 @@ def my_organizations(user: CurrentUser, db: DB) -> list[dict]:
 def _detail(ctx: OrgContext) -> OrganizationDetailOut:
     return OrganizationDetailOut(
         id=ctx.org.id, name=ctx.org.name, slug=ctx.org.slug, status=ctx.org.status,
-        created_at=ctx.org.created_at, your_role=ctx.role.name,
+        kind=ctx.org.kind, created_at=ctx.org.created_at, your_role=ctx.role.name,
         your_permissions=sorted(ctx.permissions),
     )
 
@@ -54,6 +55,7 @@ def update_organization(body: OrganizationUpdateIn, request: Request, db: DB,
                meta={"name": {"from": ctx.org.name, "to": body.name}}, ip=client_ip(request))
         ctx.org.name = body.name
         db.add(ctx.org)
+        rename_for(db, org=ctx.org)
         db.commit()
     return _detail(ctx)
 

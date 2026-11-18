@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
-from app.core.errors import Conflict, NotFound
+from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.pagination import PageParams, apply_sort, like_pattern, paginate
 from app.modules.audit.service import record
 from app.modules.clients.models import Client, ClientUser
@@ -13,6 +13,7 @@ from app.modules.rbac.catalogue import CLIENT
 from app.modules.rbac.models import Role
 from app.modules.users.models import User
 from app.modules.websites.models import Website
+from app.modules.workspaces.service import create_client_workspace, rename_for
 from app.tenancy.context import OrgContext
 from app.tenancy.scoped import client_visibility, get_scoped, get_visible
 
@@ -64,10 +65,16 @@ def list_clients(db: Session, ctx: OrgContext, params: PageParams, *, q: str | N
     return _many_out(db, ctx, [c for (c,) in rows]), total
 
 
+BUSINESS_HAS_NO_CLIENTS = "Business accounts don't have clients."
+
+
 def create_client(db: Session, ctx: OrgContext, data: dict, ip: str | None) -> ClientOut:
+    if ctx.org.kind != "agency":
+        raise Forbidden(BUSINESS_HAS_NO_CLIENTS, code="business_account")
     client = Client(organization_id=ctx.org.id, **data)
     db.add(client)
     db.flush()
+    create_client_workspace(db, client)
     record(db, "client.create", actor_user_id=ctx.user.id, organization_id=ctx.org.id,
            target_type="client", target_id=client.id, meta={"name": client.name}, ip=ip)
     db.commit()
@@ -80,6 +87,8 @@ def update_client(db: Session, ctx: OrgContext, client_id: uuid.UUID, data: dict
     changed = sorted(k for k, v in data.items() if getattr(client, k) != v)
     for key in changed:
         setattr(client, key, data[key])
+    if "name" in changed:
+        rename_for(db, client=client)
     if changed:
         meta: dict = {"name": client.name, "fields": changed}
         if "status" in changed:
@@ -99,7 +108,8 @@ def delete_client(db: Session, ctx: OrgContext, client_id: uuid.UUID, ip: str | 
     record(db, "client.delete", actor_user_id=ctx.user.id, organization_id=ctx.org.id,
            target_type="client", target_id=client.id, meta={"name": client.name, **counts},
            ip=ip)
-    db.delete(client)  # websites, portal links and client invitations cascade in the database
+    # Its workspace, websites, portal links and client invitations cascade in the database.
+    db.delete(client)
     db.commit()
 
 
