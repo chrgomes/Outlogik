@@ -4,7 +4,7 @@ import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import { apiProblem } from '../../core/api-errors';
-import { Invitation, Member, Page } from '../../core/api.types';
+import { Invitation, Member, Page, WorkspaceRef } from '../../core/api.types';
 import { CurrentOrgService } from '../../core/current-org.service';
 import { OrgApi, queryParams } from '../../core/org-api.service';
 import { DialogService } from '../../shared/dialog/dialog';
@@ -15,6 +15,7 @@ import { Can, Pager, Search, Status } from '../../shared/table/table-parts';
 import { ToastService } from '../../shared/toast/toast';
 import { ChangeRoleDialog } from './change-role-dialog';
 import { InviteDialog } from './invite-dialog';
+import { MemberWorkspacesDialog } from './member-workspaces-dialog';
 
 const PAGE_SIZE = 25;
 
@@ -59,7 +60,12 @@ const PAGE_SIZE = 25;
                     @if (m.is_you) { <span class="badge rounded-pill you">You</span> }
                     <span class="d-block small text-muted">{{ m.email }}</span>
                   </td>
-                  <td>{{ m.role.name }}</td>
+                  <td>
+                    {{ m.role.name }}
+                    @if (m.role.workspace_scope === 'assigned') {
+                      <span class="d-block small text-muted">Assigned workspaces only</span>
+                    }
+                  </td>
                   <td><ol-status [value]="m.status" /></td>
                   <td class="text-muted text-nowrap">{{ m.joined_at | date: 'mediumDate' }}</td>
                   <td class="text-end">
@@ -72,6 +78,9 @@ const PAGE_SIZE = 25;
                         <div class="ol-menu" cdkMenu>
                           @if (org.can('members.update')) {
                             <button type="button" class="ol-menu-item" cdkMenuItem (cdkMenuItemTriggered)="changeRole(m)">Change role…</button>
+                            @if (m.role.workspace_scope === 'assigned') {
+                              <button type="button" class="ol-menu-item" cdkMenuItem (cdkMenuItemTriggered)="chooseWorkspaces(m)">Choose workspaces…</button>
+                            }
                             <button type="button" class="ol-menu-item" cdkMenuItem (cdkMenuItemTriggered)="toggleStatus(m)">
                               {{ m.status === 'active' ? 'Disable access' : 'Restore access' }}
                             </button>
@@ -174,6 +183,14 @@ export class Team {
     if (updated) {
       this.members.reload();
       this.toast.success(`${m.full_name} is now ${updated.role.name}.`);
+    }
+  }
+
+  protected async chooseWorkspaces(m: Member): Promise<void> {
+    const saved = await this.dialogs.open<WorkspaceRef[]>(MemberWorkspacesDialog, m);
+    if (saved) {
+      this.toast.success(saved.length === 1 ? `${m.full_name} now sees 1 workspace.`
+        : `${m.full_name} now sees ${saved.length} workspaces.`);
     }
   }
 

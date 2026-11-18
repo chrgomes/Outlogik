@@ -10,7 +10,7 @@ import { WebsitesList } from './websites-list';
 
 const own: Workspace = {
   id: 'w-own', kind: 'own', name: 'Acme', client_id: null, client_status: null, website_count: 1,
-  created_at: '2026-11-18T00:00:00Z',
+  created_at: '2026-11-18T00:00:00Z', linked: false, organization_name: null, access: null,
 };
 const bakery: Workspace = { ...own, id: 'w-1', kind: 'client', name: 'Bakery', client_id: 'c1',
   client_status: 'active' };

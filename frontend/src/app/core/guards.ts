@@ -72,3 +72,9 @@ export const agencyGuard: CanActivateFn = () => {
   const org = inject(CurrentOrgService);
   return org.isAgency() || inject(Router).createUrlTree(['/o', org.slug(), 'dashboard']);
 };
+
+/** Business-only pages (agency access): an agency goes to its dashboard instead. */
+export const businessGuard: CanActivateFn = () => {
+  const org = inject(CurrentOrgService);
+  return !org.isAgency() || inject(Router).createUrlTree(['/o', org.slug(), 'dashboard']);
+};

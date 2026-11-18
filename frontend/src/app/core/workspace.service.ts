@@ -23,11 +23,15 @@ export class WorkspaceService {
     return this.org.area() === 'org' && slug ? `/api/v1/orgs/${slug}/workspaces` : undefined;
   });
   private readonly workspaces = computed(() => (this.list.hasValue() ? this.list.value() : []));
-  /** The own workspace first, then clients' (the API's order). */
-  readonly own = computed(() => this.workspaces().find((w) => w.kind === 'own') ?? null);
-  readonly clients = computed(() => this.workspaces().filter((w) => w.kind === 'client'));
+  /** The organization's own workspace, its clients', and businesses' shared with it. */
+  readonly own = computed(() => this.workspaces().find((w) => w.kind === 'own' && !w.linked) ?? null);
+  readonly clients = computed(() => this.workspaces().filter((w) => w.kind === 'client' && !w.linked));
+  readonly linked = computed(() => this.workspaces().filter((w) => w.linked));
 
   private readonly selectedId = linkedSignal(() => prefs.get(KEY + this.org.slug()));
+
+  /** Changes aren't allowed in the selected workspace (shared with view-only access). */
+  readonly readOnly = computed(() => this.current()?.access === 'view');
 
   /** The selected workspace, or null for all of them (agencies only). */
   readonly current = computed<Workspace | null>(() => {

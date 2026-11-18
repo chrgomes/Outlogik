@@ -16,7 +16,8 @@ import { ToastService } from '../../shared/toast/toast';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, PageHeader, FieldError],
   template: `
-    <ol-page-header title="Organization" description="Your agency's workspace in Outlogik." />
+    <ol-page-header title="Organization"
+      [description]="org.isAgency() ? 'Your agency’s account in Outlogik.' : 'Your business’s account in Outlogik.'" />
 
     <section class="settings-card">
       <form [formGroup]="form" (ngSubmit)="save()" novalidate>

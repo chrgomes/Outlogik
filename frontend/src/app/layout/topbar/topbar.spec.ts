@@ -50,7 +50,8 @@ describe('Topbar', () => {
   describe('workspace switcher', () => {
     const ws = (over: Partial<Workspace>): Workspace => ({
       id: 'w-own', kind: 'own', name: 'Globex', client_id: null, client_status: null,
-      website_count: 0, created_at: '2026-11-18T00:00:00Z', ...over,
+      website_count: 0, created_at: '2026-11-18T00:00:00Z', linked: false,
+      organization_name: null, access: null, ...over,
     });
 
     async function render(kind: 'agency' | 'business', list: Workspace[]) {

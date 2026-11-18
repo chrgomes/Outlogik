@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import {
+  AccessGrant,
   Client,
   ClientUser,
   Invitation,
@@ -10,6 +11,7 @@ import {
   OrganizationDetail,
   Role,
   Website,
+  WorkspaceRef,
 } from './api.types';
 import { CurrentOrgService } from './current-org.service';
 import { WorkspaceService } from './workspace.service';
@@ -40,7 +42,7 @@ export class OrgApi {
     return `/api/v1/orgs/${this.org.slug()}${path ? '/' + path : ''}`;
   }
 
-  private async send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
+  private async send<T>(method: 'POST' | 'PATCH' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T> {
     const result = await firstValueFrom(this.http.request<T>(method, this.url(path), { body: body ?? {} }));
     if (CHANGES_WORKSPACES.test(path)) this.workspaces.list.reload();
     return result;
@@ -87,6 +89,23 @@ export class OrgApi {
     return this.send<void>('DELETE', `websites/${id}`);
   }
 
+  // Workspace assignments (members whose role is limited to assigned workspaces)
+  setMemberWorkspaces(memberId: string, workspaceIds: string[]) {
+    return this.send<WorkspaceRef[]>('PUT', `members/${memberId}/workspaces`, { workspace_ids: workspaceIds });
+  }
+
+  // Access grants: a business shares its workspace with an agency
+  createGrant(body: { email: string; access: 'manage' | 'view' }) {
+    return this.send<AccessGrant>('POST', 'access-grants', body);
+  }
+  revokeGrant(id: string) {
+    return this.send<void>('DELETE', `access-grants/${id}`);
+  }
+  /** An agency ends its access to a business's workspace. */
+  disconnectWorkspace(workspaceId: string) {
+    return this.send<void>('DELETE', `workspaces/${workspaceId}/access`);
+  }
+
   // Members and invitations
   updateMember(id: string, body: { role_id?: string; status?: string }) {
     return this.send<Member>('PATCH', `members/${id}`, body);
@@ -105,10 +124,10 @@ export class OrgApi {
   }
 
   // Roles
-  createRole(body: { name: string; description?: string | null; permissions: string[] }) {
+  createRole(body: { name: string; description?: string | null; permissions: string[]; workspace_scope?: string }) {
     return this.send<Role>('POST', 'roles', body);
   }
-  updateRole(id: string, body: { name?: string; description?: string | null; permissions?: string[] }) {
+  updateRole(id: string, body: { name?: string; description?: string | null; permissions?: string[]; workspace_scope?: string }) {
     return this.send<Role>('PATCH', `roles/${id}`, body);
   }
   deleteRole(id: string) {

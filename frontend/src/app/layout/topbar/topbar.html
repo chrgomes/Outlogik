@@ -118,6 +118,23 @@
           </button>
         }
       }
+      @if (ws.linked().length) {
+        <div class="ol-menu-divider" role="separator"></div>
+        <div class="ol-menu-label">Linked businesses</div>
+        @for (w of ws.linked(); track w.id) {
+          <button type="button" class="ol-menu-item" cdkMenuItemRadio
+            [cdkMenuItemChecked]="ws.current()?.id === w.id" (cdkMenuItemTriggered)="ws.select(w.id)">
+            <ol-icon name="link-45deg" />
+            <span class="flex-grow-1 text-truncate">
+              {{ w.organization_name }}
+              @if (w.access === 'view') {<small class="text-muted"> · view only</small>}
+            </span>
+            @if (ws.current()?.id === w.id) {
+              <ol-icon name="check2" class="ol-menu-check" />
+            }
+          </button>
+        }
+      }
     </div>
   </ng-template>
 }

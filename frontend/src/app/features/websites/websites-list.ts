@@ -28,10 +28,17 @@ const PAGE_SIZE = 25;
     ErrorState, LoadingState, Pager, Search, Status, Can, Icon],
   template: `
     <ol-page-header title="Websites" [description]="description()">
-      <button *olCan="'websites.write'" actions type="button" class="btn btn-primary" (click)="add()">
-        <ol-icon name="plus-lg" /> Add website
-      </button>
+      @if (canWrite()) {
+        <button *olCan="'websites.write'" actions type="button" class="btn btn-primary" (click)="add()">
+          <ol-icon name="plus-lg" /> Add website
+        </button>
+      }
     </ol-page-header>
+    @if (ws.readOnly()) {
+      <div class="alert alert-secondary" role="status">
+        {{ ws.current()?.organization_name }} gave your agency view-only access, so you can look but not make changes.
+      </div>
+    }
 
     <div class="ol-toolbar">
       <ol-search placeholder="Search by name or domain" [value]="q()" (search)="q.set($event); page.set(1)" />
@@ -53,9 +60,11 @@ const PAGE_SIZE = 25;
           <ol-empty-state icon="search" title="No matching websites" message="Try a different search or filter." />
         } @else {
           <ol-empty-state icon="globe2" title="No websites yet" [message]="emptyMessage()">
-            <button *olCan="'websites.write'" type="button" class="btn btn-primary" (click)="add()">
-              <ol-icon name="plus-lg" /> Add a website
-            </button>
+            @if (canWrite()) {
+              <button *olCan="'websites.write'" type="button" class="btn btn-primary" (click)="add()">
+                <ol-icon name="plus-lg" /> Add a website
+              </button>
+            }
           </ol-empty-state>
         }
       } @else {
@@ -78,14 +87,18 @@ const PAGE_SIZE = 25;
                         <a class="row-link" [routerLink]="['/o', org.slug(), 'clients', w.client_id]">{{ w.workspace_name }}</a>
                       } @else {
                         {{ w.workspace_name }}
-                        @if (!w.client_id) {<small class="d-block text-muted">Your own marketing</small>}
+                        @if (isLinked(w.workspace_id)) {
+                          <small class="d-block text-muted">Linked business</small>
+                        } @else if (!w.client_id) {
+                          <small class="d-block text-muted">Your own marketing</small>
+                        }
                       }
                     </td>
                   }
                   <td><ol-status [value]="w.status" /></td>
                   <td class="text-muted text-nowrap">{{ w.created_at | date: 'mediumDate' }}</td>
                   <td class="text-end">
-                    @if (org.can('websites.write') || org.can('websites.delete')) {
+                    @if ((org.can('websites.write') || org.can('websites.delete')) && !viewOnly(w.workspace_id)) {
                       <button type="button" class="icon-action" [cdkMenuTriggerFor]="menu"
                         [attr.aria-label]="'Actions for ' + w.name">
                         <ol-icon name="three-dots" />
@@ -140,8 +153,19 @@ export class WebsitesList {
     const w = this.ws.current();
     if (!this.org.isAgency()) return 'Your websites, in one place.';
     if (!w) return 'Every website across your workspaces.';
+    if (w.linked) return `${w.organization_name}'s websites, shared with your agency.`;
     return w.kind === 'own' ? 'Websites for your own marketing.' : `${w.name}'s websites.`;
   });
+  /** Adding is allowed unless the selected workspace is shared view-only. */
+  protected readonly canWrite = computed(() => !this.ws.readOnly());
+  private readonly accessById = computed(
+    () => new Map(this.ws.linked().map((w) => [w.id, w.access] as const)));
+  protected isLinked(workspaceId: string): boolean {
+    return this.accessById().has(workspaceId);
+  }
+  protected viewOnly(workspaceId: string): boolean {
+    return this.accessById().get(workspaceId) === 'view';
+  }
   protected readonly emptyMessage = computed(() => {
     const w = this.ws.current();
     if (!this.org.isAgency() || w?.kind === 'own') return 'Add your websites to track them.';

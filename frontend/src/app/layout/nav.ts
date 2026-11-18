@@ -6,8 +6,9 @@ export interface NavItem {
   /** Path below /o/:orgSlug */
   path: string;
   permission: string;
-  /** Shown to agencies only (businesses have no clients). */
+  /** Shown to one account type only (businesses have no clients; agencies share nothing). */
   agencyOnly?: boolean;
+  businessOnly?: boolean;
 }
 
 export interface NavSection {
@@ -32,6 +33,10 @@ export const NAV: NavSection[] = [
         permission: 'organization.read' },
       { label: 'Team', icon: 'people', path: 'settings/members', permission: 'members.read' },
       { label: 'Roles', icon: 'shield-lock', path: 'settings/roles', permission: 'roles.read' },
+      { label: 'Agency access', icon: 'people', path: 'settings/agency-access',
+        permission: 'access_grants.manage', businessOnly: true },
+      { label: 'Linked businesses', icon: 'link-45deg', path: 'settings/linked-businesses',
+        permission: 'linked_accounts.manage', agencyOnly: true },
     ],
   },
 ];

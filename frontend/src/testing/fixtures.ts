@@ -7,6 +7,7 @@ export function membership(over: Partial<Membership> = {}): Membership {
     organization_name: 'Acme',
     organization_status: 'active',
     organization_kind: 'agency',
+    workspace_scope: 'all',
     role_id: 'role-1',
     role_name: 'Owner',
     role_key: 'owner',

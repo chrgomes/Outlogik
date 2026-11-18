@@ -82,6 +82,8 @@ const STATUS_STYLES: Record<string, string> = {
   spam: 'text-bg-danger-subtle', confirmed: 'text-bg-success-subtle',
   unsubscribed: 'text-bg-secondary-subtle', available: 'text-bg-success-subtle',
   in_development: 'text-bg-warning-subtle', hidden: 'text-bg-secondary-subtle',
+  // Agency access grants
+  revoked: 'text-bg-secondary-subtle',
 };
 
 /** A small status label: Active, Archived, Paused, Disabled, Pending, Expired. */

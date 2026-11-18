@@ -47,9 +47,25 @@ describe('Sidebar', () => {
     expect(links).toEqual(['Dashboard', 'Websites']);
   });
 
+  it('shows Agency access to businesses and Linked businesses to agencies', () => {
+    const perms = ['organization.read', 'access_grants.manage', 'linked_accounts.manage'];
+    expect(render(perms, 'business').links).toEqual(['Organization', 'Agency access']);
+  });
+
+  it('shows Linked businesses to agencies', () => {
+    const perms = ['organization.read', 'access_grants.manage', 'linked_accounts.manage'];
+    expect(render(perms, 'agency').links).toEqual(['Organization', 'Linked businesses']);
+  });
+
   it('links point into the current organization', () => {
     const { el } = render(['clients.read']);
     expect(el.querySelector('nav a')!.getAttribute('href')).toBe('/o/acme/clients');
+  });
+
+  it('nested pages get a real path, not an encoded slash', () => {
+    const { el } = render(['members.read', 'roles.read']);
+    const hrefs = [...el.querySelectorAll('nav a')].map((a) => a.getAttribute('href'));
+    expect(hrefs).toEqual(['/o/acme/settings/members', '/o/acme/settings/roles']);
   });
 
   it('collapses to icons with accessible names, and remembers it', () => {

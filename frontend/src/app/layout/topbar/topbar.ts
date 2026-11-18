@@ -42,7 +42,8 @@ export class Topbar {
 
   protected readonly workspaceLabel = computed(() => {
     const w = this.ws.current();
-    if (!w) return `${this.ws.clients().length + 1} workspaces`;
+    if (!w) return `${this.ws.list.value()?.length ?? 0} workspaces`;
+    if (w.linked) return w.access === 'view' ? 'Linked business · view only' : 'Linked business';
     return w.kind === 'own' ? 'Your own marketing' : 'Client';
   });
 

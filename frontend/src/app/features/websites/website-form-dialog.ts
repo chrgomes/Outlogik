@@ -1,5 +1,5 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { apiProblem, applyFieldErrors } from '../../core/api-errors';
@@ -57,6 +57,13 @@ export interface WebsiteFormData {
                 }
               </optgroup>
             }
+            @if (linkedTargets().length) {
+              <optgroup label="Linked businesses">
+                @for (w of linkedTargets(); track w.id) {
+                  <option [value]="w.id">{{ w.organization_name }}</option>
+                }
+              </optgroup>
+            }
           </select>
           <ol-field-error [control]="form.controls.workspace_id" />
         </div>
@@ -87,8 +94,15 @@ export class WebsiteFormDialog {
   protected readonly lockedClient = !this.existing && !!this.data.clientId;
   private readonly api = inject(OrgApi);
   protected readonly ws = inject(WorkspaceService);
-  /** Agencies pick the workspace; a business only has its own. */
-  protected readonly choosesWorkspace = inject(CurrentOrgService).isAgency() && !this.lockedClient;
+  /**
+   * Agencies pick the workspace; a business only has its own. A website in a linked business's
+   * workspace stays there (websites only move within the organization that owns them).
+   */
+  protected readonly choosesWorkspace = inject(CurrentOrgService).isAgency() && !this.lockedClient
+    && !(this.existing && this.ws.linked().some((w) => w.id === this.existing!.workspace_id));
+  /** New websites can go into businesses' workspaces shared with permission to make changes. */
+  protected readonly linkedTargets = computed(
+    () => (this.existing ? [] : this.ws.linked().filter((w) => w.access === 'manage')));
   protected readonly form = inject(NonNullableFormBuilder).group({
     url: [this.existing?.url ?? '', [Validators.required, Validators.maxLength(2048)]],
     name: [this.existing?.name ?? ''],
