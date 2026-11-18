@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import case, false, func, select, true
 from sqlalchemy.orm import Session
 
-from app.core.errors import NotFound
+from app.core.errors import Forbidden, NotFound
 from app.modules.clients.models import Client
 from app.modules.organizations.models import Organization, OrganizationMember
 from app.modules.websites.models import Website
@@ -54,6 +54,15 @@ def rename_for(db: Session, *, org: Organization | None = None,
     ws.name = (org or client).name
 
 
+def reachable(ctx: OrgContext):
+    """WHERE clause: workspaces of this organization, or shared with it, that the caller may
+    see."""
+    belongs = Workspace.organization_id == ctx.org.id
+    if ctx.linked:
+        belongs = belongs | Workspace.id.in_(ctx.linked)
+    return belongs & visibility(ctx)
+
+
 def visibility(ctx: OrgContext):
     """WHERE clause: the workspaces the caller may see. Roles that see every workspace see
     them all; others (Account Manager, Client Viewer, …) only the ones they're assigned."""
@@ -63,36 +72,51 @@ def visibility(ctx: OrgContext):
 
 
 def get_workspace(db: Session, ctx: OrgContext, workspace_id: uuid.UUID) -> Workspace:
-    ws = db.scalar(select(Workspace).where(Workspace.id == workspace_id,
-                                           Workspace.organization_id == ctx.org.id,
-                                           visibility(ctx)))
+    ws = db.scalar(select(Workspace).where(Workspace.id == workspace_id, reachable(ctx)))
     if ws is None:
         raise NotFound(WORKSPACE_NOT_FOUND)
     return ws
 
 
-def _many_out(db: Session, rows: list[tuple[Workspace, str | None]]) -> list[WorkspaceOut]:
+def _many_out(db: Session, ctx: OrgContext,
+              rows: list[tuple[Workspace, str | None]]) -> list[WorkspaceOut]:
     ids = [ws.id for ws, _ in rows]
     counts = dict(db.execute(select(Website.workspace_id, func.count())
                              .where(Website.workspace_id.in_(ids))
                              .group_by(Website.workspace_id)).all()) if ids else {}
+    other_orgs = {ws.organization_id for ws, _ in rows if ws.organization_id != ctx.org.id}
+    org_names = dict(db.execute(select(Organization.id, Organization.name)
+                                .where(Organization.id.in_(other_orgs))).all()) \
+        if other_orgs else {}
     return [WorkspaceOut(id=ws.id, kind=ws.kind, name=ws.name, client_id=ws.client_id,
                          client_status=status, website_count=counts.get(ws.id, 0),
-                         created_at=ws.created_at) for ws, status in rows]
+                         created_at=ws.created_at, linked=ws.id in ctx.linked,
+                         organization_name=org_names.get(ws.organization_id),
+                         access=ctx.linked.get(ws.id)) for ws, status in rows]
 
 
 def list_workspaces(db: Session, ctx: OrgContext) -> list[WorkspaceOut]:
-    """The own workspace first, then client workspaces by name."""
+    """The own workspace first, then clients' and linked businesses', by name."""
+    order = case((Workspace.organization_id != ctx.org.id, 2),
+                 (Workspace.kind == "own", 0), else_=1)
     stmt = (select(Workspace, Client.status).outerjoin(Client, Client.id == Workspace.client_id)
-            .where(Workspace.organization_id == ctx.org.id, visibility(ctx))
-            .order_by(case((Workspace.kind == "own", 0), else_=1), func.lower(Workspace.name)))
-    return _many_out(db, [tuple(r) for r in db.execute(stmt).all()])
+            .where(reachable(ctx)).order_by(order, func.lower(Workspace.name)))
+    return _many_out(db, ctx, [tuple(r) for r in db.execute(stmt).all()])
 
 
-def to_out(db: Session, ws: Workspace) -> WorkspaceOut:
+def to_out(db: Session, ctx: OrgContext, ws: Workspace) -> WorkspaceOut:
     status = db.scalar(select(Client.status).where(Client.id == ws.client_id)) \
         if ws.client_id else None
-    return _many_out(db, [(ws, status)])[0]
+    return _many_out(db, ctx, [(ws, status)])[0]
+
+
+VIEW_ONLY = "This business gave your agency view-only access, so changes aren't allowed."
+
+
+def ensure_writable(ctx: OrgContext, workspace_id: uuid.UUID) -> None:
+    """Refuse changes in a workspace shared with view-only access."""
+    if ctx.linked.get(workspace_id) == "view":
+        raise Forbidden(VIEW_ONLY, code="view_only_access")
 
 
 # --- assignments ----------------------------------------------------------------------------

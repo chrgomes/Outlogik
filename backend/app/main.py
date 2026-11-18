@@ -12,6 +12,9 @@ from app.modules import health
 from app.modules.auth.router import router as auth_router
 from app.modules.clients.router import router as clients_router
 from app.modules.dashboard.router import router as dashboard_router
+from app.modules.grants.router import linked_router as grants_linked_router
+from app.modules.grants.router import open_router as grants_open_router
+from app.modules.grants.router import router as grants_router
 from app.modules.leads.admin import router as leads_admin_router
 from app.modules.leads.router import open_router as leads_open_router
 from app.modules.leads.router import router as leads_router
@@ -61,6 +64,9 @@ def create_app() -> FastAPI:
     api.include_router(websites_router)
     api.include_router(workspaces_router)
     api.include_router(member_workspaces_router)
+    api.include_router(grants_router)
+    api.include_router(grants_linked_router)
+    api.include_router(grants_open_router)
     api.include_router(workspace_websites_router)
     api.include_router(dashboard_router)
     api.include_router(site_public_router)

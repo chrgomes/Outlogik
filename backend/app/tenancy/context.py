@@ -36,6 +36,9 @@ class OrgContext:
     # those workspaces. None = no restriction (the role sees every workspace).
     workspace_ids: set[uuid.UUID] | None = None
     client_ids: set[uuid.UUID] | None = None
+    # Other organizations' workspaces this organization may work in, through an active access
+    # grant: workspace id → "manage" or "view".
+    linked: dict[uuid.UUID, str] = field(default_factory=dict)
 
     @property
     def is_client_user(self) -> bool:
@@ -74,22 +77,27 @@ def get_org_context(
     org, member, role = row
     if org.status != "active":
         raise Forbidden("This organization is suspended.", code="org_suspended")
+    # Imported here: these modules import this one.
+    from app.modules.grants.models import WorkspaceGrant
+    from app.modules.workspaces.models import Workspace, WorkspaceAssignment
+
+    linked = dict(db.execute(
+        select(WorkspaceGrant.workspace_id, WorkspaceGrant.access).where(
+            WorkspaceGrant.agency_organization_id == org.id, WorkspaceGrant.status == "active")
+    ).all())
     workspace_ids = client_ids = None
     if role.workspace_scope == ASSIGNED_WORKSPACES:
-        # Imported here: the workspaces module imports this one.
-        from app.modules.workspaces.models import Workspace, WorkspaceAssignment
-
         rows = db.execute(
             select(Workspace.id, Workspace.client_id)
             .join(WorkspaceAssignment, WorkspaceAssignment.workspace_id == Workspace.id)
             .where(WorkspaceAssignment.member_id == member.id,
-                   Workspace.organization_id == org.id)
+                   (Workspace.organization_id == org.id) | Workspace.id.in_(linked))
         ).all()
         workspace_ids = {ws_id for ws_id, _ in rows}
         client_ids = {client_id for _, client_id in rows if client_id}
     return OrgContext(org=org, member=member, role=role, user=auth.user,
                       permissions=role_permission_codes(db, role.id),
-                      workspace_ids=workspace_ids, client_ids=client_ids)
+                      workspace_ids=workspace_ids, client_ids=client_ids, linked=linked)
 
 
 def require(permission: str) -> Callable[..., OrgContext]:

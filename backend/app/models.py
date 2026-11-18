@@ -4,6 +4,7 @@ from app.core.models import Base
 from app.modules.audit.models import AuditLog
 from app.modules.auth.models import EmailVerificationToken, PasswordResetToken, UserSession
 from app.modules.clients.models import Client, ClientUser
+from app.modules.grants.models import WorkspaceGrant
 from app.modules.leads.models import Lead, LeadNote, NewsletterSubscriber
 from app.modules.organizations.models import Invitation, Organization, OrganizationMember
 from app.modules.rbac.models import Permission, Role, RolePermission
@@ -33,5 +34,6 @@ __all__ = [
     "UserSession",
     "Website",
     "Workspace",
+    "WorkspaceGrant",
     "WorkspaceAssignment",
 ]

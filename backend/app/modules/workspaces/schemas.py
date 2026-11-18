@@ -16,6 +16,10 @@ class WorkspaceOut(BaseModel):
     client_status: str | None
     website_count: int
     created_at: datetime
+    # Set for another organization's workspace, shared through an access grant.
+    linked: bool = False
+    organization_name: str | None = None
+    access: Literal["manage", "view"] | None = None
 
 
 class WorkspaceRef(BaseModel):

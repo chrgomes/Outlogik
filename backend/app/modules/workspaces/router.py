@@ -23,7 +23,7 @@ def list_workspaces(db: DB, ctx: OrgContext = Depends(require("organization.read
 
 @router.get("/{workspace_id}", response_model=WorkspaceOut)
 def get_workspace(db: DB, wctx: WorkspaceContext = Depends(require_workspace("organization.read"))):
-    return service.to_out(db, wctx.workspace)
+    return service.to_out(db, wctx.org, wctx.workspace)
 
 
 @members_router.get("", response_model=list[WorkspaceRef],
