@@ -73,6 +73,10 @@ module, Phase 2 → later H2, Phase 3 → H3.
 brand and an agency monitors each client separately, with the client's competitors and
 queries. Client Viewers see their own workspace's results only.
 
+**Google Business Profile** (decided 2026-11-18): its details (name, address, phone,
+hours, reviews) feed local results and AI answers, so it's part of the business identity
+consistency checks once Google approves API access. See `HYBRID_SAAS_PLAN.md`, H2.
+
 **Paid keyword research** (search volumes) stays out, as before: question-style queries
 come from the site's own Search Console data instead.
 

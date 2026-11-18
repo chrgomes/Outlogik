@@ -294,6 +294,12 @@ it's done. The proposed order, to be adjusted to what beta customers ask for:
    inside Outlogik rather than in their existing email tool.
 
 Within the existing modules, in H2:
+- **Google Business Profile** (decided 2026-11-18) belongs with **SEO and AI Search**, not
+  social media. Posting to it adds little, but the profile itself drives local search and
+  feeds AI answers. Planned: profile completeness and consistency checks (name, address,
+  phone, hours matching the website), reviews with reply reminders, and basic insights
+  (views, calls, direction requests). Needs Google's Business Profile API access, which must
+  be requested and approved first.
 - **AI explanations and summaries,** with usage and cost limits (§6.9), added inside SEO,
   Analytics and Reports
 - **Competitor comparisons** in SEO, clearly labelled as estimated or verified
