@@ -12,6 +12,10 @@ import {
   Website,
 } from './api.types';
 import { CurrentOrgService } from './current-org.service';
+import { WorkspaceService } from './workspace.service';
+
+/** Writes that change workspace names or website counts, so the switcher reloads. */
+const CHANGES_WORKSPACES = /^(|clients(\/[^/]+)?|websites(\/.+)?|workspaces\/.+)$/;
 
 /** Drops empty values so they aren't sent as query parameters. */
 export function queryParams(values: Record<string, string | number | null | undefined>): HttpParams {
@@ -30,13 +34,16 @@ export function queryParams(values: Record<string, string | number | null | unde
 export class OrgApi {
   private readonly http = inject(HttpClient);
   private readonly org = inject(CurrentOrgService);
+  private readonly workspaces = inject(WorkspaceService);
 
   url(path = ''): string {
     return `/api/v1/orgs/${this.org.slug()}${path ? '/' + path : ''}`;
   }
 
-  private send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
-    return firstValueFrom(this.http.request<T>(method, this.url(path), { body: body ?? {} }));
+  private async send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
+    const result = await firstValueFrom(this.http.request<T>(method, this.url(path), { body: body ?? {} }));
+    if (CHANGES_WORKSPACES.test(path)) this.workspaces.list.reload();
+    return result;
   }
 
   // Organization
@@ -65,7 +72,12 @@ export class OrgApi {
   }
 
   // Websites
-  createWebsite(body: { client_id: string; url: string; name?: string | null }) {
+  /** Into a workspace. */
+  createWebsite(workspaceId: string, body: { url: string; name?: string | null }) {
+    return this.send<Website>('POST', `workspaces/${workspaceId}/websites`, body);
+  }
+  /** Into a client's workspace, or without client_id the organization's own workspace. */
+  createWebsiteFor(body: { client_id?: string; url: string; name?: string | null }) {
     return this.send<Website>('POST', 'websites', body);
   }
   updateWebsite(id: string, body: Partial<Website>) {

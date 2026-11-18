@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 
 import { NoAccess, NoOrganization, NotFound } from './features/system/system-pages';
 import {
-  authGuard, guestGuard, homeRedirect, orgGuard, permissionGuard, siteAdminGuard,
+  agencyGuard, authGuard, guestGuard, homeRedirect, orgGuard, permissionGuard, siteAdminGuard,
 } from './core/guards';
 import { CenteredLayout } from './layout/centered/centered';
 import { Shell } from './layout/shell/shell';
@@ -71,14 +71,14 @@ export const routes: Routes = [
       },
       {
         path: 'clients',
-        canActivate: [permissionGuard],
+        canActivate: [agencyGuard, permissionGuard],
         data: { permission: 'clients.read' },
         title: 'Clients · Outlogik',
         loadComponent: () => import('./features/clients/clients-list').then((m) => m.ClientsList),
       },
       {
         path: 'clients/:clientId',
-        canActivate: [permissionGuard],
+        canActivate: [agencyGuard, permissionGuard],
         data: { permission: 'clients.read' },
         title: 'Client · Outlogik',
         loadComponent: () => import('./features/clients/client-detail').then((m) => m.ClientDetail),

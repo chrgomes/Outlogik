@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { apiProblem, applyFieldErrors } from '../../core/api-errors';
+import { AccountType } from '../../core/api.types';
 import { AuthService } from '../../core/auth.service';
 import { SignupStatus } from '../../core/signup-status';
 import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
@@ -28,14 +30,25 @@ import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
     }
 
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <fieldset class="mb-3">
+        <legend class="form-label fs-6 mb-2">Who is the account for?</legend>
+        @for (t of accountTypes; track t.value) {
+          <div class="form-check account-type">
+            <input class="form-check-input" type="radio" formControlName="account_type"
+              [id]="'type-' + t.value" [value]="t.value" [attr.aria-describedby]="'type-' + t.value + '-hint'" />
+            <label class="form-check-label fw-medium" [for]="'type-' + t.value">{{ t.label }}</label>
+            <div class="form-text mt-0" [id]="'type-' + t.value + '-hint'">{{ t.hint }}</div>
+          </div>
+        }
+      </fieldset>
       <div class="mb-3">
         <label for="full_name" class="form-label">Your name</label>
         <input id="full_name" class="form-control" formControlName="full_name" autocomplete="name"
-          [class.is-invalid]="invalid('full_name')" autofocus />
+          [class.is-invalid]="invalid('full_name')" />
         <ol-field-error [control]="form.controls.full_name" />
       </div>
       <div class="mb-3">
-        <label for="organization_name" class="form-label">Agency name</label>
+        <label for="organization_name" class="form-label">{{ isAgency() ? 'Agency name' : 'Business name' }}</label>
         <input id="organization_name" class="form-control" formControlName="organization_name"
           autocomplete="organization" [class.is-invalid]="invalid('organization_name')" />
         <ol-field-error [control]="form.controls.organization_name" />
@@ -67,17 +80,26 @@ import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
     </p>
     }
   `,
+  styles: `.account-type { margin-bottom: 0.5rem; }`,
 })
 export class Register {
   private readonly auth = inject(AuthService);
   protected readonly signup = inject(SignupStatus);
   private readonly router = inject(Router);
+  protected readonly accountTypes = [
+    { value: 'business', label: 'My business', hint: 'Market your own business.' },
+    { value: 'agency', label: 'An agency', hint: 'Also manage marketing for your clients, each in its own workspace.' },
+  ] as const;
   protected readonly form = inject(NonNullableFormBuilder).group({
+    account_type: ['business' as AccountType, Validators.required],
     full_name: ['', [Validators.required, Validators.maxLength(200)]],
     organization_name: ['', [Validators.required, Validators.maxLength(200)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128)]],
   });
+  private readonly accountType = toSignal(this.form.controls.account_type.valueChanges,
+    { initialValue: this.form.controls.account_type.value });
+  protected readonly isAgency = computed(() => this.accountType() === 'agency');
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly emailTaken = signal(false);

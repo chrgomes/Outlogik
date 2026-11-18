@@ -11,11 +11,15 @@ export interface User {
   created_at: string;
 }
 
+/** business: markets itself (one workspace, no clients). agency: also works for clients. */
+export type AccountType = 'business' | 'agency';
+
 export interface Membership {
   organization_id: string;
   organization_slug: string;
   organization_name: string;
   organization_status: string;
+  organization_kind: AccountType;
   role_id: string;
   role_name: string;
   /** Built-in role key ('owner', 'admin', 'member', 'client'), or null for custom roles. */
@@ -70,10 +74,26 @@ export interface ClientUser {
   linked_at: string;
 }
 
+/**
+ * Where marketing data lives: the organization's own workspace, or one per agency client.
+ */
+export interface Workspace {
+  id: string;
+  kind: 'own' | 'client';
+  name: string;
+  client_id: string | null;
+  client_status: 'active' | 'archived' | null;
+  website_count: number;
+  created_at: string;
+}
+
 export interface Website {
   id: string;
-  client_id: string;
-  client_name: string;
+  workspace_id: string;
+  workspace_name: string;
+  /** Null for websites in the organization's own workspace. */
+  client_id: string | null;
+  client_name: string | null;
   name: string;
   url: string;
   domain: string;
@@ -133,6 +153,7 @@ export interface OrganizationDetail {
   name: string;
   slug: string;
   status: string;
+  kind: AccountType;
   created_at: string;
   your_role: string;
   your_permissions: string[];

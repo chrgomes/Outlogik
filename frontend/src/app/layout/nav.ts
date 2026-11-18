@@ -6,6 +6,8 @@ export interface NavItem {
   /** Path below /o/:orgSlug */
   path: string;
   permission: string;
+  /** Shown to agencies only (businesses have no clients). */
+  agencyOnly?: boolean;
 }
 
 export interface NavSection {
@@ -18,7 +20,8 @@ export const NAV: NavSection[] = [
   {
     items: [
       { label: 'Dashboard', icon: 'grid-1x2', path: 'dashboard', permission: 'dashboard.read' },
-      { label: 'Clients', icon: 'briefcase', path: 'clients', permission: 'clients.read' },
+      { label: 'Clients', icon: 'briefcase', path: 'clients', permission: 'clients.read',
+        agencyOnly: true },
       { label: 'Websites', icon: 'globe2', path: 'websites', permission: 'websites.read' },
     ],
   },

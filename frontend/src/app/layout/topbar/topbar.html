@@ -67,6 +67,61 @@
   </div>
 </ng-template>
 
+<!-- Workspace switcher: agencies move between their own marketing and their clients' -->
+@if (org.area() === 'org' && ws.canSwitch()) {
+  <span class="switcher-sep" aria-hidden="true">/</span>
+  <button type="button" class="org-switcher ws-switcher" [cdkMenuTriggerFor]="wsMenu">
+    <span class="visually-hidden">Switch workspace:</span>
+    <span class="org-text">
+      <span class="org-name">{{ ws.current()?.name ?? 'All workspaces' }}</span>
+      <span class="org-role">{{ workspaceLabel() }}</span>
+    </span>
+    <ol-icon name="chevron-expand" class="text-muted" />
+  </button>
+
+  <ng-template #wsMenu>
+    <div class="ol-menu ws-menu" cdkMenu>
+      <button type="button" class="ol-menu-item" cdkMenuItemRadio
+        [cdkMenuItemChecked]="ws.current() === null" (cdkMenuItemTriggered)="ws.select(null)">
+        <ol-icon name="grid-1x2" />
+        <span class="flex-grow-1">All workspaces</span>
+        @if (ws.current() === null) {
+          <ol-icon name="check2" class="ol-menu-check" />
+        }
+      </button>
+      @if (ws.own(); as own) {
+        <div class="ol-menu-divider" role="separator"></div>
+        <div class="ol-menu-label">Your own marketing</div>
+        <button type="button" class="ol-menu-item" cdkMenuItemRadio
+          [cdkMenuItemChecked]="ws.current()?.id === own.id" (cdkMenuItemTriggered)="ws.select(own.id)">
+          <ol-icon name="building" />
+          <span class="flex-grow-1 text-truncate">{{ own.name }}</span>
+          @if (ws.current()?.id === own.id) {
+            <ol-icon name="check2" class="ol-menu-check" />
+          }
+        </button>
+      }
+      @if (ws.clients().length) {
+        <div class="ol-menu-divider" role="separator"></div>
+        <div class="ol-menu-label">Clients</div>
+        @for (w of ws.clients(); track w.id) {
+          <button type="button" class="ol-menu-item" cdkMenuItemRadio
+            [cdkMenuItemChecked]="ws.current()?.id === w.id" (cdkMenuItemTriggered)="ws.select(w.id)">
+            <ol-icon name="briefcase" />
+            <span class="flex-grow-1 text-truncate">
+              {{ w.name }}
+              @if (w.client_status === 'archived') {<small class="text-muted"> · archived</small>}
+            </span>
+            @if (ws.current()?.id === w.id) {
+              <ol-icon name="check2" class="ol-menu-check" />
+            }
+          </button>
+        }
+      }
+    </div>
+  </ng-template>
+}
+
 <span class="flex-grow-1"></span>
 
 <!-- Theme -->

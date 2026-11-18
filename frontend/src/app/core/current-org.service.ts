@@ -19,6 +19,8 @@ export class CurrentOrgService {
   readonly permissions = computed(() => new Set(this.membership()?.permissions ?? []));
   readonly isOwner = computed(() => this.membership()?.role_key === 'owner');
   readonly isClientUser = computed(() => this.membership()?.role_key === 'client');
+  /** Agencies work for clients; businesses only market themselves (no clients anywhere). */
+  readonly isAgency = computed(() => this.membership()?.organization_kind === 'agency');
 
   /**
    * For showing or hiding UI only. The API enforces every permission itself.

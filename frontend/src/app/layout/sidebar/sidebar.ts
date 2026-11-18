@@ -42,7 +42,8 @@ export class Sidebar {
     }
     return NAV.map((s) => ({
       label: s.label,
-      items: s.items.filter((i) => this.org.permissions().has(i.permission))
+      items: s.items.filter((i) => this.org.permissions().has(i.permission)
+          && (!i.agencyOnly || this.org.isAgency()))
         .map((i) => ({ ...i, link: ['/o', this.org.slug(), i.path] })),
     })).filter((s) => s.items.length > 0);
   });

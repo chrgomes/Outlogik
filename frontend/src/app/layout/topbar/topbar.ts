@@ -6,6 +6,7 @@ import { AuthService } from '../../core/auth.service';
 import { CurrentOrgService } from '../../core/current-org.service';
 import { LayoutService } from '../../core/layout.service';
 import { ThemePreference, ThemeService } from '../../core/theme.service';
+import { WorkspaceService } from '../../core/workspace.service';
 import { Icon } from '@brand/icon/icon';
 import { IconName } from '@brand/icon/icons';
 
@@ -22,6 +23,7 @@ export class Topbar {
   protected readonly org = inject(CurrentOrgService);
   protected readonly layout = inject(LayoutService);
   protected readonly theme = inject(ThemeService);
+  protected readonly ws = inject(WorkspaceService);
   private readonly router = inject(Router);
 
   protected readonly themes: { value: ThemePreference; label: string; icon: IconName }[] = [
@@ -36,6 +38,12 @@ export class Topbar {
     const name = this.auth.user()?.full_name ?? '';
     const parts = name.trim().split(/\s+/).filter(Boolean);
     return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts.at(-1)![0] : '')).toUpperCase();
+  });
+
+  protected readonly workspaceLabel = computed(() => {
+    const w = this.ws.current();
+    if (!w) return `${this.ws.clients().length + 1} workspaces`;
+    return w.kind === 'own' ? 'Your own marketing' : 'Client';
   });
 
   protected switchTo(slug: string): void {

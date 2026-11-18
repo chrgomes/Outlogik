@@ -5,7 +5,7 @@ import { Observable, firstValueFrom } from 'rxjs';
 
 import { FormProof } from '@brand/forms/proof-of-work';
 
-import { InvitePreview, Me } from './api.types';
+import { AccountType, InvitePreview, Me } from './api.types';
 
 const API = '/api/v1/auth';
 
@@ -66,6 +66,7 @@ export class AuthService {
 
   async register(body: {
     email: string; password: string; full_name: string; organization_name: string;
+    account_type: AccountType;
   }): Promise<Me> {
     return this.signedIn(this.http.post<Me>(`${API}/register`, body));
   }

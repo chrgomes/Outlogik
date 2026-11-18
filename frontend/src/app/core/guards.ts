@@ -66,3 +66,9 @@ export const permissionGuard: CanActivateFn = (route) => {
   if (!needed || org.can(needed)) return true;
   return inject(Router).createUrlTree(['/o', org.slug(), 'no-access']);
 };
+
+/** Agency-only pages (clients): a business account goes to its dashboard instead. */
+export const agencyGuard: CanActivateFn = () => {
+  const org = inject(CurrentOrgService);
+  return org.isAgency() || inject(Router).createUrlTree(['/o', org.slug(), 'dashboard']);
+};

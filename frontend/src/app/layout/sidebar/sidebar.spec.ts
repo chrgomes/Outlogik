@@ -13,8 +13,8 @@ describe('Sidebar', () => {
     TestBed.configureTestingModule({ imports: [Sidebar], providers: [provideRouter([])] });
   });
 
-  function render(permissions: string[]) {
-    TestBed.inject(AuthService).me.set(me([membership({ permissions })]));
+  function render(permissions: string[], kind: 'agency' | 'business' = 'agency') {
+    TestBed.inject(AuthService).me.set(me([membership({ permissions, organization_kind: kind })]));
     TestBed.inject(CurrentOrgService).slug.set('acme');
     const fixture = TestBed.createComponent(Sidebar);
     fixture.detectChanges();
@@ -40,6 +40,11 @@ describe('Sidebar', () => {
       'roles.read',
     ]);
     expect(links).toEqual(['Dashboard', 'Clients', 'Websites', 'Organization', 'Team', 'Roles']);
+  });
+
+  it('hides Clients from business accounts', () => {
+    const { links } = render(['dashboard.read', 'clients.read', 'websites.read'], 'business');
+    expect(links).toEqual(['Dashboard', 'Websites']);
   });
 
   it('links point into the current organization', () => {
