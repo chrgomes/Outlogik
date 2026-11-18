@@ -4,8 +4,9 @@
 management platform by the Outlogik owner. Reviewed 2026-11-18 from its latest commit
 (`e702084`), to decide what the H2 social media module can reuse.
 
-**Status:** proposal (decision D2 said "built new"; this suggests porting Sociola instead).
-Waiting for confirmation.
+**Status:** decided 2026-11-18: **Sociola stays a separate product.** It isn't ported into
+Outlogik or linked to it. This review is kept as a record of Sociola's state and as input for
+its own beta (see [`SOCIOLA_BETA_CHECKLIST.md`](SOCIOLA_BETA_CHECKLIST.md)).
 
 ## What Sociola has
 
@@ -57,9 +58,8 @@ Port into Outlogik as the H2 social media module, per workspace:
 - Either way, Sociola's blockers (background worker, encrypted tokens, tenant tests, media
   publishing, platform app reviews) must be fixed before paying customers use it.
 
-The owner is reviewing these options (expected within one to two weeks).
+Decided 2026-11-18: neither. Sociola stays separate.
 
 ## Open questions for the owner
 
 - Have any network apps passed review (Meta, TikTok audit, LinkedIn)? They can be reused.
-- Keep social second in H2 (after AI Search), or move it first?

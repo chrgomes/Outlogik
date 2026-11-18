@@ -87,12 +87,12 @@ Platform
   organization, and custom roles already work.
 - **New role templates by account type:**
   - business: Owner, Administrator, Marketing Manager, Marketing Contributor, Reporting Viewer
-  - agency: Owner, Administrator, Account Manager, SEO Specialist, Social Media Manager,
+  - agency: Owner, Administrator, Account Manager, SEO Specialist,
     Marketing Strategist, Content Creator, Analyst
   - **Client Viewer** is a workspace-level role, which the existing client users become
 - **Workspace scope:** each role either covers **all workspaces** or only **assigned
   workspaces** ("account managers manage assigned clients"). Assignments are a new table.
-- **Permissions get per-module groups** (seo, analytics, social, campaigns, reports and so on),
+- **Permissions get per-module groups** (seo, analytics, campaigns, reports and so on),
   each with read, write and approve where needed.
 - **Platform roles:** `users.platform_role` is extended with *platform admin*, *support admin*
   and *billing admin*. Super admins stay a flag. Existing `site_admin` and `content_editor`
@@ -242,8 +242,8 @@ counts as done only when its backend, storage, permissions, error handling and t
 | H1-12 | **H1 review:** security review, isolation tests, staging deployment for an internal alpha | §21 |
 
 **Not in H1, as the audit found:**
-- The specification's "existing social media module integration" item doesn't apply, because
-  there is no such module (see decision D2).
+- The specification's "existing social media module integration" item doesn't apply: social
+  media management stays a separate product, Sociola (see decision D2).
 - **Keyword tracking** in H1 means the positions Search Console reports for a site's own
   queries. Keyword research and competitor rankings need paid data (H2, optional).
 
@@ -283,15 +283,17 @@ it's done. The proposed order, to be adjusted to what beta customers ask for:
    history, and the AI Visibility page; then competitor AI visibility, AEO recommendations
    and recommendations turned into tasks. Bing's AI citation report joins here or in the
    H1.5 integration center.
-2. **Social media** (built new; see D2): account connections, calendar, drafts, approvals,
-   scheduling, and publishing **only where the platform's API allows it** (§6.3), plus
-   analytics. Facebook and Instagram first, then LinkedIn, then others; X only if paid API
-   access is worth it.
-3. **Campaigns and content:** one place to plan a campaign across channels, with a content
+2. **Campaigns and content:** one place to plan a campaign across channels, with a content
    calendar, briefs and approvals. AI search content briefs and optimization come with it.
-4. **Paid ads (read-only):** Google Ads, Meta Ads, LinkedIn Ads results next to the rest.
-5. **Email marketing:** Listmonk, with CASL consent and unsubscribe. Only if customers want it
+3. **Paid ads (read-only):** Google Ads, Meta Ads, LinkedIn Ads results next to the rest.
+4. **Email marketing:** Listmonk, with CASL consent and unsubscribe. Only if customers want it
    inside Outlogik rather than in their existing email tool.
+
+**Social media management is not part of Outlogik** (decided 2026-11-18, replacing D2).
+It stays a separate product, Sociola, with its own app, accounts and billing (see
+[`SOCIOLA_REVIEW.md`](SOCIOLA_REVIEW.md)). Outlogik builds no social posting, scheduling or
+social analytics, and doesn't connect to Sociola. A link or data exchange can be revisited
+later if customers ask for it.
 
 Within the existing modules, in H2:
 - **Google Business Profile** (decided 2026-11-18) belongs with **SEO and AI Search**, not
@@ -321,7 +323,7 @@ Within the existing modules, in H2:
 | # | Decision | Recommendation |
 |---|---|---|
 | D1 | **Phase names.** Call the specification's phases H1, H1.5, H2, H3. | Yes, to avoid confusion with the finished Phase 1 and 1.5. |
-| D2 | **Social media.** There's no existing module (audit). Where does it go? | **The first H2 module**, built new. Publishing depends on Meta, LinkedIn and others approving the app, which takes weeks, so **apply for those approvals during H1**. |
+| D2 | **Social media.** There's no existing module (audit). Where does it go? | ~~The first H2 module, built new.~~ **Replaced 2026-11-18:** social media management stays a separate product (Sociola). Outlogik doesn't build or connect to it. |
 | D3 | **Docker** (§3: "not a requirement"). Local development already runs without it; deployment uses Dockerfiles that DigitalOcean builds. | **Keep the Dockerfiles** for DigitalOcean (you never need Docker installed). Also document a Docker-free deployment (a plain server, or DigitalOcean's buildpacks) so nothing depends on Docker. |
 | D4 | **The agency website.** It's ready to launch and sells Outlogik as an agency. | **Launch it now.** The agency is the business today, and H1 takes a while. In H1.5 it gains only the **Platform section** and the **pricing page** (section 0). |
 | D5 | **Outlogik's own account.** | Outlogik becomes an **agency tenant** on its own platform, and its clients become client workspaces. You use the product you sell. |
@@ -347,7 +349,7 @@ Within the existing modules, in H2:
 | 9 reports for businesses and agency clients | H1-9 |
 | 10 entitlements enforced in the backend | H1-4 |
 | 11 Super Admin manages organizations, users, subscriptions, configuration | H1-11 (basic), H1.5 (complete) |
-| 12 "existing social media functionality remains operational" | **Not applicable as written:** there's none. Replaced by the social module, the first H2 module (D2). |
+| 12 "existing social media functionality remains operational" | **Not applicable:** social media management is a separate product, Sociola (D2). |
 | 13 reliable integration connections and syncs | H1-7, H1.5 |
 | 14 reliable background jobs | H1-5, H1.5 (monitoring) |
 | 15 cross-tenant tests pass | From H1-3, every step |
