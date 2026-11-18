@@ -79,7 +79,7 @@ describe('Dashboard', () => {
       team: { members: 1, client_users: 0, pending_invitations: 0 } });
     const { el } = await render(ALL, empty);
     const items = [...el.querySelectorAll('.checklist li')].map((li) => li.textContent!.trim());
-    expect(items).toEqual(['Add your first client', 'Add a client website', 'Invite your team']);
+    expect(items).toEqual(['Add your first client', 'Add a website', 'Invite your team']);
   });
 
   it('client-portal users get their counts only, no team or activity', async () => {

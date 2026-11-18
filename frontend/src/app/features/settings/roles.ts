@@ -37,6 +37,9 @@ import { RoleEditorDialog } from './role-editor-dialog';
                 <td>
                   <span class="fw-medium">{{ r.name }}</span>
                   @if (r.is_system) { <span class="badge rounded-pill builtin">Built-in</span> }
+                  @if (r.workspace_scope === 'assigned') {
+                    <span class="badge rounded-pill builtin">Assigned workspaces only</span>
+                  }
                   @if (r.description) { <span class="d-block small text-muted">{{ r.description }}</span> }
                 </td>
                 <td class="text-end tabular-nums">{{ r.member_count }}</td>

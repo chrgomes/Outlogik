@@ -87,6 +87,12 @@
   color: var(--ol-text-muted);
 }
 
+// The muted grey is too faint on the hover background at this size.
+.org-switcher:hover .org-role,
+.org-switcher[aria-expanded='true'] .org-role {
+  color: var(--ol-text);
+}
+
 .avatar-btn {
   padding: 0.25rem;
   border-radius: 50%;
@@ -108,4 +114,26 @@
 .user-card {
   padding: 0.5rem 0.625rem;
   max-width: 18rem;
+}
+
+.switcher-sep {
+  color: var(--ol-text-muted);
+  font-size: 1.25rem;
+  font-weight: 300;
+}
+
+.ws-switcher {
+  padding-left: 0.625rem;
+}
+
+.ws-menu {
+  max-height: min(70vh, 32rem);
+  overflow-y: auto;
+}
+
+@media (max-width: 575.98px) {
+  .switcher-sep,
+  .ws-switcher .org-role {
+    display: none;
+  }
 }

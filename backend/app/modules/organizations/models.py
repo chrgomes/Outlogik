@@ -1,18 +1,23 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, Uuid
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.models import Base, Timestamps, UUIDPrimaryKey
 
+ORGANIZATION_KINDS = ("business", "agency")
+
 
 class Organization(UUIDPrimaryKey, Timestamps, Base):
     __tablename__ = "organizations"
+    __table_args__ = (CheckConstraint("kind IN ('business', 'agency')", name="kind_valid"),)
 
     name: Mapped[str] = mapped_column(String(200))
     slug: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     status: Mapped[str] = mapped_column(String(20), default="active", server_default="active")
+    # business: markets itself (one workspace, no clients). agency: also works for clients.
+    kind: Mapped[str] = mapped_column(String(20), default="agency", server_default="agency")
 
 
 class OrganizationMember(UUIDPrimaryKey, Timestamps, Base):

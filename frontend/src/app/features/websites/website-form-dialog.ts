@@ -1,16 +1,19 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { apiProblem, applyFieldErrors } from '../../core/api-errors';
-import { Client, Page, Website } from '../../core/api.types';
-import { OrgApi, queryParams } from '../../core/org-api.service';
+import { Website } from '../../core/api.types';
+import { CurrentOrgService } from '../../core/current-org.service';
+import { OrgApi } from '../../core/org-api.service';
+import { WorkspaceService } from '../../core/workspace.service';
 import { FieldError, showError } from '../../shared/forms/forms';
 
 export interface WebsiteFormData {
   website?: Website;
-  /** Pre-selects (and locks) the client, e.g. when adding from a client's page. */
+  /** Pre-selects the workspace (agencies choose; a business always uses its own). */
+  workspaceId?: string;
+  /** Locks the new website to this client's workspace, e.g. when adding from a client's page. */
   clientId?: string;
 }
 
@@ -38,17 +41,31 @@ export interface WebsiteFormData {
         <input id="site-name" class="form-control" formControlName="name"
           placeholder="Defaults to the domain" />
       </div>
-      @if (!lockedClient) {
+      @if (choosesWorkspace) {
         <div class="mb-3">
-          <label for="site-client" class="form-label">Client</label>
-          <select id="site-client" class="form-select" formControlName="client_id"
-            [class.is-invalid]="invalid('client_id')">
-            <option value="" disabled>Choose a client</option>
-            @for (c of clients.value()?.items ?? []; track c.id) {
-              <option [value]="c.id">{{ c.name }}</option>
+          <label for="site-workspace" class="form-label">Workspace</label>
+          <select id="site-workspace" class="form-select" formControlName="workspace_id"
+            [class.is-invalid]="invalid('workspace_id')">
+            <option value="" disabled>Choose a workspace</option>
+            @if (ws.own(); as own) {
+              <option [value]="own.id">{{ own.name }} (your own marketing)</option>
+            }
+            @if (ws.clients().length) {
+              <optgroup label="Clients">
+                @for (w of ws.clients(); track w.id) {
+                  <option [value]="w.id">{{ w.name }}</option>
+                }
+              </optgroup>
+            }
+            @if (linkedTargets().length) {
+              <optgroup label="Linked businesses">
+                @for (w of linkedTargets(); track w.id) {
+                  <option [value]="w.id">{{ w.organization_name }}</option>
+                }
+              </optgroup>
             }
           </select>
-          <ol-field-error [control]="form.controls.client_id" />
+          <ol-field-error [control]="form.controls.workspace_id" />
         </div>
       }
       @if (existing) {
@@ -76,20 +93,27 @@ export class WebsiteFormDialog {
   protected readonly existing = this.data.website;
   protected readonly lockedClient = !this.existing && !!this.data.clientId;
   private readonly api = inject(OrgApi);
-  protected readonly clients = httpResource<Page<Client>>(() =>
-    this.lockedClient ? undefined : {
-      url: this.api.url('clients'), params: queryParams({ page_size: 100, sort: 'name' }),
-    });
+  protected readonly ws = inject(WorkspaceService);
+  /**
+   * Agencies pick the workspace; a business only has its own. A website in a linked business's
+   * workspace stays there (websites only move within the organization that owns them).
+   */
+  protected readonly choosesWorkspace = inject(CurrentOrgService).isAgency() && !this.lockedClient
+    && !(this.existing && this.ws.linked().some((w) => w.id === this.existing!.workspace_id));
+  /** New websites can go into businesses' workspaces shared with permission to make changes. */
+  protected readonly linkedTargets = computed(
+    () => (this.existing ? [] : this.ws.linked().filter((w) => w.access === 'manage')));
   protected readonly form = inject(NonNullableFormBuilder).group({
     url: [this.existing?.url ?? '', [Validators.required, Validators.maxLength(2048)]],
     name: [this.existing?.name ?? ''],
-    client_id: [this.existing?.client_id ?? this.data.clientId ?? '', Validators.required],
+    workspace_id: [this.existing?.workspace_id ?? this.data.workspaceId ?? '',
+      this.choosesWorkspace ? Validators.required : []],
     status: [this.existing?.status ?? 'active'],
   });
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  protected invalid(name: 'url' | 'client_id'): boolean {
+  protected invalid(name: 'url' | 'workspace_id'): boolean {
     return showError(this.form.controls[name]);
   }
 
@@ -102,11 +126,18 @@ export class WebsiteFormDialog {
     this.busy.set(true);
     this.error.set(null);
     try {
-      const saved = this.existing
-        ? await this.api.updateWebsite(this.existing.id, {
-            url: v.url, name: v.name || this.existing.domain, client_id: v.client_id,
-            status: v.status as Website['status'] })
-        : await this.api.createWebsite({ client_id: v.client_id, url: v.url, name: v.name || null });
+      const name = v.name || null;
+      let saved: Website;
+      if (this.existing) {
+        saved = await this.api.updateWebsite(this.existing.id, {
+          url: v.url, name: name ?? this.existing.domain, status: v.status as Website['status'],
+          ...(this.choosesWorkspace ? { workspace_id: v.workspace_id } : {}) });
+      } else if (this.choosesWorkspace) {
+        saved = await this.api.createWebsite(v.workspace_id, { url: v.url, name });
+      } else {
+        // A client's page (that client's workspace), or a business (its own workspace).
+        saved = await this.api.createWebsiteFor({ client_id: this.data.clientId, url: v.url, name });
+      }
       this.ref.close(saved);
     } catch (err) {
       const p = apiProblem(err);

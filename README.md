@@ -90,6 +90,12 @@ uv run python -m app.cli create-super-admin --email you@example.com --name "Your
 uv run python -m app.cli grant-staff --email colleague@example.com --role content_editor
 ```
 
+New organizations get a 14-day trial. To give one a plan by hand (until billing exists):
+
+```bash
+uv run python -m app.cli set-plan --org outlogik --plan agency_business
+```
+
 Roles are `content_editor` (website content) and `site_admin` (everything in the admin area).
 Remove access with `revoke-staff --email …`.
 

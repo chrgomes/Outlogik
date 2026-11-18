@@ -29,12 +29,15 @@ schemas, service functions and router.
 | `modules/users` | The `User` model |
 | `modules/organizations` | Organizations, members, invitations |
 | `modules/rbac` | Permission catalogue, built-in roles, custom roles, escalation guard |
+| `modules/workspaces` | Workspaces (an organization's own, and one per agency client), the workspace list API, `require_workspace(...)` for `/orgs/{slug}/workspaces/{id}/…` routes, and member workspace assignments |
+| `modules/plans` | Plans, their limits, subscriptions and trials; `check_limit(...)`, called by the services that add websites, clients and team members |
+| `modules/grants` | Access grants: a business shares its workspace with an agency (send, accept, revoke, disconnect) |
 | `modules/clients`, `modules/websites` | Clients, client-portal access, websites and URL validation |
 | `modules/dashboard` | Dashboard counts and recent activity |
 | `modules/audit` | The append-only audit log |
 | `modules/site` | Marketing site settings and product module statuses (public and admin API) |
 | `platform.py` | Outlogik staff roles (`content_editor`, `site_admin`) and `require_staff(...)` for `/api/v1/admin/...` |
-| `cli.py` | Admin commands (create a Super Admin, grant or revoke staff roles, sync permissions) |
+| `cli.py` | Admin commands (create a Super Admin, create an organization with `--kind business` or `agency`, grant or revoke staff roles, sync permissions) |
 
 Conventions:
 
@@ -50,15 +53,20 @@ Conventions:
 
 ### Checklist: adding an organization endpoint
 
-1. Put it under `/api/v1/orgs/{org_slug}/…` in the module's router.
+1. Put it under `/api/v1/orgs/{org_slug}/…` in the module's router. Marketing data that
+   belongs to a workspace goes under `/api/v1/orgs/{org_slug}/workspaces/{workspace_id}/…`
+   and depends on `require_workspace("<permission>")` instead, which also loads the
+   workspace (404 if the caller can't see it).
 2. Depend on `require("<permission>")`. Add new permissions to `rbac/catalogue.py` and decide
    which built-in roles get them; startup applies the change to every organization.
 3. Load rows with `get_scoped()` / `scoped_select()`, or `get_visible()` plus
-   `client_visibility()` for anything tied to a client, so client-portal users only see their
-   own. Never query tenant tables by ID alone.
+   `client_visibility()` / `workspace_visibility()` for anything tied to a client or workspace,
+   so members limited to assigned workspaces only see theirs. Never query tenant tables by ID
+   alone. A new tenant table also needs a row-level security policy (see migration 0012).
 4. Record an audit entry for any change.
-5. Add tests: behaviour, a cross-organization attempt (must 404 and change nothing), and a
-   client-portal user where relevant. `test_permission_matrix.py` checks the new route's
+5. Add tests: behaviour, and a member limited to assigned workspaces where relevant.
+   `test_cross_tenant.py` attacks every new route with another organization's ids
+   automatically, and fails until it knows each new kind of id. `test_permission_matrix.py` checks the new route's
    permission automatically.
 
 ### API surfaces
@@ -121,17 +129,49 @@ Conventions:
 4. Add unit tests for permission-dependent behaviour, and check it at phone width in both
    themes.
 
-## Data model (Phase 1)
+## Data model
 
 ```
 users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
-       └─ organization_members ─┬─ organizations ─┬─ roles ── role_permissions ── permissions
-                                │                 ├─ invitations
-                                │                 ├─ clients ─┬─ websites
-                                │                 │           └─ client_users ── users
-                                │                 └─ audit_logs
+       └─ organization_members ─┬─ organizations (kind: business | agency)
+                                │    ├─ roles ── role_permissions ── permissions
+                                │    ├─ invitations
+                                │    ├─ clients ── workspaces (kind client, one per client)
+                                │    ├─ workspaces (kind own, exactly one) ─┬─ websites
+                                │    │                                       ├─ workspace_assignments ── organization_members
+                                │    │                                       └─ workspace_grants ── agency organizations
+                                │    └─ audit_logs
                                 └─ roles
 ```
 
+- **Organizations** are the tenant: team, roles and (later) the subscription belong to them. A
+  **business** markets itself; an **agency** also works for clients.
+- **Workspaces** hold marketing data. Every organization has one `own` workspace; each agency
+  client has a `client` workspace. Both are created and renamed with their organization or
+  client; deleting a client deletes its workspace and websites.
+- **Websites** belong to a workspace (`workspace_id`). `websites.client_id` is kept in step
+  (null in the own workspace) until every reader has moved to `workspace_id`
+  (docs/HYBRID_SAAS_PLAN.md §2).
+- Business accounts can't create clients (403 `business_account`).
+- **Roles** are built in per account type (rbac/catalogue.py): Owner, Administrator,
+  Marketing Manager and Reporting Viewer for everyone; agencies also get Account Manager and
+  Client Viewer. A role sees every workspace (`workspace_scope = all`) or only the ones each
+  member is assigned (`assigned`, stored in `workspace_assignments`). The startup sync adds new
+  built-in roles to existing organizations and keeps names and permissions current.
+- **Access grants** (`workspace_grants`) let a business share its own workspace with an
+  agency. The agency's requests then include that workspace (`OrgContext.linked`), with
+  "manage" or "view" access. Websites created there belong to the business.
+- **Plans** (`plans`, `plan_entitlements`, `subscriptions`; migration 0013): limit keys are
+  defined in `plans/catalogue.py`, values in the database. Each organization has one
+  subscription: a 14-day trial of the top plan at sign-up, or a plan set by staff. Limits are
+  checked by the services when something is added (never by the interface), against live
+  counts. After a trial ends, or when cancelled, nothing new can be added; nothing is removed.
+  A new limit (for example, audits per month) is a catalogue entry, a migration adding values
+  to the plans, and a `check_limit` call where the thing is created.
+- **Row-level security** (migration 0012) backs all of this up in Postgres. `get_org_context`
+  calls `core.db.set_tenant`, which sets `app.org_id` and `app.linked_ws` at the start of each
+  transaction for the rest of the request.
+
 Every tenant-owned table has `organization_id`. Migrations are in `backend/alembic/versions`
-(`0001` initial schema, `0002` unique website URL per organization).
+(`0001` initial schema … `0008` account types and workspaces … `0010` role scope and
+assignments, `0011` access grants, `0012` row-level security).

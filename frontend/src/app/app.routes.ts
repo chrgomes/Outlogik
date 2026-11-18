@@ -2,7 +2,8 @@ import { Routes } from '@angular/router';
 
 import { NoAccess, NoOrganization, NotFound } from './features/system/system-pages';
 import {
-  authGuard, guestGuard, homeRedirect, orgGuard, permissionGuard, siteAdminGuard,
+  agencyGuard, authGuard, businessGuard, guestGuard, homeRedirect, orgGuard, permissionGuard,
+  siteAdminGuard,
 } from './core/guards';
 import { CenteredLayout } from './layout/centered/centered';
 import { Shell } from './layout/shell/shell';
@@ -47,6 +48,13 @@ export const routes: Routes = [
         title: 'Accept invitation · Outlogik',
         loadComponent: () => import('./features/auth/accept-invite').then((m) => m.AcceptInvite),
       },
+      {
+        // From a business's email: accept access to its workspace into one of your agencies.
+        path: 'agency-access',
+        canActivate: [authGuard],
+        title: 'Accept agency access · Outlogik',
+        loadComponent: () => import('./features/access/accept-access').then((m) => m.AcceptAccess),
+      },
       { path: 'not-found', component: NotFound, title: 'Not found · Outlogik' },
       {
         path: 'no-organization',
@@ -71,14 +79,14 @@ export const routes: Routes = [
       },
       {
         path: 'clients',
-        canActivate: [permissionGuard],
+        canActivate: [agencyGuard, permissionGuard],
         data: { permission: 'clients.read' },
         title: 'Clients · Outlogik',
         loadComponent: () => import('./features/clients/clients-list').then((m) => m.ClientsList),
       },
       {
         path: 'clients/:clientId',
-        canActivate: [permissionGuard],
+        canActivate: [agencyGuard, permissionGuard],
         data: { permission: 'clients.read' },
         title: 'Client · Outlogik',
         loadComponent: () => import('./features/clients/client-detail').then((m) => m.ClientDetail),
@@ -111,6 +119,28 @@ export const routes: Routes = [
         data: { permission: 'roles.read' },
         title: 'Roles · Outlogik',
         loadComponent: () => import('./features/settings/roles').then((m) => m.Roles),
+      },
+      {
+        path: 'settings/plan',
+        canActivate: [permissionGuard],
+        data: { permission: 'plan.read' },
+        title: 'Plan · Outlogik',
+        loadComponent: () => import('./features/settings/plan').then((m) => m.Plan),
+      },
+      {
+        path: 'settings/agency-access',
+        canActivate: [businessGuard, permissionGuard],
+        data: { permission: 'access_grants.manage' },
+        title: 'Agency access · Outlogik',
+        loadComponent: () => import('./features/access/agency-access').then((m) => m.AgencyAccess),
+      },
+      {
+        path: 'settings/linked-businesses',
+        canActivate: [agencyGuard, permissionGuard],
+        data: { permission: 'linked_accounts.manage' },
+        title: 'Linked businesses · Outlogik',
+        loadComponent: () =>
+          import('./features/access/linked-businesses').then((m) => m.LinkedBusinesses),
       },
       { path: 'no-access', component: NoAccess, title: 'No access · Outlogik' },
     ],

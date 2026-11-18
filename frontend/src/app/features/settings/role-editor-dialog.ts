@@ -48,6 +48,20 @@ export interface RoleEditorData {
         </div>
       }
 
+      <fieldset class="scope mb-3" [disabled]="readOnly">
+        <legend class="form-label fs-6 mb-1">Which workspaces</legend>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" id="scope-all" value="all" formControlName="workspace_scope" />
+          <label class="form-check-label" for="scope-all">Every workspace</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" id="scope-assigned" value="assigned"
+            formControlName="workspace_scope" aria-describedby="scope-assigned-hint" />
+          <label class="form-check-label" for="scope-assigned">Only the workspaces each person is given</label>
+          <div id="scope-assigned-hint" class="form-text mt-0">You choose them per person on the Team page.</div>
+        </div>
+      </fieldset>
+
       @if (catalogue.hasValue()) {
         <fieldset [disabled]="readOnly">
           <legend class="visually-hidden">Permissions</legend>
@@ -109,6 +123,7 @@ export class RoleEditorDialog {
   protected readonly form = inject(NonNullableFormBuilder).group({
     name: [this.role?.name ?? '', [Validators.required, Validators.maxLength(100)]],
     description: [this.role?.description ?? '', Validators.maxLength(300)],
+    workspace_scope: [this.role?.workspace_scope ?? 'all'],
   });
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -134,7 +149,8 @@ export class RoleEditorDialog {
       return;
     }
     const v = this.form.getRawValue();
-    const body = { name: v.name, description: v.description || null, permissions: [...this.selected()] };
+    const body = { name: v.name, description: v.description || null, permissions: [...this.selected()],
+      workspace_scope: v.workspace_scope };
     this.busy.set(true);
     this.error.set(null);
     try {

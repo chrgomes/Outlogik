@@ -6,6 +6,9 @@ export interface NavItem {
   /** Path below /o/:orgSlug */
   path: string;
   permission: string;
+  /** Shown to one account type only (businesses have no clients; agencies share nothing). */
+  agencyOnly?: boolean;
+  businessOnly?: boolean;
 }
 
 export interface NavSection {
@@ -18,7 +21,8 @@ export const NAV: NavSection[] = [
   {
     items: [
       { label: 'Dashboard', icon: 'grid-1x2', path: 'dashboard', permission: 'dashboard.read' },
-      { label: 'Clients', icon: 'briefcase', path: 'clients', permission: 'clients.read' },
+      { label: 'Clients', icon: 'briefcase', path: 'clients', permission: 'clients.read',
+        agencyOnly: true },
       { label: 'Websites', icon: 'globe2', path: 'websites', permission: 'websites.read' },
     ],
   },
@@ -29,6 +33,11 @@ export const NAV: NavSection[] = [
         permission: 'organization.read' },
       { label: 'Team', icon: 'people', path: 'settings/members', permission: 'members.read' },
       { label: 'Roles', icon: 'shield-lock', path: 'settings/roles', permission: 'roles.read' },
+      { label: 'Plan', icon: 'speedometer2', path: 'settings/plan', permission: 'plan.read' },
+      { label: 'Agency access', icon: 'people', path: 'settings/agency-access',
+        permission: 'access_grants.manage', businessOnly: true },
+      { label: 'Linked businesses', icon: 'link-45deg', path: 'settings/linked-businesses',
+        permission: 'linked_accounts.manage', agencyOnly: true },
     ],
   },
 ];

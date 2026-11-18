@@ -16,6 +16,7 @@ class OrganizationOut(BaseModel):
     name: str
     slug: str
     status: str
+    kind: Literal["business", "agency"]
     created_at: datetime
 
 
@@ -32,6 +33,7 @@ class RoleRef(BaseModel):
     id: uuid.UUID
     name: str
     system_key: str | None
+    workspace_scope: Literal["all", "assigned"] = "all"
 
 
 class MemberOut(BaseModel):

@@ -4,6 +4,8 @@ import { ChangeDetectionStrategy, Component, inject, Injectable, signal } from '
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
+let dialogCount = 0;
+
 /** Opens app dialogs with one look and focus handling (CDK Dialog traps focus). */
 @Injectable({ providedIn: 'root' })
 export class DialogService {
@@ -16,6 +18,15 @@ export class DialogService {
       backdropClass: 'ol-dialog-backdrop',
       autoFocus: 'first-tabbable',
       restoreFocus: true,
+    });
+    // Name the dialog after its heading, so screen readers announce what opened.
+    setTimeout(() => {
+      const pane = ref.overlayRef.overlayElement;
+      const container = pane.querySelector<HTMLElement>('[role="dialog"], [role="alertdialog"]');
+      const heading = pane.querySelector<HTMLElement>('h1, h2, h3');
+      if (!container || !heading || container.hasAttribute('aria-labelledby')) return;
+      heading.id ||= `ol-dialog-title-${++dialogCount}`;
+      container.setAttribute('aria-labelledby', heading.id);
     });
     return firstValueFrom(ref.closed);
   }

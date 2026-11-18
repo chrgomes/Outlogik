@@ -87,12 +87,12 @@ Platform
   organization, and custom roles already work.
 - **New role templates by account type:**
   - business: Owner, Administrator, Marketing Manager, Marketing Contributor, Reporting Viewer
-  - agency: Owner, Administrator, Account Manager, SEO Specialist, Social Media Manager,
+  - agency: Owner, Administrator, Account Manager, SEO Specialist,
     Marketing Strategist, Content Creator, Analyst
   - **Client Viewer** is a workspace-level role, which the existing client users become
 - **Workspace scope:** each role either covers **all workspaces** or only **assigned
   workspaces** ("account managers manage assigned clients"). Assignments are a new table.
-- **Permissions get per-module groups** (seo, analytics, social, campaigns, reports and so on),
+- **Permissions get per-module groups** (seo, analytics, campaigns, reports and so on),
   each with read, write and approve where needed.
 - **Platform roles:** `users.platform_role` is extended with *platform admin*, *support admin*
   and *billing admin*. Super admins stay a flag. Existing `site_admin` and `content_editor`
@@ -130,6 +130,32 @@ Platform
     interface
   - a friendly error explaining the limit and how to upgrade
 - **Billing provider later (H3),** behind an adapter. Stripe supports Canada.
+
+**Plans and prices (decided 2026-11-18).** In Canadian dollars; HST is added for Canadian
+customers at checkout (H3). Annual billing is 20% off and paid upfront.
+- **"Digital" plans** are for clients: businesses that sign up to Outlogik directly and
+  manage their own marketing (business accounts).
+- **"Agency" plans** are for marketing agencies managing their clients (agency accounts).
+
+| Plan | Account type | Monthly | Annual, upfront (per month) | Websites | Clients | Team members |
+|---|---|---|---|---|---|---|
+| Digital Starter | business | $29 | $278.40 ($23.20) | 1 | – | 2 |
+| Digital Growth | business | $59 | $566.40 ($47.20) | 3 | – | 5 |
+| Digital Professional | business | $99 | $950.40 ($79.20) | 10 | – | 10 |
+| Agency Starter | agency | $79 | $758.40 ($63.20) | 10 | 5 | 3 |
+| Agency Professional | agency | $149 | $1,430.40 ($119.20) | 30 | 15 | 8 |
+| Agency Business | agency | $299 | $2,870.40 ($239.20) | 100 | 40 | 20 |
+
+- These are the starting values seeded in H1-4. They live in the database: staff change them
+  without code changes (from the Super Admin area once it exists, H1-11).
+- Limits for SEO audits, AI Search monitoring and other modules are added to each plan when
+  the module exists, so no plan lists a feature that isn't built.
+- **Free trial: 14 days** with the full plan, no card needed during beta. Until billing exists
+  (H3), plans are assigned by hand.
+- **Before selling subscriptions,** the website needs subscription terms: annual upfront
+  payment, renewals, cancellation and refunds for the unused part of a year, and trial
+  terms. Today's payment policy covers Outlogik's agency services (monthly in arrears), not
+  software subscriptions. To write in H1.5 with the pricing page, and have reviewed.
 
 ### 1.5 Background processing (§19)
 
@@ -229,21 +255,21 @@ counts as done only when its backend, storage, permissions, error handling and t
 | # | Step | Specification |
 |---|---|---|
 | H1-1 | **This audit and plan:** decisions (section 4) and approval | §2 |
-| H1-2 | **Account types and workspaces:** the data model and migration above; workspace-scoped API; the app's workspace switcher | §4 |
-| H1-3 | **Roles, assignments and isolation:** business and agency role templates, workspace scope and assignments, platform roles, RLS backstop, cross-tenant test suite | §5, §16, §21 |
-| H1-4 | **Entitlements foundation:** plans, entitlements, subscriptions (assigned by hand), usage records, backend enforcement (websites, clients, team, audits) | §12 |
+| H1-2 ✅ | **Account types and workspaces:** the data model and migration above; workspace-scoped API; the app's workspace switcher | §4 |
+| H1-3 ✅ | **Roles, assignments and isolation:** business and agency role templates, workspace scope and assignments, business-to-agency access grants, RLS backstop, cross-tenant test suite (platform roles moved to H1-11, where the Super Admin area gives them something to control) | §5, §16, §21 |
+| H1-4 ✅ | **Entitlements foundation:** plans, entitlements, subscriptions (assigned by hand), 14-day trials, backend enforcement (websites, clients, team). Metered usage records (audits, AI Search) move to H1-6, with the first metered limit | §12 |
 | H1-5 | **Background jobs:** Celery and beat, the jobs table, retries, duplicate prevention; email moves to the queue | §19 |
-| H1-6 | **SEO crawler and audits:** the crawler, checks, PageSpeed, scheduled audits, history and comparison, prioritized issues | §6.1 |
-| H1-7 | **Integration framework and Google:** encrypted credentials, Google OAuth, GA4 and Search Console syncs into snapshots. **Google's app verification is applied for at the start of H1**, because it takes weeks. | §6.2, §11 |
+| H1-6 | **SEO crawler and audits:** the crawler, checks, PageSpeed, scheduled audits, history and comparison, prioritized issues. Includes an **AI search readiness** section (GEO technical checks: AI crawler access, structured data, business identity consistency, question-and-answer coverage; see [`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) | §6.1, Addendum §5 |
+| H1-7 | **Integration framework and Google:** encrypted credentials, Google OAuth, GA4 and Search Console syncs into snapshots, including **AI referral traffic** (visits from ChatGPT, Perplexity, Gemini, Copilot). **Google's app verification is applied for at the start of H1**, because it takes weeks. | §6.2, §11, Addendum §2 |
 | H1-8 | **Business and agency dashboards:** ECharts, real data only, empty states that explain how to connect | §9 |
 | H1-9 | **Basic reporting:** SEO and analytics reports per workspace, PDF and CSV | §10 |
 | H1-10 | **Client portal on workspaces:** Client Viewer sees the dashboard, audits and reports, never agency-wide or internal data | §7 |
-| H1-11 | **Self-serve sign-up and basic Super Admin:** choose business or agency at sign-up (behind an invitation code during beta); Super Admin lists organizations and users, assigns plans, suspends accounts | §13, §23 |
+| H1-11 | **Self-serve sign-up and basic Super Admin:** choose business or agency at sign-up (behind an invitation code during beta); Super Admin lists organizations and users, assigns plans, suspends accounts; platform roles (platform, support and billing admin) | §13, §23 |
 | H1-12 | **H1 review:** security review, isolation tests, staging deployment for an internal alpha | §21 |
 
 **Not in H1, as the audit found:**
-- The specification's "existing social media module integration" item doesn't apply, because
-  there is no such module (see decision D2).
+- The specification's "existing social media module integration" item doesn't apply: social
+  media management stays a separate product, Sociola (see decision D2).
 - **Keyword tracking** in H1 means the positions Search Console reports for a site's own
   queries. Keyword research and competitor rankings need paid data (H2, optional).
 
@@ -278,17 +304,30 @@ default dashboards should be good enough without it.
 Each module is planned, built, tested and released on its own, and appears in the app only when
 it's done. The proposed order, to be adjusted to what beta customers ask for:
 
-1. **Social media** (built new; see D2): account connections, calendar, drafts, approvals,
-   scheduling, and publishing **only where the platform's API allows it** (§6.3), plus
-   analytics. Facebook and Instagram first, then LinkedIn, then others; X only if paid API
-   access is worth it.
+1. **AI Search** (decided 2026-11-18, A1; see [`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)):
+   monitoring of brand mentions and citations in AI answers through official APIs only,
+   history, and the AI Visibility page; then competitor AI visibility, AEO recommendations
+   and recommendations turned into tasks. Bing's AI citation report joins here or in the
+   H1.5 integration center.
 2. **Campaigns and content:** one place to plan a campaign across channels, with a content
-   calendar, briefs and approvals.
+   calendar, briefs and approvals. AI search content briefs and optimization come with it.
 3. **Paid ads (read-only):** Google Ads, Meta Ads, LinkedIn Ads results next to the rest.
 4. **Email marketing:** Listmonk, with CASL consent and unsubscribe. Only if customers want it
    inside Outlogik rather than in their existing email tool.
 
+**Social media management is not part of Outlogik** (decided 2026-11-18, replacing D2).
+It stays a separate product, Sociola, with its own app, accounts and billing (see
+[`SOCIOLA_REVIEW.md`](SOCIOLA_REVIEW.md)). Outlogik builds no social posting, scheduling or
+social analytics, and doesn't connect to Sociola. A link or data exchange can be revisited
+later if customers ask for it.
+
 Within the existing modules, in H2:
+- **Google Business Profile** (decided 2026-11-18) belongs with **SEO and AI Search**, not
+  social media. Posting to it adds little, but the profile itself drives local search and
+  feeds AI answers. Planned: profile completeness and consistency checks (name, address,
+  phone, hours matching the website), reviews with reply reminders, and basic insights
+  (views, calls, direction requests). Needs Google's Business Profile API access, which must
+  be requested and approved first.
 - **AI explanations and summaries,** with usage and cost limits (§6.9), added inside SEO,
   Analytics and Reports
 - **Competitor comparisons** in SEO, clearly labelled as estimated or verified
@@ -310,7 +349,7 @@ Within the existing modules, in H2:
 | # | Decision | Recommendation |
 |---|---|---|
 | D1 | **Phase names.** Call the specification's phases H1, H1.5, H2, H3. | Yes, to avoid confusion with the finished Phase 1 and 1.5. |
-| D2 | **Social media.** There's no existing module (audit). Where does it go? | **The first H2 module**, built new. Publishing depends on Meta, LinkedIn and others approving the app, which takes weeks, so **apply for those approvals during H1**. |
+| D2 | **Social media.** There's no existing module (audit). Where does it go? | ~~The first H2 module, built new.~~ **Replaced 2026-11-18:** social media management stays a separate product (Sociola). Outlogik doesn't build or connect to it. |
 | D3 | **Docker** (§3: "not a requirement"). Local development already runs without it; deployment uses Dockerfiles that DigitalOcean builds. | **Keep the Dockerfiles** for DigitalOcean (you never need Docker installed). Also document a Docker-free deployment (a plain server, or DigitalOcean's buildpacks) so nothing depends on Docker. |
 | D4 | **The agency website.** It's ready to launch and sells Outlogik as an agency. | **Launch it now.** The agency is the business today, and H1 takes a while. In H1.5 it gains only the **Platform section** and the **pricing page** (section 0). |
 | D5 | **Outlogik's own account.** | Outlogik becomes an **agency tenant** on its own platform, and its clients become client workspaces. You use the product you sell. |
@@ -336,7 +375,7 @@ Within the existing modules, in H2:
 | 9 reports for businesses and agency clients | H1-9 |
 | 10 entitlements enforced in the backend | H1-4 |
 | 11 Super Admin manages organizations, users, subscriptions, configuration | H1-11 (basic), H1.5 (complete) |
-| 12 "existing social media functionality remains operational" | **Not applicable as written:** there's none. Replaced by the social module, the first H2 module (D2). |
+| 12 "existing social media functionality remains operational" | **Not applicable:** social media management is a separate product, Sociola (D2). |
 | 13 reliable integration connections and syncs | H1-7, H1.5 |
 | 14 reliable background jobs | H1-5, H1.5 (monitoring) |
 | 15 cross-tenant tests pass | From H1-3, every step |

@@ -42,8 +42,9 @@ def test_permission_catalogue(client, acme):
 def test_list_roles_shows_system_roles_first_with_counts(client, acme):
     create(client, acme)
     items = client.get(roles_url(acme)).json()["items"]
-    assert [r["name"] for r in items] == ["Owner", "Admin", "Team Member", "Client",
-                                          "SEO Specialist"]
+    assert [r["name"] for r in items] == ["Owner", "Administrator", "Marketing Manager",
+                                          "Account Manager", "Reporting Viewer",
+                                          "Client Viewer", "SEO Specialist"]
     owner = items[0]
     assert owner["is_system"] and owner["member_count"] == 1
     assert set(owner["permissions"]) == set(PERMISSIONS)

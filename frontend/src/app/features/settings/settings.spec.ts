@@ -124,6 +124,17 @@ describe('Role editor', () => {
     (el.querySelector('#perm-clients\\.read') as HTMLInputElement).click();
     el.querySelector('form')!.dispatchEvent(new Event('submit'));
     const req = http.expectOne('/api/v1/orgs/acme/roles');
-    expect(req.request.body).toEqual({ name: 'SEO', description: null, permissions: ['clients.read'] });
+    expect(req.request.body).toEqual({ name: 'SEO', description: null, permissions: ['clients.read'],
+      workspace_scope: 'all' });
+  });
+
+  it('can limit a role to assigned workspaces', async () => {
+    const { el, http } = await render({});
+    (el.querySelector('#role-name') as HTMLInputElement).value = 'Freelancer';
+    el.querySelector('#role-name')!.dispatchEvent(new Event('input'));
+    (el.querySelector('#scope-assigned') as HTMLInputElement).click();
+    (el.querySelector('#perm-clients\\.read') as HTMLInputElement).click();
+    el.querySelector('form')!.dispatchEvent(new Event('submit'));
+    expect(http.expectOne('/api/v1/orgs/acme/roles').request.body.workspace_scope).toBe('assigned');
   });
 });

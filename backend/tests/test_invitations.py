@@ -7,7 +7,7 @@ from app.core import email
 from app.core.config import get_settings
 from app.core.models import utcnow
 from app.core.security import hash_token
-from app.models import AuditLog, ClientUser, Invitation, User
+from app.models import AuditLog, Invitation, User, Workspace, WorkspaceAssignment
 from tests.conftest import (
     PASSWORD,
     login,
@@ -45,7 +45,7 @@ def test_invite_sends_email_and_stores_hashed_token(client, db, acme):
     assert res.status_code == 201, res.text
     body = res.json()
     assert body["email"] == "new.person@example.com"
-    assert body["role"]["name"] == "Team Member"
+    assert body["role"]["name"] == "Marketing Manager"
     assert body["status"] == "pending"
     assert body["invited_by"] == "Olive Owner"
 
@@ -147,7 +147,7 @@ def test_preview_shows_invitation_details(client, new_client, db, acme):
     assert res.status_code == 200
     assert res.json() | {"expires_at": None} == {
         "email": "new@example.com", "organization_name": "Acme", "organization_slug": acme,
-        "role_name": "Team Member",
+        "role_name": "Marketing Manager",
         "client_name": None, "invited_by": "Olive Owner", "account_exists": False,
         "expires_at": None,
     }
@@ -168,7 +168,7 @@ def test_new_user_accepts_and_is_signed_in(client, new_client, db, acme):
     me = res.json()
     assert me["user"]["email_verified_at"] is not None
     assert [(m["organization_slug"], m["role_name"]) for m in me["memberships"]] == [
-        (acme, "Team Member")]
+        (acme, "Marketing Manager")]
     assert browser.get(f"/api/v1/orgs/{acme}").status_code == 200
 
     # Single use.
@@ -200,7 +200,7 @@ def test_existing_user_must_sign_in_as_the_invited_email(client, new_client, db,
     res = globex_owner.post(ACCEPT, json={"token": token})
     assert res.status_code == 200
     roles = {m["organization_name"]: m["role_name"] for m in res.json()["memberships"]}
-    assert roles == {"Acme": "Admin", "Globex": "Owner"}
+    assert roles == {"Acme": "Administrator", "Globex": "Owner"}
 
 
 def test_signed_in_user_cannot_create_account_for_another_email(client, new_client, db, acme):
@@ -224,9 +224,9 @@ def test_client_invitation_links_user_to_client(client, new_client, db, acme):
     res = new_client().post(ACCEPT, json={"token": token, "full_name": "Cleo",
                                           "password": PASSWORD})
     assert res.status_code == 200
-    assert res.json()["memberships"][0]["role_name"] == "Client"
-    link = db.scalar(select(ClientUser))
-    assert link.client_id == c.id
+    assert res.json()["memberships"][0]["role_name"] == "Client Viewer"
+    link = db.scalar(select(WorkspaceAssignment))
+    assert db.get(Workspace, link.workspace_id).client_id == c.id
 
 
 def test_expired_invitation_is_rejected(client, new_client, db, acme):

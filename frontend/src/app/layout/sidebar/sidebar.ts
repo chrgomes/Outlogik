@@ -37,13 +37,15 @@ export class Sidebar {
   protected readonly sections = computed(() => {
     if (this.admin()) {
       return ADMIN_NAV.map((s) => ({
-        label: s.label, items: s.items.map((i) => ({ ...i, link: ['/admin', i.path] })),
+        label: s.label, items: s.items.map((i) => ({ ...i, link: ['/admin', ...i.path.split('/')] })),
       }));
     }
     return NAV.map((s) => ({
       label: s.label,
-      items: s.items.filter((i) => this.org.permissions().has(i.permission))
-        .map((i) => ({ ...i, link: ['/o', this.org.slug(), i.path] })),
+      items: s.items.filter((i) => this.org.permissions().has(i.permission)
+          && (!i.agencyOnly || this.org.isAgency()) && (!i.businessOnly || !this.org.isAgency()))
+        // One command per segment: 'settings/members' as a single command becomes settings%2Fmembers.
+        .map((i) => ({ ...i, link: ['/o', this.org.slug(), ...i.path.split('/')] })),
     })).filter((s) => s.items.length > 0);
   });
 }

@@ -33,7 +33,8 @@ from app.main import app  # noqa: E402
 from app.models import Base  # noqa: E402
 
 BASE_URL = "https://testserver"
-KEEP_TABLES = {"permissions"}
+# Reference data seeded by the migrations
+KEEP_TABLES = {"permissions", "plans", "plan_entitlements"}
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -99,11 +100,12 @@ PASSWORD = "correct horse battery"
 
 
 def register(client: TestClient, email: str = "owner@agency.example.com", *,
-             org: str = "Acme Agency",
+             org: str = "Acme Agency", account_type: str | None = None,
              name: str = "Olive Owner", password: str = PASSWORD):
-    res = client.post("/api/v1/auth/register", json={
-        "email": email, "password": password, "full_name": name, "organization_name": org,
-    })
+    body = {"email": email, "password": password, "full_name": name, "organization_name": org}
+    if account_type:
+        body["account_type"] = account_type
+    res = client.post("/api/v1/auth/register", json=body)
     assert res.status_code == 201, res.text
     return res.json()
 
@@ -149,10 +151,13 @@ def seed_client(db, org_slug: str, name: str = "Client Co"):
     from sqlalchemy import select as _select
 
     from app.models import Client, Organization
+    from app.modules.workspaces.service import create_client_workspace
 
     org = db.scalar(_select(Organization).where(Organization.slug == org_slug))
     client = Client(organization_id=org.id, name=name)
     db.add(client)
+    db.flush()
+    create_client_workspace(db, client)
     db.commit()
     return client
 
@@ -181,8 +186,8 @@ def signed_in_as(new_client, db, org_slug: str, email: str, role_key: str):
 
 
 def link_client(db, member, client) -> None:
-    from app.models import ClientUser
+    """Give a member access to a client's workspace (as the client-portal link does)."""
+    from app.modules.workspaces.service import assign, client_workspace
 
-    db.add(ClientUser(organization_id=client.organization_id, client_id=client.id,
-                      user_id=member.user_id))
+    assign(db, member, client_workspace(db, client.id))
     db.commit()

@@ -10,7 +10,9 @@ WebsiteStatus = Literal["active", "paused", "archived"]
 
 
 class WebsiteCreateIn(BaseModel):
-    client_id: uuid.UUID
+    # Organization-level endpoint only: the client whose workspace gets the site. Leave it out
+    # for the organization's own workspace. Ignored by the workspace endpoint.
+    client_id: uuid.UUID | None = None
     url: Url
     # Defaults to the domain when omitted.
     name: Name | None = None
@@ -18,6 +20,8 @@ class WebsiteCreateIn(BaseModel):
 
 
 class WebsiteUpdateIn(BaseModel):
+    # Move the site to another workspace (or, the older way, to a client's workspace)
+    workspace_id: uuid.UUID | None = None
     client_id: uuid.UUID | None = None
     url: Url | None = None
     name: Name | None = None
@@ -26,8 +30,11 @@ class WebsiteUpdateIn(BaseModel):
 
 class WebsiteOut(BaseModel):
     id: uuid.UUID
-    client_id: uuid.UUID
-    client_name: str
+    workspace_id: uuid.UUID
+    workspace_name: str
+    # Null for websites in the organization's own workspace
+    client_id: uuid.UUID | None
+    client_name: str | None
     name: str
     url: str
     domain: str

@@ -37,14 +37,16 @@ def get_role(role_id: uuid.UUID, db: DB, ctx: OrgContext = Depends(require("role
 def create_role(body: RoleCreateIn, request: Request, db: DB,
                 ctx: OrgContext = Depends(require("roles.manage"))):
     return roles.create_role(db, ctx, name=body.name, description=body.description,
-                             permissions=body.permissions, ip=client_ip(request))
+                             permissions=body.permissions, ip=client_ip(request),
+                             workspace_scope=body.workspace_scope)
 
 
 @router.patch("/roles/{role_id}", response_model=RoleOut)
 def update_role(role_id: uuid.UUID, body: RoleUpdateIn, request: Request, db: DB,
                 ctx: OrgContext = Depends(require("roles.manage"))):
     return roles.update_role(db, ctx, role_id, name=body.name, description=body.description,
-                             permissions=body.permissions, ip=client_ip(request))
+                             permissions=body.permissions, ip=client_ip(request),
+                             workspace_scope=body.workspace_scope)
 
 
 @router.delete("/roles/{role_id}", status_code=status.HTTP_204_NO_CONTENT)

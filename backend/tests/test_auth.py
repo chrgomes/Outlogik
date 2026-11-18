@@ -355,4 +355,5 @@ def test_new_org_gets_default_roles(client, db):
     register(client)
     org = db.scalar(select(Organization))
     names = set(db.scalars(select(Role.name).where(Role.organization_id == org.id)))
-    assert names == {"Owner", "Admin", "Team Member", "Client"}
+    assert names == {"Owner", "Administrator", "Marketing Manager", "Account Manager",
+                     "Reporting Viewer", "Client Viewer"}

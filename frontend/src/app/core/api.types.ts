@@ -11,11 +11,20 @@ export interface User {
   created_at: string;
 }
 
+/** business: markets itself (one workspace, no clients). agency: also works for clients. */
+export type AccountType = 'business' | 'agency';
+
+/** A role sees every workspace, or only the ones each member is assigned to. */
+export type WorkspaceScope = 'all' | 'assigned';
+
 export interface Membership {
   organization_id: string;
   organization_slug: string;
   organization_name: string;
   organization_status: string;
+  organization_kind: AccountType;
+  /** 'assigned': this member sees only the workspaces they're assigned to. */
+  workspace_scope: WorkspaceScope;
   role_id: string;
   role_name: string;
   /** Built-in role key ('owner', 'admin', 'member', 'client'), or null for custom roles. */
@@ -70,10 +79,78 @@ export interface ClientUser {
   linked_at: string;
 }
 
+/**
+ * Where marketing data lives: the organization's own workspace, or one per agency client.
+ */
+export interface Workspace {
+  id: string;
+  kind: 'own' | 'client';
+  name: string;
+  client_id: string | null;
+  client_status: 'active' | 'archived' | null;
+  website_count: number;
+  created_at: string;
+  /** Another organization's workspace, shared with this one through an access grant. */
+  linked: boolean;
+  organization_name: string | null;
+  access: 'manage' | 'view' | null;
+}
+
+export interface WorkspaceRef {
+  id: string;
+  kind: 'own' | 'client';
+  name: string;
+}
+
+/** A business's grant of access to an agency. */
+export interface AccessGrant {
+  id: string;
+  email: string;
+  access: 'manage' | 'view';
+  status: 'pending' | 'expired' | 'active' | 'revoked';
+  agency_name: string | null;
+  invited_by: string | null;
+  accepted_by: string | null;
+  created_at: string;
+  expires_at: string;
+  accepted_at: string | null;
+  revoked_at: string | null;
+}
+
+export interface GrantPreview {
+  business_name: string;
+  workspace_name: string;
+  access: 'manage' | 'view';
+  email: string;
+  invited_by: string | null;
+  expires_at: string;
+  agencies: { organization_id: string; slug: string; name: string }[];
+}
+
+export interface Subscription {
+  plan: {
+    key: string;
+    name: string;
+    account_kind: AccountType;
+    currency: string;
+    monthly_price_cents: number;
+    annual_price_cents: number;
+  };
+  status: 'trialing' | 'active' | 'past_due' | 'cancelled' | 'trial_ended';
+  billing_interval: 'monthly' | 'annual';
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  /** limit null: unlimited. */
+  limits: { key: string; label: string; limit: number | null; used: number }[];
+}
+
 export interface Website {
   id: string;
-  client_id: string;
-  client_name: string;
+  workspace_id: string;
+  workspace_name: string;
+  /** Null for websites in the organization's own workspace. */
+  client_id: string | null;
+  client_name: string | null;
   name: string;
   url: string;
   domain: string;
@@ -86,6 +163,7 @@ export interface RoleRef {
   id: string;
   name: string;
   system_key: string | null;
+  workspace_scope: WorkspaceScope;
 }
 
 export interface Member {
@@ -117,6 +195,7 @@ export interface Role {
   description: string | null;
   is_system: boolean;
   system_key: string | null;
+  workspace_scope: WorkspaceScope;
   permissions: string[];
   member_count: number;
   created_at: string;
@@ -133,6 +212,7 @@ export interface OrganizationDetail {
   name: string;
   slug: string;
   status: string;
+  kind: AccountType;
   created_at: string;
   your_role: string;
   your_permissions: string[];

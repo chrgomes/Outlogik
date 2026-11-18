@@ -16,7 +16,12 @@ class Website(UUIDPrimaryKey, Timestamps, Base):
     organization_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("organizations.id", ondelete="CASCADE"), index=True
     )
-    client_id: Mapped[uuid.UUID] = mapped_column(
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
+    )
+    # Kept in step with the workspace (set for client workspaces, null for the own workspace)
+    # until every reader uses workspace_id; see docs/HYBRID_SAAS_PLAN.md §2.
+    client_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("clients.id", ondelete="CASCADE"), index=True
     )
     name: Mapped[str] = mapped_column(String(200))

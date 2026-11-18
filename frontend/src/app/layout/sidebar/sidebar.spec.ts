@@ -13,8 +13,8 @@ describe('Sidebar', () => {
     TestBed.configureTestingModule({ imports: [Sidebar], providers: [provideRouter([])] });
   });
 
-  function render(permissions: string[]) {
-    TestBed.inject(AuthService).me.set(me([membership({ permissions })]));
+  function render(permissions: string[], kind: 'agency' | 'business' = 'agency') {
+    TestBed.inject(AuthService).me.set(me([membership({ permissions, organization_kind: kind })]));
     TestBed.inject(CurrentOrgService).slug.set('acme');
     const fixture = TestBed.createComponent(Sidebar);
     fixture.detectChanges();
@@ -42,9 +42,30 @@ describe('Sidebar', () => {
     expect(links).toEqual(['Dashboard', 'Clients', 'Websites', 'Organization', 'Team', 'Roles']);
   });
 
+  it('hides Clients from business accounts', () => {
+    const { links } = render(['dashboard.read', 'clients.read', 'websites.read'], 'business');
+    expect(links).toEqual(['Dashboard', 'Websites']);
+  });
+
+  it('shows Agency access to businesses and Linked businesses to agencies', () => {
+    const perms = ['organization.read', 'access_grants.manage', 'linked_accounts.manage'];
+    expect(render(perms, 'business').links).toEqual(['Organization', 'Agency access']);
+  });
+
+  it('shows Linked businesses to agencies', () => {
+    const perms = ['organization.read', 'access_grants.manage', 'linked_accounts.manage'];
+    expect(render(perms, 'agency').links).toEqual(['Organization', 'Linked businesses']);
+  });
+
   it('links point into the current organization', () => {
     const { el } = render(['clients.read']);
     expect(el.querySelector('nav a')!.getAttribute('href')).toBe('/o/acme/clients');
+  });
+
+  it('nested pages get a real path, not an encoded slash', () => {
+    const { el } = render(['members.read', 'roles.read']);
+    const hrefs = [...el.querySelectorAll('nav a')].map((a) => a.getAttribute('href'));
+    expect(hrefs).toEqual(['/o/acme/settings/members', '/o/acme/settings/roles']);
   });
 
   it('collapses to icons with accessible names, and remembers it', () => {

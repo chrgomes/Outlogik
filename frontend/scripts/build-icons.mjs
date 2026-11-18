@@ -8,7 +8,7 @@ const APP = [
   'circle-half', 'box-arrow-right', 'list', 'x-lg', 'check2', 'search', 'plus-lg',
   'three-dots', 'arrow-left', 'exclamation-triangle', 'inbox', 'shield-x', 'plug',
   'person-circle', 'arrow-repeat', 'graph-up', 'heart-pulse', 'link-45deg', 'check-circle-fill',
-  'circle', 'clock-history', 'envelope', 'arrow-right',
+  'circle', 'clock-history', 'envelope', 'arrow-right', 'speedometer2',
   // website admin
   'window-stack', 'sliders', 'download', 'trash', 'box-arrow-up-right', 'megaphone',
 ];

@@ -1,18 +1,27 @@
 import uuid
 
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.core.errors import Conflict, NotFound
+from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.pagination import PageParams, apply_sort, like_pattern, paginate
 from app.modules.audit.service import record
-from app.modules.clients.models import Client, ClientUser
+from app.modules.clients.models import Client
 from app.modules.clients.schemas import ClientOut, ClientUserOut
 from app.modules.organizations.models import OrganizationMember
+from app.modules.plans.service import check_limit
 from app.modules.rbac.catalogue import CLIENT
 from app.modules.rbac.models import Role
 from app.modules.users.models import User
 from app.modules.websites.models import Website
+from app.modules.workspaces.models import Workspace, WorkspaceAssignment
+from app.modules.workspaces.service import (
+    assign,
+    client_workspace,
+    create_client_workspace,
+    rename_for,
+    unassign,
+)
 from app.tenancy.context import OrgContext
 from app.tenancy.scoped import client_visibility, get_scoped, get_visible
 
@@ -30,7 +39,7 @@ def _count_by_client(db: Session, column, ids: list[uuid.UUID]) -> dict[uuid.UUI
 def _many_out(db: Session, ctx: OrgContext, clients: list[Client]) -> list[ClientOut]:
     ids = [c.id for c in clients]
     sites = _count_by_client(db, Website.client_id, ids)
-    users = {} if ctx.is_client_user else _count_by_client(db, ClientUser.client_id, ids)
+    users = {} if ctx.is_client_user else _portal_counts(db, ctx, ids)
     return [ClientOut(
         id=c.id, name=c.name, contact_email=c.contact_email, status=c.status,
         notes=None if ctx.is_client_user else c.notes, website_count=sites.get(c.id, 0),
@@ -45,7 +54,8 @@ def to_out(db: Session, ctx: OrgContext, client: Client) -> ClientOut:
 
 def get_client(db: Session, ctx: OrgContext, client_id: uuid.UUID, *,
                for_update: bool = False) -> Client:
-    return get_visible(db, Client, client_id, ctx, client_id_column=Client.id, label="Client",
+    return get_visible(db, Client, client_id, ctx, visibility=client_visibility(Client.id, ctx),
+                       label="Client",
                        for_update=for_update)
 
 
@@ -64,10 +74,18 @@ def list_clients(db: Session, ctx: OrgContext, params: PageParams, *, q: str | N
     return _many_out(db, ctx, [c for (c,) in rows]), total
 
 
+BUSINESS_HAS_NO_CLIENTS = "Business accounts don't have clients."
+
+
 def create_client(db: Session, ctx: OrgContext, data: dict, ip: str | None) -> ClientOut:
+    if ctx.org.kind != "agency":
+        raise Forbidden(BUSINESS_HAS_NO_CLIENTS, code="business_account")
+    if data.get("status", "active") != "archived":
+        check_limit(db, ctx.org.id, "limits.clients")
     client = Client(organization_id=ctx.org.id, **data)
     db.add(client)
     db.flush()
+    create_client_workspace(db, client)
     record(db, "client.create", actor_user_id=ctx.user.id, organization_id=ctx.org.id,
            target_type="client", target_id=client.id, meta={"name": client.name}, ip=ip)
     db.commit()
@@ -77,9 +95,13 @@ def create_client(db: Session, ctx: OrgContext, data: dict, ip: str | None) -> C
 def update_client(db: Session, ctx: OrgContext, client_id: uuid.UUID, data: dict,
                   ip: str | None) -> ClientOut:
     client = get_client(db, ctx, client_id, for_update=True)
+    if client.status == "archived" and data.get("status") not in (None, "archived"):
+        check_limit(db, ctx.org.id, "limits.clients")  # restoring counts again
     changed = sorted(k for k, v in data.items() if getattr(client, k) != v)
     for key in changed:
         setattr(client, key, data[key])
+    if "name" in changed:
+        rename_for(db, client=client)
     if changed:
         meta: dict = {"name": client.name, "fields": changed}
         if "status" in changed:
@@ -94,29 +116,45 @@ def delete_client(db: Session, ctx: OrgContext, client_id: uuid.UUID, ip: str | 
     client = get_client(db, ctx, client_id, for_update=True)
     counts = {
         "websites": _count_by_client(db, Website.client_id, [client.id]).get(client.id, 0),
-        "portal_users": _count_by_client(db, ClientUser.client_id, [client.id]).get(client.id, 0),
+        "portal_users": _portal_counts(db, ctx, [client.id]).get(client.id, 0),
     }
     record(db, "client.delete", actor_user_id=ctx.user.id, organization_id=ctx.org.id,
            target_type="client", target_id=client.id, meta={"name": client.name, **counts},
            ip=ip)
-    db.delete(client)  # websites, portal links and client invitations cascade in the database
+    # Its workspace, websites, portal links and client invitations cascade in the database.
+    db.delete(client)
     db.commit()
 
 
 # --- client-portal users --------------------------------------------------------------------
+# A client-portal user is a member with the Client Viewer role, assigned to the client's
+# workspace.
+
+def _portal_rows(db: Session, ctx: OrgContext, client_ids: list[uuid.UUID]):
+    return db.execute(
+        select(Workspace.client_id, WorkspaceAssignment, User, OrganizationMember)
+        .join(WorkspaceAssignment, WorkspaceAssignment.workspace_id == Workspace.id)
+        .join(OrganizationMember, OrganizationMember.id == WorkspaceAssignment.member_id)
+        .join(Role, Role.id == OrganizationMember.role_id)
+        .join(User, User.id == OrganizationMember.user_id)
+        .where(Workspace.client_id.in_(client_ids),
+               OrganizationMember.organization_id == ctx.org.id, Role.system_key == CLIENT)
+        .order_by(func.lower(User.full_name))
+    ).all()
+
+
+def _portal_counts(db: Session, ctx: OrgContext, client_ids: list[uuid.UUID]) -> dict:
+    counts: dict[uuid.UUID, int] = {}
+    for client_id, *_ in _portal_rows(db, ctx, client_ids) if client_ids else []:
+        counts[client_id] = counts.get(client_id, 0) + 1
+    return counts
+
 
 def list_client_users(db: Session, ctx: OrgContext, client_id: uuid.UUID) -> list[ClientUserOut]:
     client = get_client(db, ctx, client_id)
-    rows = db.execute(
-        select(ClientUser, User, OrganizationMember)
-        .join(User, User.id == ClientUser.user_id)
-        .join(OrganizationMember, (OrganizationMember.user_id == User.id)
-              & (OrganizationMember.organization_id == ctx.org.id))
-        .where(ClientUser.client_id == client.id)
-        .order_by(func.lower(User.full_name))
-    ).all()
     return [ClientUserOut(user_id=u.id, member_id=m.id, email=u.email, full_name=u.full_name,
-                          linked_at=cu.created_at) for cu, u, m in rows]
+                          linked_at=a.created_at)
+            for _, a, u, m in _portal_rows(db, ctx, [client.id])]
 
 
 def link_client_user(db: Session, ctx: OrgContext, client_id: uuid.UUID,
@@ -126,13 +164,10 @@ def link_client_user(db: Session, ctx: OrgContext, client_id: uuid.UUID,
     member = get_scoped(db, OrganizationMember, member_id, ctx, label="Member")
     role = db.get(Role, member.role_id)
     if role.system_key != CLIENT:
-        raise Conflict("Only members with the Client role can be linked to a client. "
-                       "Team members already see every client.", code="not_client_role")
-    exists = db.scalar(select(ClientUser.id).where(ClientUser.client_id == client.id,
-                                                   ClientUser.user_id == member.user_id))
-    if not exists:
-        db.add(ClientUser(organization_id=ctx.org.id, client_id=client.id,
-                          user_id=member.user_id))
+        raise Conflict("Only members with the Client Viewer role can be linked to a client. "
+                       "Team members are given workspaces from the Team page.",
+                       code="not_client_role")
+    if assign(db, member, client_workspace(db, client.id)):
         user = db.get(User, member.user_id)
         record(db, "client_user.link", actor_user_id=ctx.user.id, organization_id=ctx.org.id,
                target_type="client", target_id=client.id,
@@ -144,10 +179,9 @@ def link_client_user(db: Session, ctx: OrgContext, client_id: uuid.UUID,
 def unlink_client_user(db: Session, ctx: OrgContext, client_id: uuid.UUID,
                        user_id: uuid.UUID, ip: str | None) -> None:
     client = get_client(db, ctx, client_id)
-    result = db.execute(delete(ClientUser).where(ClientUser.client_id == client.id,
-                                                 ClientUser.user_id == user_id,
-                                                 ClientUser.organization_id == ctx.org.id))
-    if not result.rowcount:
+    member = db.scalar(select(OrganizationMember).where(
+        OrganizationMember.organization_id == ctx.org.id, OrganizationMember.user_id == user_id))
+    if member is None or not unassign(db, member.id, client_workspace(db, client.id).id):
         raise NotFound("This person doesn't have access to this client.")
     user = db.get(User, user_id)
     record(db, "client_user.unlink", actor_user_id=ctx.user.id, organization_id=ctx.org.id,

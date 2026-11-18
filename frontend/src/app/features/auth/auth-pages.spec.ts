@@ -161,9 +161,30 @@ describe('Register page', () => {
     type(el, '#email', 'olive@acme.example.com');
     type(el, '#password', 'correct horse battery');
     el.querySelector('form')!.dispatchEvent(new Event('submit'));
-    http.expectOne(`${API}/register`).flush(me([membership({ organization_slug: 'acme' })]));
+    const req = http.expectOne(`${API}/register`);
+    expect(req.request.body.account_type).toBe('business');
+    req.flush(me([membership({ organization_slug: 'acme' })]));
     await settle();
     expect(TestBed.inject(Router).url).toBe('/o/acme');
+  });
+
+  it('asks whether the account is for a business or an agency', async () => {
+    const http = setup();
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/register');
+    http.expectOne('/api/v1/public/site').flush({ signup_open: true });
+    harness.detectChanges();
+    const el = harness.routeNativeElement!;
+    expect(el.querySelector('label[for="organization_name"]')!.textContent).toContain('Business name');
+    (el.querySelector('#type-agency') as HTMLInputElement).click();
+    harness.detectChanges();
+    expect(el.querySelector('label[for="organization_name"]')!.textContent).toContain('Agency name');
+    type(el, '#full_name', 'Olive');
+    type(el, '#organization_name', 'Acme');
+    type(el, '#email', 'olive@acme.example.com');
+    type(el, '#password', 'correct horse battery');
+    el.querySelector('form')!.dispatchEvent(new Event('submit'));
+    expect(http.expectOne(`${API}/register`).request.body.account_type).toBe('agency');
   });
 });
 
