@@ -76,6 +76,50 @@ deployment must add. Each item is covered by backend or frontend tests unless no
   allow everything. They don't apply to superusers or `BYPASSRLS` users, so production uses
   an ordinary database user (DEPLOYMENT.md §4); the API warns at startup otherwise, and CI
   runs the tests as an ordinary user.
+- **Fetching customers' websites (audits) safely:**
+  - All fetching goes through `audits/fetch.py`, which resolves each host itself and refuses
+    to connect unless every address it resolves to is on the public internet. That excludes
+    private, loopback, link-local (including the cloud metadata address 169.254.169.254),
+    carrier-grade NAT, multicast, reserved, and IPv4-mapped IPv6 addresses.
+  - It connects to the exact address it checked, so a DNS answer can't change between check
+    and connection.
+  - Redirects are followed by hand, each hop checked again; only http and https.
+  - No proxies; responses capped at 2 MB, 10 seconds per request, 40 minutes per audit.
+  - Addresses are also checked when a website is added. `CRAWLER_ALLOW_PRIVATE` exists only
+    for the test suite's local site, and the API refuses to start with it in production.
+  - The crawler is polite: it identifies itself (`OutlogikBot`), obeys robots.txt, stays on
+    the site's own host and port, waits between requests, and stops at the plan's page
+    limit.
+  - Sitemaps and pages are read as text (no XML parser), so a hostile file can't exploit
+    one.
+  - Audit results are under row-level security; an agency's audit of a shared workspace
+    belongs to the business.
+- **Google connections:**
+  - Read-only scopes only (`analytics.readonly`, `webmasters.readonly`, plus `openid email` to
+    show which account is connected). If someone unticks either read scope, the token is
+    revoked and nothing is stored.
+  - Sign-in uses PKCE and a one-time `state` kept in Redis for 10 minutes, tied to the person
+    who started it. On return, Outlogik checks it's the same signed-in person, that they're
+    still a member allowed to manage integrations, and that the workspace is still theirs and
+    writable.
+  - Refresh tokens are encrypted (Fernet, `INTEGRATIONS_ENCRYPTION_KEY`), never returned by the
+    API, and revoked at Google on disconnect or when replaced. Disconnecting deletes the synced
+    history.
+  - If Google stops accepting a token, the connection is marked "reconnect" and nightly syncs
+    skip it instead of retrying.
+  - All nine tables of Google data are under row-level security; the cross-tenant suite
+    includes a victim Google connection.
+- **Dashboards:** the agency overview lists only workspaces the caller can see, and leaves out
+  team details (account managers, reviews) for anyone without `members.read`, so client-portal
+  users never see them. Parts the caller's role can't read (`analytics.read`, `audits.read`)
+  are left out of the response, not just hidden in the app. Reviews belong to the reviewing
+  organization (row-level security: that organization only), so a business never sees its
+  agency's reviews. The cross-tenant suite includes a victim's review.
+- **Background jobs:** emails are sent by a job, and their text (which can contain a sign-in,
+  reset or invitation link) is erased from the job record as soon as the email is sent or gives
+  up. Errors are stored without the payload. Finished jobs are deleted after 30 days, and
+  expired sessions and used tokens nightly. The `jobs` table is under row-level security like
+  other tenant tables.
 - **Cross-tenant attack suite** (`tests/test_cross_tenant.py`): every organization route that
   takes an id, found automatically, is called by another organization's owner with the
   victim's ids, in the URL and in the body. All must fail, and the victim's data must be

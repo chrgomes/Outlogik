@@ -9,7 +9,13 @@ ENTITLEMENTS: dict[str, str] = {
     "limits.websites": "Websites (archived ones don't count)",
     "limits.clients": "Clients (archived ones don't count)",
     "limits.team_members": "Team members (client-portal users don't count)",
+    "limits.audits_per_month": "Website audits this month",
+    # A cap on each audit, not a count: how many pages one audit checks.
+    "limits.pages_per_audit": "Pages checked per audit",
 }
+# Limits counted per calendar month (UTC) in usage_records, and caps that aren't counted.
+METERED = {"limits.audits_per_month": "audits"}
+CAPS = {"limits.pages_per_audit"}
 
 TRIAL_DAYS = 14
 STATUSES = ("trialing", "active", "past_due", "cancelled")

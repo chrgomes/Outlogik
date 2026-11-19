@@ -9,13 +9,23 @@ kind of id this test doesn't know fails the test until the id is added to VICTIM
 """
 
 import re
+from datetime import UTC, date, datetime
 
 import pytest
 from fastapi.routing import APIRoute, iter_route_contexts
 from sqlalchemy import select, text
 
 from app.main import app
-from app.models import Organization, Role, Workspace
+from app.models import (
+    Audit,
+    DataSource,
+    Integration,
+    Organization,
+    Role,
+    Workspace,
+    WorkspaceReview,
+)
+from app.modules.integrations.crypto import encrypt
 from tests.conftest import (
     link_client,
     register,
@@ -56,6 +66,14 @@ SNAPSHOT = """
       WHERE a.organization_id = :org
     UNION ALL SELECT 'workspace', ws.id::text, ws.name FROM workspaces ws
       WHERE ws.organization_id = :org
+    UNION ALL SELECT 'audit', a.id::text, a.status || a.pages_crawled FROM audits a
+      WHERE a.organization_id = :org
+    UNION ALL SELECT 'integration', i.id::text, i.status || i.refresh_token_encrypted
+      FROM integrations i WHERE i.organization_id = :org
+    UNION ALL SELECT 'data_source', d.id::text, d.external_id || d.sync_status FROM data_sources d
+      WHERE d.organization_id = :org
+    UNION ALL SELECT 'review', r.id::text, r.reviewed_at::text FROM workspace_reviews r
+      WHERE r.organization_id = :org
     UNION ALL SELECT 'grant', g.id::text, g.status FROM workspace_grants g
       WHERE g.organization_id = :org OR g.agency_organization_id = :org
     ORDER BY 1, 2
@@ -83,10 +101,24 @@ def victim(client, db):
     workspace = db.scalar(select(Workspace.id).where(Workspace.client_id == c.id))
     own = db.scalar(select(Workspace.id).where(Workspace.organization_id == acme_id,
                                                Workspace.kind == "own"))
+    audit = Audit(organization_id=acme_id, workspace_id=workspace, website_id=site["id"],
+                  url=site["url"], page_limit=10, status="completed")
+    db.add(audit)
+    integration = Integration(organization_id=acme_id, workspace_id=workspace, provider="google",
+                              refresh_token_encrypted=encrypt("victim-refresh-token"))
+    db.add(integration)
+    db.flush()
+    db.add(DataSource(organization_id=acme_id, workspace_id=workspace,
+                      integration_id=integration.id, kind="ga4", external_id="properties/1",
+                      name="Victim", synced_through=date(2026, 11, 1)))
+    db.add(WorkspaceReview(organization_id=acme_id, workspace_id=workspace,
+                           reviewed_at=datetime(2026, 11, 1, tzinfo=UTC)))
+    db.commit()
     return {"slug": acme, "org_id": acme_id, "client_id": str(c.id), "website_id": site["id"],
             "member_id": str(manager.id), "user_id": str(portal.user_id),
             "role_id": role["id"], "invitation_id": invitation["id"],
-            "workspace_id": str(workspace), "own_workspace_id": str(own)}
+            "workspace_id": str(workspace), "own_workspace_id": str(own),
+            "audit_id": str(audit.id)}
 
 
 @pytest.fixture

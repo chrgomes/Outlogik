@@ -131,3 +131,5 @@ jobs:
           curl -sfI localhost:8092/login | grep -qi 'x-robots-tag: noindex'
       - name: The API image runs as a non-root user
         run: test "$(docker run --rm outlogik-api whoami)" = outlogik
+      - name: The API image can run the background worker
+        run: docker run --rm outlogik-api python -c "import app.worker; print(app.worker.celery.main)"

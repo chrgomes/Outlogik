@@ -11,8 +11,556 @@ unfinished, security notes, and what's next.
 | H1-3 Roles, assignments, access grants, RLS | **Done** (2026-11-18) |
 | AI Search addendum | Planned 2026-11-18: GEO checks in H1-6, AI referral traffic in H1-7, monitoring as the first H2 module ([`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) |
 | H1-4 Plans and limits | **Done** (2026-11-18) |
-| H1-5 Background jobs | Next |
-| H1-6 … H1-12 | Not started |
+| H1-5 Background jobs | **Done** (2026-11-18) |
+| H1-6 SEO crawler and audits | **Done** (2026-11-18) |
+| H1-7 Integrations and Google | **Done** (2026-11-19); waits on your Google Cloud setup to connect real accounts |
+| H1-8 Dashboards | **Done** (2026-11-19) |
+| H1-9 Basic reporting | Next |
+| H1-10 … H1-12 | Not started |
+
+---
+
+## H1-8: Dashboards
+
+Built to the mockup approved on 2026-11-19, with the additions you chose (#1–#5, #7, #9–#11).
+
+### 1. What was completed
+
+- **The business dashboard** (also an agency's view of one client):
+  - **Period:** last 7, 28 or 90 days, or a custom range up to 16 months. **Compare with** the
+    period before, the same period last year, or nothing.
+  - **What changed** (#4): plain sentences worked out from the numbers by fixed rules, for
+    example "Visits are up 6% (3,113), mostly from Organic Search (+131) compared with
+    before." No AI writing, no forecasts.
+  - **Headline figures:** visits, visitors, visits from AI tools, search clicks, key events and
+    audit errors, each with its change.
+  - **Charts:** visits per day with the comparison period as a dashed line; Google search
+    clicks per day; audit errors and warnings over the last six audits (#5).
+  - **Visits from AI tools** by tool, and **where visits came from** by channel.
+  - **Latest audit:** errors, warnings and notices, what to fix first, and a link to it.
+  - **Pages that bring the most visits** (#1), by the page each visit started on.
+  - **Searches you almost rank for** (#2): positions 8 to 20.
+  - **Shown in search, rarely clicked** (#3): pages on Google's first page clicked less than
+    half as often as the site's other pages, with a link to the audit's title advice.
+  - **Top Google searches.**
+  - **Before anything is connected:** three steps (add your website, run an audit, connect
+    Google) and, in each empty section, what will appear there and what it needs.
+- **The agency dashboard** (all workspaces):
+  - Headline figures across clients, **what needs attention** (Google needs reconnecting, visits
+    down 20% or more, audit errors, Google not connected) with a button to fix each, and weekly
+    visits across all clients for 12 weeks.
+  - **Client table** with a trend line per client, visits and change, AI visits, search
+    clicks, audit status and Google status.
+  - **Sort and filter** (#9): biggest drop or gain, most AI visits, most audit errors, name;
+    needs attention, audit errors, Google not connected, my clients.
+  - **Account manager and "Reviewed" date** per client (#10), with **Mark reviewed**.
+- **More history from Google:** the first sync now copies 16 months (what Search Console
+  keeps), so "same period last year" works from day one. Visits by landing page start with 90
+  days.
+- **Honest comparisons:** a comparison is shown only when the whole earlier period was synced;
+  otherwise the dashboard says "No earlier data to compare".
+- **Permissions:** the dashboard leaves out what a role can't read (traffic, audits). Client
+  Viewers see their client's numbers but never the team details. **Mark reviewed** needs the
+  new `workspaces.review` permission (owners, administrators, Marketing Managers, Account
+  Managers).
+
+### 2. Files changed
+
+**Backend:**
+- `dashboard/`: new `analytics.py` (one workspace), `overview.py` (agency), `models.py`
+  (reviews); `router.py` and `schemas.py` extended.
+- `integrations/`: `sync.py` (16 months, landing pages, Search Console pages and searches by
+  page), `models.py` (three tables, `history_from`, `pages_from`), `summary.py` (same
+  comparison rule as the dashboard).
+- `rbac/catalogue.py` (`workspaces.review`). Migration `0017`.
+- Tests: new `test_dashboards.py`; updated integration, cross-tenant and role tests.
+
+**App:** `features/dashboard/` rewritten (page, workspace view, agency view, chart component,
+ECharts setup, styles, tests); chart colours in the theme; one API call; the Integrations page
+mentions 16 months. ECharts 5.6.0 added.
+
+**Docs:** `ARCHITECTURE.md`, `SECURITY.md`, `DEPLOYMENT.md`, `HYBRID_SAAS_PLAN.md`, this
+tracker.
+
+### 3. Database changes (migration `0017`)
+
+| Change | Existing data |
+|---|---|
+| `ga4_pages` (daily visits by landing page) | None |
+| `gsc_pages`, `gsc_query_pages` (Search Console's latest 28 days by page, and by search and page) | None |
+| `workspace_reviews` (organization, workspace, when, by whom) | None |
+| `data_sources.history_from`, `pages_from` | Empty until the next first sync |
+| Row-level security on the four new tables (reviews: the reviewing organization only) | None |
+
+Run up, down and up again; the test suite builds from it.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **464 passed** (was 443) |
+| App (Vitest) | **132 passed** (was 128) |
+| Website (Vitest) | 93 passed (was 92, the privacy policy test) |
+
+The new backend tests cover:
+- the default period and its comparison; same period last year; no comparison; a comparison
+  left out when the earlier period wasn't synced
+- "what changed", including the channel that explains a change
+- custom ranges and their limits
+- top pages, searches in positions 8–20, rarely clicked pages
+- the latest audit, its history, new and fixed issues, what to fix first
+- a workspace with nothing connected
+- roles without traffic or audit access
+- the agency overview, what needs attention (including a drop in visits and Google needing
+  reconnection), account managers, reviews, "my clients", client-portal users, archived
+  clients, and an agency's review of a business's shared workspace staying the agency's
+- the cross-organization attack suite found the new routes by itself, now includes a victim's
+  review, and every attempt failed
+
+**Browser check** with data synced through the real code (from the fake Google, with numbers
+that vary by day): business dashboard, agency dashboard and the getting-started view in light
+and dark mode. An axe scan found no problems in any of them; no sideways scrolling on a phone;
+Mark reviewed worked.
+
+### 5. Unfinished (on purpose)
+
+- **The "Client report" button (#11) isn't there yet.** Reports are H1-9; a button that does
+  nothing would break the no-placeholders rule, so it arrives with the reports.
+- **Alerts, AI search visibility and Google Business Profile** are planned for later (H1.5 and
+  H2), as agreed. **A marketing score and forecasts are left out** on purpose.
+- **The searches and page lists** cover Search Console's latest 28 days whatever period is
+  chosen; the dashboard says so under them.
+- **Still waiting on Google Cloud** for real data; until then the dashboard shows the
+  getting-started steps.
+
+### 6. Security notes
+
+- Parts a role can't read are left out of the API response, not just hidden in the app.
+- Team details (account managers, reviews) are only sent to people who can see the team.
+- Reviews are under row-level security for the reviewing organization only.
+- The new routes are covered by the cross-organization attack suite.
+
+### 7. Next: H1-9 basic reporting
+
+SEO and analytics reports per workspace as PDF and CSV, including the **Client report** button
+on the agency dashboard.
+
+---
+
+## H1-7: Integrations and Google
+
+### 1. What was completed
+
+- **Connect Google per workspace** (Integrations, a new item in the menu):
+  - Sign-in with Google using read-only access to Analytics and Search Console. Outlogik can
+    see reports, never change anything in the Google account.
+  - Pick one **GA4 property** and one **Search Console site** from the ones that Google
+    account can see (unverified Search Console sites aren't offered).
+  - See which Google account is connected, when each source last synced, and any error.
+  - **Sync now**, **Change what's synced**, and **Disconnect** (with a confirmation). Disconnect
+    removes Outlogik's access at Google and deletes the synced history.
+  - If Google stops accepting the connection (for example, the person removed access in their
+    Google account), the page says so and offers **Reconnect Google**.
+- **Syncing into Outlogik's own history:**
+  - The first sync copies the last 90 days; then every night the last 7 days are refreshed
+    (Google revises recent days).
+  - GA4: sessions, visitors, new visitors, engaged sessions, page views, key events, and
+    sessions by channel.
+  - Search Console: clicks, impressions and average position by day, and the top 250 searches
+    over 28 days.
+- **Visits from AI tools** (the addendum): GA4 sessions referred by ChatGPT, Perplexity,
+  Gemini, Microsoft Copilot, Claude and You.com, grouped by tool. The page says plainly that
+  some AI tools don't pass on where a visitor came from, so the real number can be higher.
+- **A 28-day summary** on the Integrations page: totals against the 28 days before, visits from
+  AI tools, channels and top Google searches. A comparison is shown only when the earlier
+  period was fully synced; otherwise it says "No earlier data to compare". Charts come with the
+  dashboards (H1-8).
+- **Permissions:**
+  - **Connect, choose, sync, disconnect:** owners, administrators, Marketing Managers and
+    Account Managers.
+  - **See the connection and the numbers:** also Reporting Viewers.
+  - **Client Viewers** see the numbers only (for the client portal, H1-10), not which Google
+    account is connected.
+  - An agency with **view-only** access to a business's workspace sees the numbers but can't
+    change the connection.
+- **If Google isn't set up on the server** (today), the page says so, and nothing else is
+  affected.
+
+### 2. Files changed
+
+**Backend:**
+- New module `integrations/`: `google.py` (every call to Google), `crypto.py` (token
+  encryption), `models.py`, `schemas.py`, `service.py` (connect, choose, disconnect),
+  `sync.py`, `summary.py`, `router.py`.
+- `jobs/handlers.py` (`integrations.sync`, `integrations.sync_all`), `worker.py` (nightly at
+  05:23 Toronto).
+- `rbac/catalogue.py` (`integrations.read`, `integrations.manage`, `analytics.read`).
+- `tenancy/context.py` (the organization check reused for Google's return).
+- `core/config.py` (Google and encryption settings; production refuses Google without an
+  encryption key). `pyproject.toml` adds `cryptography`.
+- Migration `0016`.
+- Tests: new `test_integrations.py`; updated cross-tenant and role tests.
+
+**App:** new `features/integrations/` (page and tests); menu, route, types, API calls.
+
+**Docs:** `DEPLOYMENT.md` (Google Cloud setup, step by step, and the launch checklist),
+`ARCHITECTURE.md`, `SECURITY.md`, `.env.example`, this tracker.
+
+### 3. Database changes (migration `0016`)
+
+| Change | Existing data |
+|---|---|
+| `integrations` (workspace, provider, status, Google account, encrypted refresh token) | None |
+| `data_sources` (the GA4 property or Search Console site, sync status) | None |
+| `ga4_daily`, `ga4_breakdowns` (channels and AI tools), `gsc_daily`, `gsc_queries` | None |
+| Row-level security on all six (an agency can see a business's that shared its workspace) | None |
+
+Run up, down and up again; the test suite builds from it.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **443 passed** (was 414) |
+| App (Vitest) | **128 passed** (was 121) |
+| Website (Vitest) | 92 passed (unchanged) |
+
+**Honest limit:** these tests use a fake Google that answers with the real APIs' addresses and
+data shapes, written from Google's documentation. Nothing has talked to the real Google yet,
+because that needs the Google Cloud project. The first real connection on staging is the real
+test; if Google's answers differ anywhere, I'll fix it then.
+
+The new backend tests cover:
+- **Signing in:** the full round trip; read-only scopes and PKCE in the request; the one-time
+  state (expires in 10 minutes, works once, only for the person who started it); signed out;
+  cancelled at Google; scopes unticked (token revoked, nothing stored); no lasting access.
+- **Storage:** the token is encrypted at rest and never in an API response; reconnecting
+  revokes the old token.
+- **Syncing:** only sources the account can see; 90 days then 7; replaced, not doubled; AI
+  sources merged (chatgpt.com and chat.openai.com are both ChatGPT); Search Console's delay.
+- **Failures:** Google withdrawing access (marked for reconnection, skipped nightly); Google
+  down (sync marked failed, history kept).
+- **Summary:** totals, the previous period, no comparison without a full earlier period, before
+  anything is connected.
+- **Access:** viewers read only; Marketing Managers manage; a view-only agency sees but can't
+  change.
+- **The cross-organization attack suite** found the new routes by itself, now includes a
+  victim's Google connection, and every attempt failed.
+
+**Browser check** with data synced through the real sync code (fed by the fake Google): the
+page, summary, AI visits and disconnect all worked; no console errors; no sideways scrolling on
+a phone; an axe scan found no problems in light or dark mode.
+
+### 5. Unfinished (on purpose)
+
+- **Real Google connections wait on your Google Cloud setup** (DEPLOYMENT.md has the steps).
+  Until the app is verified, only test users you list (up to 100) can connect, and their
+  connections expire after 7 days.
+- **The privacy policy now covers Google data** (section 3, approved 2026-11-19): what's read,
+  that it's used only for the workspace's own reports, not sold, used for ads or to train AI
+  models, who can see it, how to disconnect, and Google's Limited Use statement. A lawyer's
+  review is still on the launch checklist. When Google access is removed from the Google
+  account side, copied data stays until the person disconnects in Outlogik or asks us; the
+  policy says so.
+- **Google Business Profile** moved to the SEO and AI Search module (H2), as agreed.
+- **No charts yet.** The dashboards (H1-8) add charts from this same history.
+- **No email when a connection breaks.** Comes with alerts and notifications (H1.5).
+
+### 6. Security notes
+
+- **Read-only access** at Google; refused and revoked if either read permission is unticked.
+- **Sign-in protection:** PKCE, a one-time state tied to the person, and on return the
+  membership, permission and workspace are checked again.
+- **Tokens are encrypted** with a key that lives only in the server's secrets, are never sent
+  to the browser, and are revoked at Google on disconnect.
+- **Row-level security** on every new table; the cross-organization suite covers the new
+  routes and a victim's connection.
+
+### 7. Next: H1-8 dashboards
+
+Business and agency dashboards with charts, using real data only (audits, and the Google
+history from this step), and empty states that explain how to connect.
+
+---
+
+## H1-6: Website crawler and audits
+
+### 1. What was completed
+
+- **A safe, polite crawler** that only fetches public websites:
+  - **Public addresses only:** every connection checks the real address it's about to
+    connect to, and refuses private networks, the server itself and cloud metadata.
+  - **Redirects:** each hop is checked again.
+  - **Limits:** no proxies; size and time limits.
+  - **Polite:** it obeys robots.txt, reads the sitemap, stays on the site, and waits between
+    requests.
+- **Website audits with 29 checks in three areas,** each with plain "why it matters" and "how
+  to fix it" text:
+  - **Technical:**
+    - broken pages, with the page linking to them
+    - server errors, HTTPS, redirect chains, slow pages
+    - robots.txt, sitemap, the mobile viewport, pages hidden from search
+  - **SEO:**
+    - titles and meta descriptions (missing, too long, duplicated)
+    - headings, image alt text, thin pages, canonicals, the page language
+  - **AI search readiness** (from the addendum):
+    - AI search crawlers blocked by robots.txt
+    - structured data, and business details in it
+    - the same name, phone and address across pages
+    - questions without FAQ markup
+  - **AI training crawlers** (GPTBot and others) are shown as information. Blocking them is
+    the site owner's choice and doesn't affect AI search.
+- **Page speed** from Google PageSpeed (mobile, home page) once a key is set. Until then,
+  audits say "not connected".
+- **Results:**
+  - a summary, and what's new or fixed since the previous audit
+  - issues grouped by check, most serious first, filtered by area
+  - every page checked
+- **Plan limits you approved:** audits a month (counted per calendar month) and pages per
+  audit.
+  - An agency's audit of a business's shared workspace counts against the business's plan.
+  - Both show on the Plan page.
+- **Schedules:** each website can be audited weekly or monthly, started at night within the
+  plan's limits.
+- **Permissions:**
+  - **View audits:** everyone except custom roles without it, including Client Viewers, so
+    clients will see audits in their portal (H1-10).
+  - **Run audits and set schedules:** owners, administrators, Marketing Managers and Account
+    Managers.
+  - **View-only shared workspaces** can't run audits.
+
+**Audited Outlogik's own website as a real test.** It found three false alarms, all now fixed
+and covered by tests:
+- the crawler wandered from the website onto the client portal's login page (same host
+  locally, different port)
+- the home page was counted twice through a redirect
+- the booking page's `?service=…` variants were reported as duplicates, although they
+  already point search engines to the main version
+
+What's left on your site is accurate:
+- **About page:** its meta description is 164 characters, just over the ~160 shown in search
+  results.
+- **Booking-page variants:** informational notices for the four `?service=…` addresses.
+- **HTTPS:** reported only because the local copy runs without it.
+
+### 2. Files changed
+
+**Backend:**
+- New module `audits/`: `fetch.py`, `parse.py`, `crawler.py`, `checks.py`, `pagespeed.py`,
+  `models.py`, `schemas.py`, `service.py`, `router.py`.
+- `jobs/handlers.py` (`audit.run`, `audits.schedule`), `jobs/registry.py` and `service.py`
+  (a time limit per job kind).
+- `worker.py` (nightly scheduled audits).
+- `plans/` (audit limits, monthly usage, caps), `websites/` (audit schedule),
+  `rbac/catalogue.py` (`audits.read`, `audits.run`).
+- `core/config.py` (crawler and PageSpeed settings; private crawling refused in
+  production).
+- Migration `0015`.
+- Tests: new `test_crawler.py` and `test_audits.py`; updated cross-tenant, plans and role
+  tests.
+
+**App:**
+- New `features/audits/` (Audits list, audit page, shared parts, tests).
+- The Plan page shows caps; navigation, routes, types, API calls.
+
+**Docs:** `ARCHITECTURE.md`, `SECURITY.md` (fetching safely), `DEPLOYMENT.md` (the optional
+PageSpeed key), `HYBRID_SAAS_PLAN.md` (audit limits in the plans table), `.env.example`, this
+tracker.
+
+### 3. Database changes (migration `0015`)
+
+| Change | Existing data |
+|---|---|
+| `audits` (status, trigger, page limit, counts, site-level facts, timings) | None |
+| `audit_pages` and `audit_issues` (check, severity, area, page, details) | None |
+| `usage_records` (organization, metric, month, count) | None |
+| `websites.audit_frequency` (off, weekly, monthly) | All off |
+| Plan limits `limits.audits_per_month` and `limits.pages_per_audit` | The approved values for all six plans |
+| Row-level security on the new tables (an agency can write audits and usage for a business that shared its workspace) | None |
+
+Run up, checked, down and up again; the test suite builds from it.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **414 passed** (was 367) |
+| App (Vitest) | **121 passed** (was 113) |
+| Website (Vitest) | 92 passed (unchanged) |
+
+The new backend tests cover:
+- **Safety:**
+  - 15 address types allowed or refused
+  - private addresses refused at connection time, including through a redirect
+  - only http and https; size caps; proxies never used
+- **Crawling and reading:**
+  - reading pages, including broken HTML
+  - robots.txt, sitemaps, page limits, another port as another site
+- **Full audits** against a local test site with known problems:
+  - each finding, and new or fixed against the previous audit
+  - an unreachable site
+  - one audit at a time
+  - PageSpeed parsing
+- **Limits, schedules and access:**
+  - the monthly limit and the page cap
+  - schedules, including when the plan's limit is used up
+  - who can view or run audits; another workspace's website
+  - an agency auditing a shared workspace on the business's plan
+- **The cross-organization attack suite** found the new routes by itself, and every attempt
+  failed.
+
+**Browser check** against the real API:
+- A real audit of the Outlogik website ran: 24 pages checked.
+- Results, AI search readiness and issues displayed correctly. No page errors.
+- An axe scan of both pages found no problems in light or dark mode.
+
+### 5. Unfinished (on purpose)
+
+- **Links to other websites aren't checked yet;** only the site's own pages are. External link
+  checks can come later, with rate limits.
+- **No email when an audit finishes or finds new errors.** That comes with alerts and
+  notifications (H1.5).
+- **Pages that need JavaScript to show their content** are read as the server sends them. The
+  crawler doesn't run JavaScript. Most business sites (and Outlogik's, which is rendered on
+  the server) are fine.
+- **Page speed waits for a Google API key** (DEPLOYMENT.md has the steps).
+
+### 6. Security notes
+
+- **Server-side request forgery** is the main risk of a crawler, and it's handled at
+  connection time, not just when a website is added. The tests include a redirect to an
+  internal address.
+- **`CRAWLER_ALLOW_PRIVATE`** exists only for tests. The API refuses to start with it in
+  production.
+- **Untrusted pages and sitemaps** are read as text: no XML parser, no JavaScript, size-capped.
+- **Audit results** are under row-level security, and the cross-organization suite covers the
+  new routes.
+
+### 7. Next: H1-7 integrations and Google
+
+Encrypted credentials for connected services:
+- Google sign-in for connecting accounts
+- Google Analytics 4 and Search Console data synced into history, including the AI referral
+  traffic view from the addendum
+
+Google's app verification can take weeks, so it's worth applying as soon as the Google Cloud
+project exists.
+
+---
+
+## H1-5: Background jobs
+
+### 1. What was completed
+
+- **A job system** for work that shouldn't happen during a click:
+  - **Recorded:** every job is in a `jobs` table, with its kind, status, attempts and last
+    error.
+  - **Retried:** a failure is tried again with a growing wait (30 seconds, 2 minutes,
+    8 minutes, …). After the kind's maximum attempts the job "gives up", and is kept for a
+    person to look at and retry.
+  - **No duplicates:** the same work can't be queued twice, and a message delivered twice
+    still runs once.
+  - **Recovered:** jobs left half-done by a stopped worker, or whose message was lost, are
+    picked up again automatically.
+- **Email now goes through a job.** A slow or failing mail server no longer slows down
+  sign-up, invitations or the website forms, and failed emails are retried. Once an email is
+  sent (or gives up), its text, which can contain a sign-in or reset link, is erased from the
+  job record.
+- **Scheduled jobs:**
+  - **Every 5 minutes:** recover stuck or lost jobs.
+  - **Nightly (3:17 am Toronto time):** delete expired and idle sessions, used or expired
+    one-time tokens, and finished jobs older than 30 days. Nothing deleted any of these
+    before, so they were piling up.
+- **Two modes:**
+  - **inline** (development and tests): jobs run straight away inside the API, so nothing
+    extra runs on your computer
+  - **queue** (staging and production): a separate worker process (Celery with Redis/Valkey)
+- **DigitalOcean:** both app specs get a `worker` component, built from the API's image. Each
+  environment has its own queue name, because staging and production share one Valkey.
+- **Command line:** `python -m app.cli jobs [--status dead]` and `retry-job ID`, until the
+  Super Admin area shows job health (H1.5).
+
+**Found and fixed while testing:** a job freed from a stopped worker was requeued but only
+re-sent on the next recovery run, 5 minutes later. It's now sent straight away.
+
+### 2. Files changed
+
+- **New:** `app/jobs/` (`models.py`, `registry.py`, `service.py`, `handlers.py`),
+  `app/worker.py`, migration `0014`, `tests/test_jobs.py`.
+- **Changed:**
+  - `core/email.py` (`send_email` queues; `deliver` sends), `core/config.py`
+    (`JOBS_MODE`, `JOBS_QUEUE`)
+  - `main.py`, `models.py`, `cli.py` (`jobs`, `retry-job`)
+  - `pyproject.toml` / `uv.lock` (Celery)
+  - `.env.example`
+- **Deployment:** `.do/staging/app.yaml`, `.do/production/app.yaml` (worker component, queue
+  settings); `.github/workflows/ci.yml` (the API image must be able to start the worker).
+- **Docs:** `ARCHITECTURE.md`, `SECURITY.md`, `DEPLOYMENT.md` (§6: the worker, its secrets,
+  checking and retrying jobs), `README.md`, `HYBRID_SAAS_PLAN.md`, this tracker.
+
+### 3. Database changes (migration `0014`)
+
+| Change | Existing data |
+|---|---|
+| New table `jobs`: kind, organization (optional), status, payload, dedupe key (unique while waiting or running), attempts, max attempts, run after, started/finished, last error | None |
+| Row-level security on `jobs` | None |
+
+Run up, checked, down and up again; the test suite builds from it.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **367 passed** (was 353) |
+| App (Vitest) | 113 passed (unchanged; no app changes) |
+| Website (Vitest) | 92 passed (unchanged) |
+
+The 14 new tests cover:
+- recording and success; erasing sensitive content
+- retries and the backoff schedule; giving up after the last attempt, and a person retrying
+- running once when delivered twice; no duplicate queued work
+- unknown kinds refused
+- recovery of stuck and lost jobs (and giving up on stuck ones with no attempts left)
+- the queue being down not breaking the request
+- queue mode through Celery
+- scheduled work recorded once
+- email through the queue (with its text erased), and a mail-server failure retried while the
+  request still succeeds
+- the nightly cleanup deleting only what's no longer needed
+
+**With a real worker** (Celery, the local Redis and Postgres, the API in queue mode):
+- A sign-up's confirmation email was sent by the worker, and its text erased from the job.
+- With the worker stopped, a sign-up still succeeded and its email waited in the queue. When
+  the worker restarted, the email was sent.
+
+### 5. Unfinished (on purpose)
+
+- **Job health on screen** (counts, failures, retry button) comes with the Super Admin control
+  center (H1.5). Until then, the command line.
+- **Inline mode (development) doesn't retry failed jobs,** since there's no worker to come back
+  later. Development email goes to Mailpit or the console anyway.
+- **No metrics or alerting on the queue yet:** monitoring is in DEPLOYMENT.md's checklist for
+  launch.
+
+### 6. Security notes
+
+- **Email text erased:** an email's text, which may contain a sign-in, reset or invitation
+  link, is erased from the job record once sent or given up. A failed email therefore can't be
+  retried by staff; the person asks again from the app.
+- **Errors stored briefly:** last errors are stored truncated, without the payload.
+- **Automatic deletion:** finished jobs after 30 days; expired and idle sessions and used
+  tokens nightly (less personal data kept, as PIPEDA asks).
+- **`jobs` is under row-level security** like other tenant tables.
+- **Separate queues** for staging and production, so neither can run the other's jobs.
+- **Handlers filter by organization themselves.** They run without an organization set, as
+  the architecture checklist says.
+
+### 7. Next: H1-6 SEO crawler and audits
+
+Our own crawler with safe fetching (blocking private addresses), on-page and technical checks,
+the **AI search readiness** checks from the addendum, PageSpeed, scheduled audits on the new job
+system, history and comparison, and prioritized issues. Monthly audit limits per plan arrive
+here, with the first metered usage records.
 
 ---
 

@@ -49,11 +49,15 @@ const STATUS: Record<string, string> = {
           <div class="limit">
             <div class="d-flex justify-content-between gap-3">
               <span>{{ l.label }}</span>
-              <span class="tabular-nums" [class.text-danger]="l.limit !== null && l.used >= l.limit">
-                {{ l.used }} of {{ l.limit === null ? 'unlimited' : l.limit }}
-              </span>
+              @if (l.used === null) {
+                <span class="tabular-nums">{{ l.limit === null ? 'No limit' : 'Up to ' + l.limit }}</span>
+              } @else {
+                <span class="tabular-nums" [class.text-danger]="l.limit !== null && l.used >= l.limit">
+                  {{ l.used }} of {{ l.limit === null ? 'unlimited' : l.limit }}
+                </span>
+              }
             </div>
-            @if (l.limit) {
+            @if (l.limit && l.used !== null) {
               <div class="meter" role="progressbar" [attr.aria-label]="l.label"
                 [attr.aria-valuenow]="l.used" aria-valuemin="0" [attr.aria-valuemax]="l.limit">
                 <div class="meter-fill" [class.full]="l.used >= l.limit"

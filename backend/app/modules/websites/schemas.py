@@ -7,6 +7,7 @@ from pydantic import BaseModel, StringConstraints
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 Url = Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=2048)]
 WebsiteStatus = Literal["active", "paused", "archived"]
+AuditFrequency = Literal["off", "weekly", "monthly"]
 
 
 class WebsiteCreateIn(BaseModel):
@@ -26,6 +27,7 @@ class WebsiteUpdateIn(BaseModel):
     url: Url | None = None
     name: Name | None = None
     status: WebsiteStatus | None = None
+    audit_frequency: AuditFrequency | None = None
 
 
 class WebsiteOut(BaseModel):
@@ -39,5 +41,6 @@ class WebsiteOut(BaseModel):
     url: str
     domain: str
     status: str
+    audit_frequency: AuditFrequency = "off"
     created_at: datetime
     updated_at: datetime

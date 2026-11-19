@@ -26,3 +26,6 @@ dump.rdb
 
 # Delivery archives
 *.zip
+
+# Celery beat state (written to the temp folder; ignore any local copy)
+celerybeat-schedule*

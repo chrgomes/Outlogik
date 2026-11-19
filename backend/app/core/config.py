@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,6 +13,27 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://outlogik:outlogik@localhost:5432/outlogik"
     redis_url: str = "redis://localhost:6379/0"
+    # Background jobs: "inline" runs them straight away in the same process (development, tests);
+    # "queue" hands them to the Celery worker (staging, production). See app/worker.py.
+    jobs_mode: Literal["inline", "queue"] = "inline"
+    # The worker's queue. Staging and production share a Redis, so each needs its own name.
+    jobs_queue: str = "outlogik"
+    # Website audits (app/modules/audits). Fetching private network addresses is only for the
+    # test suite's local website; refused in production.
+    crawler_allow_private: bool = False
+    crawler_delay_seconds: float = 0.25
+    # Google PageSpeed Insights (free key from a Google Cloud project). Without it, audits say
+    # page speed isn't connected.
+    pagespeed_api_key: str | None = None
+    # Google (Analytics and Search Console connections). From the Google Cloud project's OAuth
+    # client; without them, "Connect Google" says it isn't set up yet. See docs/DEPLOYMENT.md.
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    # Where Google sends people back; defaults to {FRONTEND_URL}/api/v1/integrations/google/callback
+    google_redirect_uri: str | None = None
+    # Encrypts stored credentials: python -c "from cryptography.fernet import Fernet;
+    # print(Fernet.generate_key().decode())"
+    integrations_encryption_key: str | None = None
     frontend_url: str = "http://localhost:4200"
     # The public website. Its forms may post to /api/v1/public/* only from this origin
     # (plus any extra origins listed, comma-separated, e.g. a staging site).
@@ -102,6 +123,20 @@ class Settings(BaseSettings):
             if url.startswith(prefix):
                 return "postgresql+psycopg://" + url[len(prefix):]
         return url
+
+    @model_validator(mode="after")
+    def _no_private_crawling_in_production(self) -> "Settings":
+        if self.app_env == "production" and self.crawler_allow_private:
+            raise ValueError("CRAWLER_ALLOW_PRIVATE must not be set in production.")
+        if (self.app_env == "production" and self.google_client_id
+                and not self.integrations_encryption_key):
+            raise ValueError("Set INTEGRATIONS_ENCRYPTION_KEY to store Google credentials.")
+        return self
+
+    @property
+    def google_callback_url(self) -> str:
+        return self.google_redirect_uri or (
+            f"{self.frontend_url.rstrip('/')}/api/v1/integrations/google/callback")
 
     @property
     def public_form_origins(self) -> set[str]:

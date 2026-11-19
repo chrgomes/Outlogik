@@ -18,6 +18,13 @@
   --ol-focus-ring: rgba(0, 0, 0, 0.22);
   --ol-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.08);
   --ol-backdrop: rgba(5, 5, 5, 0.35);
+  // Charts (H1-8): every colour passes 3:1 against cards in its mode
+  --ol-chart-primary: #{$ol-charcoal};
+  --ol-chart-compare: #{$ol-grey};
+  --ol-chart-search: #{$ol-info};
+  --ol-chart-error: #{$ol-danger};
+  --ol-chart-warning: #{$ol-warning};
+  --ol-chart-grid: #{$ol-grey-100};
   color-scheme: light;
 }
 
@@ -37,6 +44,12 @@
   --ol-focus-ring: rgba(255, 255, 255, 0.3);
   --ol-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
   --ol-backdrop: rgba(0, 0, 0, 0.55);
+  --ol-chart-primary: #{$ol-grey-light};
+  --ol-chart-compare: #{$ol-grey-400};
+  --ol-chart-search: #7fb3d9;
+  --ol-chart-error: #f0857a;
+  --ol-chart-warning: #e0a54a;
+  --ol-chart-grid: #{$ol-grey-800};
   color-scheme: dark;
 
   // Bootstrap compiles $primary into components at build time; re-point them per mode.

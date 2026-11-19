@@ -30,10 +30,13 @@ schemas, service functions and router.
 | `modules/organizations` | Organizations, members, invitations |
 | `modules/rbac` | Permission catalogue, built-in roles, custom roles, escalation guard |
 | `modules/workspaces` | Workspaces (an organization's own, and one per agency client), the workspace list API, `require_workspace(...)` for `/orgs/{slug}/workspaces/{id}/…` routes, and member workspace assignments |
+| `jobs/` and `worker.py` | Background jobs: the `jobs` table, `enqueue()`, retries, recovery, the job kinds (`jobs/handlers.py`), and the Celery worker with its schedule |
+| `modules/audits` | Website audits: the safe fetcher (`fetch.py`), page reader (`parse.py`), crawler, the check catalogue (`checks.py`), PageSpeed, the audit job, schedules and comparison |
+| `modules/integrations` | Outside accounts connected to a workspace (Google): sign-in with PKCE (`service.py`), every Google call (`google.py`), encrypted tokens (`crypto.py`), the GA4 and Search Console syncs (`sync.py`) and the traffic summary (`summary.py`) |
 | `modules/plans` | Plans, their limits, subscriptions and trials; `check_limit(...)`, called by the services that add websites, clients and team members |
 | `modules/grants` | Access grants: a business shares its workspace with an agency (send, accept, revoke, disconnect) |
 | `modules/clients`, `modules/websites` | Clients, client-portal access, websites and URL validation |
-| `modules/dashboard` | Dashboard counts and recent activity |
+| `modules/dashboard` | The dashboards: one workspace for a chosen period (`analytics.py`), every workspace side by side for agencies (`overview.py`), reviews, recent activity |
 | `modules/audit` | The append-only audit log |
 | `modules/site` | Marketing site settings and product module statuses (public and admin API) |
 | `platform.py` | Outlogik staff roles (`content_editor`, `site_admin`) and `require_staff(...)` for `/api/v1/admin/...` |
@@ -168,6 +171,70 @@ users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
   counts. After a trial ends, or when cancelled, nothing new can be added; nothing is removed.
   A new limit (for example, audits per month) is a catalogue entry, a migration adding values
   to the plans, and a `check_limit` call where the thing is created.
+- **Background jobs** (`jobs` table, migration 0014; `app/jobs`, `app/worker.py`):
+  - `enqueue(kind, payload, dedupe_key=…)` records a job in its own transaction and hands it
+    to the worker. A `dedupe_key` stops the same work being queued twice.
+  - The worker claims a job with one UPDATE, so a message delivered twice runs once.
+  - A failure is retried with a growing wait (30 s, 2 min, 8 min…) up to the kind's
+    `max_attempts`, then the job is `dead`, kept for a person to retry.
+  - `JOBS_MODE=inline` (development, tests) runs jobs straight away in the same process;
+    `queue` (staging, production) uses the Celery worker, started with
+    `celery -A app.worker worker --beat`.
+  - Schedule: `jobs.recover` every 5 minutes (stuck or lost jobs), `maintenance.cleanup`
+    nightly (expired sessions and tokens, finished jobs after 30 days).
+  - Email always goes through a job (`email.send`). A kind's `scrub` removes sensitive payload
+    once it's done.
+  - **To add a kind:** a function with `@handler("area.thing")` in `jobs/handlers.py` (or the
+    module's own file, imported there), then `enqueue("area.thing", {...})` where it's needed.
+    Handlers get a session with no organization set, so they filter by organization themselves.
+- **Website audits** (`audits`, `audit_pages`, `audit_issues`, `usage_records`; migration 0015):
+  - An audit runs as a background job (`audit.run`, up to 50 minutes): crawl, then checks,
+    then PageSpeed if a key is set. One at a time per website.
+  - Each check in `checks.py` has a severity, an area (technical, SEO, AI search readiness),
+    and the "why it matters" and "how to fix it" text shown in the app.
+  - An audit belongs to the organization that owns the website, and counts against that
+    organization's plan (`limits.audits_per_month`, metered per UTC month in
+    `usage_records`; `limits.pages_per_audit` caps each crawl).
+  - Websites can be audited weekly or monthly (`audits.schedule`, nightly).
+  - **To add a check:** an entry in `CHECKS` and the code that appends `Found(...)` in
+    `run_checks()`, with a test page in `tests/test_audits.py`.
+  - **Anything that fetches another website goes through `audits/fetch.py`**, never a plain
+    HTTP client (see SECURITY.md).
+- **Google integration** (`integrations`, `data_sources`, `ga4_daily`, `ga4_breakdowns`,
+  `gsc_daily`, `gsc_queries`; migration 0016; `ga4_pages`, `gsc_pages`, `gsc_query_pages`,
+  migration 0017):
+  - One Google connection per workspace, with at most one GA4 property and one Search Console
+    site (`data_sources`). Only what the connected account can see may be chosen.
+  - Syncs run as jobs (`integrations.sync`; nightly `integrations.sync_all` at 05:23 Toronto):
+    16 months the first time (90 days for visits by landing page), then the last 7 days
+    replaced each night. Synced days are kept as daily rows ("snapshots"), so reports don't
+    call Google. Search Console's pages and searches-by-page are a snapshot of its latest 28
+    days, replaced at each sync. `data_sources.history_from` and `pages_from` record where
+    the history starts, so comparisons know what was synced (Google leaves out days without
+    visits, so counting rows can't tell).
+  - Visits from AI tools are GA4 sessions whose source is an AI assistant's site
+    (`AI_SOURCES` in `sync.py`: ChatGPT, Perplexity, Gemini, Copilot, Claude, You.com).
+  - `GET /orgs/{slug}/workspaces/{id}/analytics/summary?days=28` compares the period with the
+    one before; the comparison is left out unless that earlier period was fully synced.
+  - Tests use a fake Google (`tests/test_integrations.py`, `google.TRANSPORT`) that answers with
+    the real APIs' paths and JSON shapes.
+- **Dashboards** (H1-8; `workspace_reviews`, migration 0017):
+  - `GET /orgs/{slug}/workspaces/{id}/dashboard?days=28&compare=previous` (or `start`, `end`;
+    `compare` = `previous`, `year`, `none`): totals, daily series, AI tools, channels, top
+    landing pages, searches in positions 8–20, pages shown but rarely clicked, the latest audit
+    with its history, and "what changed".
+  - **Comparisons only with fully synced periods**; otherwise `previous` is null and the app
+    says so. "What changed" is written by fixed rules in `analytics.changes()`, never by AI,
+    and never forecasts.
+  - `GET /orgs/{slug}/dashboard/overview?days=28`: every workspace the caller can see (archived
+    clients left out), what needs attention (Google needs reconnecting, visits down 20% or
+    more from at least 50, audit errors, Google not connected), and 12 weeks of visits.
+    Account managers and reviews only for people with `members.read`.
+  - `PUT /orgs/{slug}/workspaces/{id}/review` (`workspaces.review`) records a review for the
+    caller's organization; it works on a view-only shared workspace because the review is the
+    agency's own note.
+  - The app's charts use ECharts (only the line and bar charts, SVG renderer), loaded only
+    when a chart is shown. Colours come from the `--ol-chart-*` theme tokens in both modes.
 - **Row-level security** (migration 0012) backs all of this up in Postgres. `get_org_context`
   calls `core.db.set_tenant`, which sets `app.org_id` and `app.linked_ws` at the start of each
   transaction for the rest of the request.

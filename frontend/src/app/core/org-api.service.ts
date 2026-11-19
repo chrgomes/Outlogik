@@ -4,7 +4,10 @@ import { firstValueFrom } from 'rxjs';
 
 import {
   AccessGrant,
+  Audit,
+  AuditFrequency,
   Client,
+  GoogleIntegration,
   ClientUser,
   Invitation,
   Member,
@@ -87,6 +90,33 @@ export class OrgApi {
   }
   deleteWebsite(id: string) {
     return this.send<void>('DELETE', `websites/${id}`);
+  }
+
+  // Google (Analytics and Search Console)
+  connectGoogle(workspaceId: string) {
+    return this.send<{ url: string }>('POST', `workspaces/${workspaceId}/integrations/google/connect`);
+  }
+  chooseGoogleSources(workspaceId: string, body: { ga4_property: string | null; search_console_site: string | null }) {
+    return this.send<GoogleIntegration>('PUT', `workspaces/${workspaceId}/integrations/google/sources`, body);
+  }
+  syncGoogle(workspaceId: string) {
+    return this.send<GoogleIntegration>('POST', `workspaces/${workspaceId}/integrations/google/sync`);
+  }
+  disconnectGoogle(workspaceId: string) {
+    return this.send<void>('DELETE', `workspaces/${workspaceId}/integrations/google`);
+  }
+
+  // Dashboard
+  markReviewed(workspaceId: string) {
+    return this.send<{ reviewed_at: string; reviewed_by: string | null }>('PUT', `workspaces/${workspaceId}/review`);
+  }
+
+  // Website audits
+  startAudit(workspaceId: string, websiteId: string) {
+    return this.send<Audit>('POST', `workspaces/${workspaceId}/audits`, { website_id: websiteId });
+  }
+  setAuditFrequency(websiteId: string, frequency: AuditFrequency) {
+    return this.send<Website>('PATCH', `websites/${websiteId}`, { audit_frequency: frequency });
   }
 
   // Workspace assignments (members whose role is limited to assigned workspaces)

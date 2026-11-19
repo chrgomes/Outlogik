@@ -18,7 +18,8 @@ class LimitOut(BaseModel):
     label: str
     # None: unlimited
     limit: int | None
-    used: int
+    # None for caps that aren't counted (pages per audit)
+    used: int | None
 
 
 class SubscriptionOut(BaseModel):

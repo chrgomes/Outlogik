@@ -140,8 +140,8 @@ export interface Subscription {
   billing_interval: 'monthly' | 'annual';
   trial_ends_at: string | null;
   current_period_end: string | null;
-  /** limit null: unlimited. */
-  limits: { key: string; label: string; limit: number | null; used: number }[];
+  /** limit null: unlimited. used null: a cap per use (pages per audit), not counted. */
+  limits: { key: string; label: string; limit: number | null; used: number | null }[];
 }
 
 export interface Website {
@@ -155,8 +155,75 @@ export interface Website {
   url: string;
   domain: string;
   status: 'active' | 'paused' | 'archived';
+  audit_frequency: AuditFrequency;
   created_at: string;
   updated_at: string;
+}
+
+export type AuditFrequency = 'off' | 'weekly' | 'monthly';
+export type Severity = 'error' | 'warning' | 'notice';
+export type IssueArea = 'seo' | 'technical' | 'ai_search';
+
+export interface Audit {
+  id: string;
+  workspace_id: string;
+  website_id: string;
+  website_name: string;
+  url: string;
+  status: 'queued' | 'running' | 'completed' | 'failed';
+  trigger: 'manual' | 'scheduled';
+  page_limit: number;
+  pages_crawled: number;
+  hit_page_limit: boolean;
+  errors: number;
+  warnings: number;
+  notices: number;
+  error: string | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface AuditDetail extends Audit {
+  facts: AuditFacts;
+  previous_audit_id: string | null;
+  new_issues: number | null;
+  fixed_issues: number | null;
+}
+
+export interface AuditFacts {
+  https?: boolean;
+  robots_txt?: number | null;
+  sitemap?: boolean;
+  sitemap_urls?: number;
+  skipped_by_robots?: number;
+  ai_search_crawlers?: Record<string, boolean>;
+  ai_training_crawlers?: Record<string, boolean>;
+  structured_data_types?: string[];
+  pagespeed?: { connected: boolean; error?: string; score?: number | null; lcp_ms?: number | null;
+    cls?: number | null; tbt_ms?: number | null };
+}
+
+export interface IssueGroup {
+  check: string;
+  title: string;
+  severity: Severity;
+  area: IssueArea;
+  why: string;
+  fix: string;
+  count: number;
+  new: number;
+  items: { url: string | null; details: Record<string, unknown>; is_new: boolean }[];
+}
+
+export interface WebsiteAudits {
+  website_id: string;
+  website_name: string;
+  url: string;
+  workspace_id: string;
+  workspace_name: string;
+  audit_frequency: AuditFrequency;
+  latest: Audit | null;
 }
 
 export interface RoleRef {
@@ -216,4 +283,57 @@ export interface OrganizationDetail {
   created_at: string;
   your_role: string;
   your_permissions: string[];
+}
+
+// Integrations (H1-7)
+export type SourceKind = 'ga4' | 'search_console';
+
+export interface DataSource {
+  id: string;
+  kind: SourceKind;
+  external_id: string;
+  name: string;
+  sync_status: 'pending' | 'ok' | 'failed';
+  last_synced_at: string | null;
+  synced_through: string | null;
+  last_error: string | null;
+}
+
+export interface GoogleIntegration {
+  configured: boolean;
+  connected: boolean;
+  status: 'connected' | 'error' | null;
+  account_email: string | null;
+  connected_at: string | null;
+  last_error: string | null;
+  sources: DataSource[];
+}
+
+export interface GoogleAvailable {
+  ga4: { id: string; name: string; account: string }[];
+  search_console: { site_url: string; permission: string }[];
+}
+
+export interface Metric {
+  value: number;
+  previous: number | null;
+}
+
+export interface Share {
+  name: string;
+  sessions: number;
+  previous: number;
+}
+
+export interface AnalyticsSummary {
+  days: number;
+  start: string | null;
+  end: string | null;
+  ga4: Record<'sessions' | 'users' | 'new_users' | 'engaged_sessions' | 'page_views' | 'key_events', Metric> | null;
+  search_console: Record<'clicks' | 'impressions' | 'ctr' | 'position', Metric> | null;
+  series: { day: string; sessions: number | null; users: number | null; clicks: number | null; impressions: number | null }[];
+  channels: Share[];
+  ai_referrals: Share[];
+  top_queries: { query: string; clicks: number; impressions: number; ctr: number; position: number }[];
+  top_queries_through: string | null;
 }
