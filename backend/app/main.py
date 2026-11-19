@@ -18,6 +18,8 @@ from app.modules.dashboard.router import router as dashboard_router
 from app.modules.grants.router import linked_router as grants_linked_router
 from app.modules.grants.router import open_router as grants_open_router
 from app.modules.grants.router import router as grants_router
+from app.modules.integrations.router import callback_router as integrations_callback_router
+from app.modules.integrations.router import router as integrations_router
 from app.modules.leads.admin import router as leads_admin_router
 from app.modules.leads.router import open_router as leads_open_router
 from app.modules.leads.router import router as leads_router
@@ -76,6 +78,8 @@ def create_app() -> FastAPI:
     api.include_router(audits_router)
     api.include_router(audits_overview_router)
     api.include_router(workspace_websites_router)
+    api.include_router(integrations_router)
+    api.include_router(integrations_callback_router)
     api.include_router(dashboard_router)
     api.include_router(site_public_router)
     api.include_router(leads_router)

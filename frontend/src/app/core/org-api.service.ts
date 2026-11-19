@@ -7,6 +7,7 @@ import {
   Audit,
   AuditFrequency,
   Client,
+  GoogleIntegration,
   ClientUser,
   Invitation,
   Member,
@@ -89,6 +90,20 @@ export class OrgApi {
   }
   deleteWebsite(id: string) {
     return this.send<void>('DELETE', `websites/${id}`);
+  }
+
+  // Google (Analytics and Search Console)
+  connectGoogle(workspaceId: string) {
+    return this.send<{ url: string }>('POST', `workspaces/${workspaceId}/integrations/google/connect`);
+  }
+  chooseGoogleSources(workspaceId: string, body: { ga4_property: string | null; search_console_site: string | null }) {
+    return this.send<GoogleIntegration>('PUT', `workspaces/${workspaceId}/integrations/google/sources`, body);
+  }
+  syncGoogle(workspaceId: string) {
+    return this.send<GoogleIntegration>('POST', `workspaces/${workspaceId}/integrations/google/sync`);
+  }
+  disconnectGoogle(workspaceId: string) {
+    return this.send<void>('DELETE', `workspaces/${workspaceId}/integrations/google`);
   }
 
   // Website audits

@@ -34,6 +34,9 @@ celery.conf.update(
     beat_schedule={
         "recover-jobs": {"task": "app.worker.scheduled", "schedule": 300.0,
                          "args": ["jobs.recover"]},
+        "google-sync": {"task": "app.worker.scheduled",
+                        "schedule": crontab(hour=5, minute=23),
+                        "args": ["integrations.sync_all"]},
         "scheduled-audits": {"task": "app.worker.scheduled",
                              "schedule": crontab(hour=2, minute=7),
                              "args": ["audits.schedule"]},

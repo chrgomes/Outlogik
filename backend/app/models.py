@@ -7,6 +7,14 @@ from app.modules.audits.models import Audit, AuditIssue, AuditPage, UsageRecord
 from app.modules.auth.models import EmailVerificationToken, PasswordResetToken, UserSession
 from app.modules.clients.models import Client, ClientUser
 from app.modules.grants.models import WorkspaceGrant
+from app.modules.integrations.models import (
+    DataSource,
+    Ga4Breakdown,
+    Ga4Daily,
+    GscDaily,
+    GscQuery,
+    Integration,
+)
 from app.modules.leads.models import Lead, LeadNote, NewsletterSubscriber
 from app.modules.organizations.models import Invitation, Organization, OrganizationMember
 from app.modules.plans.models import Plan, PlanEntitlement, Subscription
@@ -24,7 +32,13 @@ __all__ = [
     "Base",
     "Client",
     "ClientUser",
+    "DataSource",
     "EmailVerificationToken",
+    "Ga4Breakdown",
+    "Ga4Daily",
+    "GscDaily",
+    "GscQuery",
+    "Integration",
     "Invitation",
     "Job",
     "Lead", "LeadNote",

@@ -13,8 +13,143 @@ unfinished, security notes, and what's next.
 | H1-4 Plans and limits | **Done** (2026-11-18) |
 | H1-5 Background jobs | **Done** (2026-11-18) |
 | H1-6 SEO crawler and audits | **Done** (2026-11-18) |
-| H1-7 Integrations and Google | Next |
-| H1-8 … H1-12 | Not started |
+| H1-7 Integrations and Google | **Done** (2026-11-19); waits on your Google Cloud setup to connect real accounts |
+| H1-8 Dashboards | Next |
+| H1-9 … H1-12 | Not started |
+
+---
+
+## H1-7: Integrations and Google
+
+### 1. What was completed
+
+- **Connect Google per workspace** (Integrations, a new item in the menu):
+  - Sign-in with Google using read-only access to Analytics and Search Console. Outlogik can
+    see reports, never change anything in the Google account.
+  - Pick one **GA4 property** and one **Search Console site** from the ones that Google
+    account can see (unverified Search Console sites aren't offered).
+  - See which Google account is connected, when each source last synced, and any error.
+  - **Sync now**, **Change what's synced**, and **Disconnect** (with a confirmation). Disconnect
+    removes Outlogik's access at Google and deletes the synced history.
+  - If Google stops accepting the connection (for example, the person removed access in their
+    Google account), the page says so and offers **Reconnect Google**.
+- **Syncing into Outlogik's own history:**
+  - The first sync copies the last 90 days; then every night the last 7 days are refreshed
+    (Google revises recent days).
+  - GA4: sessions, visitors, new visitors, engaged sessions, page views, key events, and
+    sessions by channel.
+  - Search Console: clicks, impressions and average position by day, and the top 250 searches
+    over 28 days.
+- **Visits from AI tools** (the addendum): GA4 sessions referred by ChatGPT, Perplexity,
+  Gemini, Microsoft Copilot, Claude and You.com, grouped by tool. The page says plainly that
+  some AI tools don't pass on where a visitor came from, so the real number can be higher.
+- **A 28-day summary** on the Integrations page: totals against the 28 days before, visits from
+  AI tools, channels and top Google searches. A comparison is shown only when the earlier
+  period was fully synced; otherwise it says "No earlier data to compare". Charts come with the
+  dashboards (H1-8).
+- **Permissions:**
+  - **Connect, choose, sync, disconnect:** owners, administrators, Marketing Managers and
+    Account Managers.
+  - **See the connection and the numbers:** also Reporting Viewers.
+  - **Client Viewers** see the numbers only (for the client portal, H1-10), not which Google
+    account is connected.
+  - An agency with **view-only** access to a business's workspace sees the numbers but can't
+    change the connection.
+- **If Google isn't set up on the server** (today), the page says so, and nothing else is
+  affected.
+
+### 2. Files changed
+
+**Backend:**
+- New module `integrations/`: `google.py` (every call to Google), `crypto.py` (token
+  encryption), `models.py`, `schemas.py`, `service.py` (connect, choose, disconnect),
+  `sync.py`, `summary.py`, `router.py`.
+- `jobs/handlers.py` (`integrations.sync`, `integrations.sync_all`), `worker.py` (nightly at
+  05:23 Toronto).
+- `rbac/catalogue.py` (`integrations.read`, `integrations.manage`, `analytics.read`).
+- `tenancy/context.py` (the organization check reused for Google's return).
+- `core/config.py` (Google and encryption settings; production refuses Google without an
+  encryption key). `pyproject.toml` adds `cryptography`.
+- Migration `0016`.
+- Tests: new `test_integrations.py`; updated cross-tenant and role tests.
+
+**App:** new `features/integrations/` (page and tests); menu, route, types, API calls.
+
+**Docs:** `DEPLOYMENT.md` (Google Cloud setup, step by step, and the launch checklist),
+`ARCHITECTURE.md`, `SECURITY.md`, `.env.example`, this tracker.
+
+### 3. Database changes (migration `0016`)
+
+| Change | Existing data |
+|---|---|
+| `integrations` (workspace, provider, status, Google account, encrypted refresh token) | None |
+| `data_sources` (the GA4 property or Search Console site, sync status) | None |
+| `ga4_daily`, `ga4_breakdowns` (channels and AI tools), `gsc_daily`, `gsc_queries` | None |
+| Row-level security on all six (an agency can see a business's that shared its workspace) | None |
+
+Run up, down and up again; the test suite builds from it.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **443 passed** (was 414) |
+| App (Vitest) | **128 passed** (was 121) |
+| Website (Vitest) | 92 passed (unchanged) |
+
+**Honest limit:** these tests use a fake Google that answers with the real APIs' addresses and
+data shapes, written from Google's documentation. Nothing has talked to the real Google yet,
+because that needs the Google Cloud project. The first real connection on staging is the real
+test; if Google's answers differ anywhere, I'll fix it then.
+
+The new backend tests cover:
+- **Signing in:** the full round trip; read-only scopes and PKCE in the request; the one-time
+  state (expires in 10 minutes, works once, only for the person who started it); signed out;
+  cancelled at Google; scopes unticked (token revoked, nothing stored); no lasting access.
+- **Storage:** the token is encrypted at rest and never in an API response; reconnecting
+  revokes the old token.
+- **Syncing:** only sources the account can see; 90 days then 7; replaced, not doubled; AI
+  sources merged (chatgpt.com and chat.openai.com are both ChatGPT); Search Console's delay.
+- **Failures:** Google withdrawing access (marked for reconnection, skipped nightly); Google
+  down (sync marked failed, history kept).
+- **Summary:** totals, the previous period, no comparison without a full earlier period, before
+  anything is connected.
+- **Access:** viewers read only; Marketing Managers manage; a view-only agency sees but can't
+  change.
+- **The cross-organization attack suite** found the new routes by itself, now includes a
+  victim's Google connection, and every attempt failed.
+
+**Browser check** with data synced through the real sync code (fed by the fake Google): the
+page, summary, AI visits and disconnect all worked; no console errors; no sideways scrolling on
+a phone; an axe scan found no problems in light or dark mode.
+
+### 5. Unfinished (on purpose)
+
+- **Real Google connections wait on your Google Cloud setup** (DEPLOYMENT.md has the steps).
+  Until the app is verified, only test users you list (up to 100) can connect, and their
+  connections expire after 7 days.
+- **The privacy policy needs a section on Google data** before Google's review: what's read,
+  that it's used only for the workspace's own reports, not sold or used for ads, how to
+  disconnect, and Google's "Limited Use" statement. It's legal copy, so I haven't written it
+  without you. I can draft it for your review.
+- **Google Business Profile** moved to the SEO and AI Search module (H2), as agreed.
+- **No charts yet.** The dashboards (H1-8) add charts from this same history.
+- **No email when a connection breaks.** Comes with alerts and notifications (H1.5).
+
+### 6. Security notes
+
+- **Read-only access** at Google; refused and revoked if either read permission is unticked.
+- **Sign-in protection:** PKCE, a one-time state tied to the person, and on return the
+  membership, permission and workspace are checked again.
+- **Tokens are encrypted** with a key that lives only in the server's secrets, are never sent
+  to the browser, and are revoked at Google on disconnect.
+- **Row-level security** on every new table; the cross-organization suite covers the new
+  routes and a victim's connection.
+
+### 7. Next: H1-8 dashboards
+
+Business and agency dashboards with charts, using real data only (audits, and the Google
+history from this step), and empty states that explain how to connect.
 
 ---
 

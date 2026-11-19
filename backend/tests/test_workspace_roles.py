@@ -67,7 +67,8 @@ def test_startup_sync_adds_new_roles_and_renames_old_ones(client, db, agency):
     current = roles(client, agency)
     assert current["account_manager"]["name"] == "Account Manager"
     assert current["viewer"]["permissions"] == sorted(
-        ["organization.read", "clients.read", "websites.read", "dashboard.read", "audits.read"])
+        ["organization.read", "clients.read", "websites.read", "dashboard.read", "audits.read",
+         "integrations.read", "analytics.read"])
     assert current["admin"]["name"] == "Administrator"
     # A custom role already has the new name, so the built-in role keeps its old one.
     assert current["member"]["name"] == "Team Member"
@@ -176,7 +177,8 @@ def test_limited_member_can_only_hand_out_what_they_see(client, new_client, db, 
         "permissions": ["organization.read", "members.read", "members.invite",
                         "members.update", "roles.read", "clients.read", "client_users.manage",
                         "websites.read", "websites.write", "dashboard.read", "audits.read",
-                        "audits.run"]})
+                        "audits.run", "integrations.read", "integrations.manage",
+                        "analytics.read"]})
     assert res.status_code == 201 and res.json()["workspace_scope"] == "assigned"
     lead_browser, lead = signed_in_as(new_client, db, agency, "lead@agency.example.com", "member")
     client.patch(f"{API}/{agency}/members/{lead.id}", json={"role_id": res.json()["id"]})

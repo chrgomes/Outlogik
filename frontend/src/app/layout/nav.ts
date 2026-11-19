@@ -25,6 +25,7 @@ export const NAV: NavSection[] = [
         agencyOnly: true },
       { label: 'Websites', icon: 'globe2', path: 'websites', permission: 'websites.read' },
       { label: 'Audits', icon: 'heart-pulse', path: 'audits', permission: 'audits.read' },
+      { label: 'Integrations', icon: 'plug', path: 'integrations', permission: 'integrations.read' },
     ],
   },
   {

@@ -284,3 +284,56 @@ export interface OrganizationDetail {
   your_role: string;
   your_permissions: string[];
 }
+
+// Integrations (H1-7)
+export type SourceKind = 'ga4' | 'search_console';
+
+export interface DataSource {
+  id: string;
+  kind: SourceKind;
+  external_id: string;
+  name: string;
+  sync_status: 'pending' | 'ok' | 'failed';
+  last_synced_at: string | null;
+  synced_through: string | null;
+  last_error: string | null;
+}
+
+export interface GoogleIntegration {
+  configured: boolean;
+  connected: boolean;
+  status: 'connected' | 'error' | null;
+  account_email: string | null;
+  connected_at: string | null;
+  last_error: string | null;
+  sources: DataSource[];
+}
+
+export interface GoogleAvailable {
+  ga4: { id: string; name: string; account: string }[];
+  search_console: { site_url: string; permission: string }[];
+}
+
+export interface Metric {
+  value: number;
+  previous: number | null;
+}
+
+export interface Share {
+  name: string;
+  sessions: number;
+  previous: number;
+}
+
+export interface AnalyticsSummary {
+  days: number;
+  start: string | null;
+  end: string | null;
+  ga4: Record<'sessions' | 'users' | 'new_users' | 'engaged_sessions' | 'page_views' | 'key_events', Metric> | null;
+  search_console: Record<'clicks' | 'impressions' | 'ctr' | 'position', Metric> | null;
+  series: { day: string; sessions: number | null; users: number | null; clicks: number | null; impressions: number | null }[];
+  channels: Share[];
+  ai_referrals: Share[];
+  top_queries: { query: string; clicks: number; impressions: number; ctr: number; position: number }[];
+  top_queries_through: string | null;
+}

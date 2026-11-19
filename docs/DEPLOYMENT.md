@@ -169,6 +169,60 @@ audits). It's free within Google's daily quota.
 Never set `CRAWLER_ALLOW_PRIVATE` on staging or production: it would let audits reach internal
 addresses (the API refuses to start in production if it's set).
 
+### Google Analytics and Search Console (optional until you're ready)
+
+Until this is done, the app's **Integrations** page says Google "isn't set up on this Outlogik
+server yet", and nothing else is affected. Use the same Google Cloud project as the PageSpeed key.
+
+1. **Turn on the APIs.** In Google Cloud → **APIs & Services** → **Library**, enable
+   **Google Analytics Admin API**, **Google Analytics Data API** and **Google Search Console API**
+   (and **PageSpeed Insights API**, if not already).
+2. **Consent screen.** **APIs & Services** → **OAuth consent screen** (also called **Google Auth
+   Platform**):
+   - User type **External**; app name **Outlogik**; support email and developer contact
+     `privacy@outlogik.com`; logo optional.
+   - App domain: home page `https://outlogik.com`, privacy policy `https://outlogik.com/privacy-policy`,
+     terms `https://outlogik.com/terms`. Authorized domain: `outlogik.com`.
+   - **Scopes** (Data access): `openid`, `.../auth/userinfo.email`,
+     `.../auth/analytics.readonly`, `.../auth/webmasters.readonly`. All are read-only; Outlogik
+     never asks to change anything in someone's Google account.
+   - While the app is in **Testing**, only the **test users** you list (up to 100 Google
+     accounts) can connect, and their connections expire after 7 days. Add your own Google
+     account and any beta clients' accounts there.
+3. **Client ID.** **Credentials** → **Create credentials** → **OAuth client ID** → **Web
+   application**, named "Outlogik". **Authorized redirect URIs** (exactly):
+   - `https://app.outlogik.com/api/v1/integrations/google/callback`
+   - `https://app.staging.outlogik.com/api/v1/integrations/google/callback`
+   - `http://localhost:4200/api/v1/integrations/google/callback` (only if you'll try it locally)
+
+   Copy the **Client ID** and **Client secret**.
+4. **Encryption key.** Outlogik stores each Google connection's token encrypted. Generate a key
+   once per environment (staging and production each get their own) and keep a copy in your
+   password manager: if it's lost, every workspace has to reconnect Google.
+
+   ```bash
+   python3 -c "import base64, os; print(base64.urlsafe_b64encode(os.urandom(32)).decode())"
+   ```
+
+5. **Secrets.** On both the **api** and **worker** components of each app, add as encrypted
+   environment variables: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+   `INTEGRATIONS_ENCRYPTION_KEY`. The api refuses to start in production if the client ID is set
+   without the encryption key.
+6. **Verification (before real clients connect).** Testing mode is fine for staging and a
+   private beta. To let any Google account connect, click **Publish app**. Google then reviews
+   it, because Analytics and Search Console read access are "sensitive" scopes: expect to show a
+   short screen recording of connecting Google in Outlogik, explain why each scope is needed
+   ("show the business its own traffic and search results"), and confirm the privacy policy
+   covers Google data. **The privacy policy doesn't cover it yet:** it needs a short section on
+   what Outlogik reads from Google, that it's used only to show the workspace its own reports,
+   isn't sold or used for advertising, how to disconnect, and Google's "Limited Use" statement.
+   Review usually takes from a few days to a few weeks.
+
+**What it syncs:** after someone connects Google in a workspace and picks a GA4 property and a
+Search Console site, the worker copies the last 90 days, then refreshes the last 7 days every
+night (05:23 Toronto). Disconnecting revokes Outlogik's access at Google and deletes the synced
+history.
+
 ### Background jobs (the worker)
 
 The api records each piece of background work in the database and hands it to the worker through
@@ -318,3 +372,5 @@ a `downgrade`).
       reviewed, ideally by a lawyer
 - [ ] Google Search Console and Bing: domain verified, sitemap submitted
 - [ ] Uptime checks and database alerts set
+- [ ] Google: APIs enabled, consent screen, OAuth client, secrets on api and worker; app
+      published and verified before clients outside the test-user list connect

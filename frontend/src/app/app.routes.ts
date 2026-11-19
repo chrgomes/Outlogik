@@ -128,6 +128,13 @@ export const routes: Routes = [
         loadComponent: () => import('./features/audits/audits-list').then((m) => m.AuditsList),
       },
       {
+        path: 'integrations',
+        canActivate: [permissionGuard],
+        data: { permission: 'integrations.read' },
+        title: 'Integrations · Outlogik',
+        loadComponent: () => import('./features/integrations/integrations').then((m) => m.IntegrationsPage),
+      },
+      {
         path: 'audits/:workspaceId/:auditId',
         canActivate: [permissionGuard],
         data: { permission: 'audits.read' },

@@ -62,13 +62,19 @@ def get_org_context(
     auth: AuthContext = Depends(get_auth),
     db: Session = Depends(get_db),
 ) -> OrgContext:
+    return load_org_context(db, auth.user, org_slug)
+
+
+def load_org_context(db: Session, user: User, org_slug: str) -> OrgContext:
+    """The organization context for `user` in `org_slug`, or 404. Also used outside the
+    /orgs/{slug} routes (for example when Google sends someone back after connecting)."""
     row = db.execute(
         select(Organization, OrganizationMember, Role)
         .join(OrganizationMember, OrganizationMember.organization_id == Organization.id)
         .join(Role, Role.id == OrganizationMember.role_id)
         .where(
             Organization.slug == org_slug.lower(),
-            OrganizationMember.user_id == auth.user.id,
+            OrganizationMember.user_id == user.id,
             OrganizationMember.status == "active",
         )
     ).first()
@@ -97,7 +103,7 @@ def get_org_context(
         client_ids = {client_id for _, client_id in rows if client_id}
     # The database now hides other organizations' rows too (row-level security).
     set_tenant(db, org.id, linked)
-    return OrgContext(org=org, member=member, role=role, user=auth.user,
+    return OrgContext(org=org, member=member, role=role, user=user,
                       permissions=role_permission_codes(db, role.id),
                       workspace_ids=workspace_ids, client_ids=client_ids, linked=linked)
 

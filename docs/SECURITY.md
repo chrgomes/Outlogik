@@ -94,6 +94,21 @@ deployment must add. Each item is covered by backend or frontend tests unless no
     one.
   - Audit results are under row-level security; an agency's audit of a shared workspace
     belongs to the business.
+- **Google connections:**
+  - Read-only scopes only (`analytics.readonly`, `webmasters.readonly`, plus `openid email` to
+    show which account is connected). If someone unticks either read scope, the token is
+    revoked and nothing is stored.
+  - Sign-in uses PKCE and a one-time `state` kept in Redis for 10 minutes, tied to the person
+    who started it. On return, Outlogik checks it's the same signed-in person, that they're
+    still a member allowed to manage integrations, and that the workspace is still theirs and
+    writable.
+  - Refresh tokens are encrypted (Fernet, `INTEGRATIONS_ENCRYPTION_KEY`), never returned by the
+    API, and revoked at Google on disconnect or when replaced. Disconnecting deletes the synced
+    history.
+  - If Google stops accepting a token, the connection is marked "reconnect" and nightly syncs
+    skip it instead of retrying.
+  - All six tables are under row-level security; the cross-tenant suite includes a victim
+    Google connection.
 - **Background jobs:** emails are sent by a job, and their text (which can contain a sign-in,
   reset or invitation link) is erased from the job record as soon as the email is sent or gives
   up. Errors are stored without the payload. Finished jobs are deleted after 30 days, and

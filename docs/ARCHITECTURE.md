@@ -32,6 +32,7 @@ schemas, service functions and router.
 | `modules/workspaces` | Workspaces (an organization's own, and one per agency client), the workspace list API, `require_workspace(...)` for `/orgs/{slug}/workspaces/{id}/…` routes, and member workspace assignments |
 | `jobs/` and `worker.py` | Background jobs: the `jobs` table, `enqueue()`, retries, recovery, the job kinds (`jobs/handlers.py`), and the Celery worker with its schedule |
 | `modules/audits` | Website audits: the safe fetcher (`fetch.py`), page reader (`parse.py`), crawler, the check catalogue (`checks.py`), PageSpeed, the audit job, schedules and comparison |
+| `modules/integrations` | Outside accounts connected to a workspace (Google): sign-in with PKCE (`service.py`), every Google call (`google.py`), encrypted tokens (`crypto.py`), the GA4 and Search Console syncs (`sync.py`) and the traffic summary (`summary.py`) |
 | `modules/plans` | Plans, their limits, subscriptions and trials; `check_limit(...)`, called by the services that add websites, clients and team members |
 | `modules/grants` | Access grants: a business shares its workspace with an agency (send, accept, revoke, disconnect) |
 | `modules/clients`, `modules/websites` | Clients, client-portal access, websites and URL validation |
@@ -199,6 +200,19 @@ users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
     `run_checks()`, with a test page in `tests/test_audits.py`.
   - **Anything that fetches another website goes through `audits/fetch.py`**, never a plain
     HTTP client (see SECURITY.md).
+- **Google integration** (`integrations`, `data_sources`, `ga4_daily`, `ga4_breakdowns`,
+  `gsc_daily`, `gsc_queries`; migration 0016):
+  - One Google connection per workspace, with at most one GA4 property and one Search Console
+    site (`data_sources`). Only what the connected account can see may be chosen.
+  - Syncs run as jobs (`integrations.sync`; nightly `integrations.sync_all` at 05:23 Toronto):
+    90 days the first time, then the last 7 days replaced each night. Synced days are kept as
+    daily rows ("snapshots"), so reports don't call Google.
+  - Visits from AI tools are GA4 sessions whose source is an AI assistant's site
+    (`AI_SOURCES` in `sync.py`: ChatGPT, Perplexity, Gemini, Copilot, Claude, You.com).
+  - `GET /orgs/{slug}/workspaces/{id}/analytics/summary?days=28` compares the period with the
+    one before; the comparison is left out unless that earlier period was fully synced.
+  - Tests use a fake Google (`tests/test_integrations.py`, `google.TRANSPORT`) that answers with
+    the real APIs' paths and JSON shapes.
 - **Row-level security** (migration 0012) backs all of this up in Postgres. `get_org_context`
   calls `core.db.set_tenant`, which sets `app.org_id` and `app.linked_ws` at the start of each
   transaction for the rest of the request.

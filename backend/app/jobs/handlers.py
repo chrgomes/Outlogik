@@ -71,3 +71,19 @@ def audits_schedule_job(db: Session, payload: dict[str, Any]) -> None:
     from app.modules.audits.service import schedule_due
 
     schedule_due(db)
+
+
+@handler("integrations.sync", max_attempts=4, stuck_after=timedelta(minutes=20))
+def integration_sync_job(db: Session, payload: dict[str, Any]) -> None:
+    import uuid
+
+    from app.modules.integrations.sync import sync_source
+
+    sync_source(db, uuid.UUID(payload["source_id"]))
+
+
+@handler("integrations.sync_all", max_attempts=1)
+def integration_sync_all_job(db: Session, payload: dict[str, Any]) -> None:
+    from app.modules.integrations.sync import sync_all
+
+    sync_all(db)

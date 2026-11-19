@@ -9,13 +9,15 @@ kind of id this test doesn't know fails the test until the id is added to VICTIM
 """
 
 import re
+from datetime import date
 
 import pytest
 from fastapi.routing import APIRoute, iter_route_contexts
 from sqlalchemy import select, text
 
 from app.main import app
-from app.models import Audit, Organization, Role, Workspace
+from app.models import Audit, DataSource, Integration, Organization, Role, Workspace
+from app.modules.integrations.crypto import encrypt
 from tests.conftest import (
     link_client,
     register,
@@ -58,6 +60,10 @@ SNAPSHOT = """
       WHERE ws.organization_id = :org
     UNION ALL SELECT 'audit', a.id::text, a.status || a.pages_crawled FROM audits a
       WHERE a.organization_id = :org
+    UNION ALL SELECT 'integration', i.id::text, i.status || i.refresh_token_encrypted
+      FROM integrations i WHERE i.organization_id = :org
+    UNION ALL SELECT 'data_source', d.id::text, d.external_id || d.sync_status FROM data_sources d
+      WHERE d.organization_id = :org
     UNION ALL SELECT 'grant', g.id::text, g.status FROM workspace_grants g
       WHERE g.organization_id = :org OR g.agency_organization_id = :org
     ORDER BY 1, 2
@@ -88,6 +94,13 @@ def victim(client, db):
     audit = Audit(organization_id=acme_id, workspace_id=workspace, website_id=site["id"],
                   url=site["url"], page_limit=10, status="completed")
     db.add(audit)
+    integration = Integration(organization_id=acme_id, workspace_id=workspace, provider="google",
+                              refresh_token_encrypted=encrypt("victim-refresh-token"))
+    db.add(integration)
+    db.flush()
+    db.add(DataSource(organization_id=acme_id, workspace_id=workspace,
+                      integration_id=integration.id, kind="ga4", external_id="properties/1",
+                      name="Victim", synced_through=date(2026, 11, 1)))
     db.commit()
     return {"slug": acme, "org_id": acme_id, "client_id": str(c.id), "website_id": site["id"],
             "member_id": str(manager.id), "user_id": str(portal.user_id),
