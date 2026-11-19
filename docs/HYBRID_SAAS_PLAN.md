@@ -261,12 +261,19 @@ counts as done only when its backend, storage, permissions, error handling and t
 | H1-4 ✅ | **Entitlements foundation:** plans, entitlements, subscriptions (assigned by hand), 14-day trials, backend enforcement (websites, clients, team). Metered usage records (audits, AI Search) move to H1-6, with the first metered limit | §12 |
 | H1-5 ✅ | **Background jobs:** Celery and beat, the jobs table, retries, duplicate prevention; email moves to the queue | §19 |
 | H1-6 ✅ | **SEO crawler and audits:** the crawler, checks, PageSpeed, scheduled audits, history and comparison, prioritized issues. Includes an **AI search readiness** section (GEO technical checks: AI crawler access, structured data, business identity consistency, question-and-answer coverage; see [`AI_SEARCH_PLAN.md`](AI_SEARCH_PLAN.md)) | §6.1, Addendum §5 |
-| H1-7 | **Integration framework and Google:** encrypted credentials, Google OAuth, GA4 and Search Console syncs into snapshots, including **AI referral traffic** (visits from ChatGPT, Perplexity, Gemini, Copilot). **Google's app verification is applied for at the start of H1**, because it takes weeks. | §6.2, §11, Addendum §2 |
-| H1-8 | **Business and agency dashboards:** ECharts, real data only, empty states that explain how to connect | §9 |
+| H1-7 ✅ | **Integration framework and Google:** encrypted credentials, Google OAuth, GA4 and Search Console syncs into snapshots, including **AI referral traffic** (visits from ChatGPT, Perplexity, Gemini, Copilot). **Google's app verification is applied for at the start of H1**, because it takes weeks. | §6.2, §11, Addendum §2 |
+| H1-8 | **Business and agency dashboards:** ECharts, real data only, empty states that explain how to connect. Approved 2026-11-19 (mockup): a plain-words "what changed" summary; period choice (7, 28, 90 days or custom) compared with the period before or the same period last year; top pages; searches in positions 8–20; pages shown in search but rarely clicked; audit errors and warnings over time. Agencies: sort and filter clients, account manager and last review per client, a client report link (reports themselves are H1-9) | §9 |
 | H1-9 | **Basic reporting:** SEO and analytics reports per workspace, PDF and CSV | §10 |
 | H1-10 | **Client portal on workspaces:** Client Viewer sees the dashboard, audits and reports, never agency-wide or internal data | §7 |
 | H1-11 | **Self-serve sign-up and basic Super Admin:** choose business or agency at sign-up (behind an invitation code during beta); Super Admin lists organizations and users, assigns plans, suspends accounts; platform roles (platform, support and billing admin) | §13, §23 |
 | H1-12 | **H1 review:** security review, isolation tests, staging deployment for an internal alpha | §21 |
+
+**Dashboard items decided 2026-11-19:**
+- **Later:** email alerts (visits drop, Google disconnects, new audit errors) in H1.5; AI search
+  visibility in the AI Search module (H2); Google Business Profile (calls, directions,
+  reviews) in SEO and AI Search (H2).
+- **Left out:** a single "marketing score" and forecasts. There isn't enough data to show them
+  honestly, and they would read as promises.
 
 **Not in H1, as the audit found:**
 - The specification's "existing social media module integration" item doesn't apply: social
