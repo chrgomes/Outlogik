@@ -132,7 +132,7 @@ const KIND_LABEL: Record<SourceKind, string> = { ga4: 'Google Analytics', search
                         <button type="button" class="btn btn-link" (click)="choosing.set(false)">Cancel</button>
                       }
                     </div>
-                    <p class="form-text mb-0">The first sync copies the last 90 days. After that, Outlogik syncs every night.</p>
+                    <p class="form-text mb-0">The first sync copies the last 16 months. After that, Outlogik syncs every night.</p>
                   } @else {
                     <ol-loading-state label="Loading your Google properties…" />
                   }

@@ -36,7 +36,7 @@ schemas, service functions and router.
 | `modules/plans` | Plans, their limits, subscriptions and trials; `check_limit(...)`, called by the services that add websites, clients and team members |
 | `modules/grants` | Access grants: a business shares its workspace with an agency (send, accept, revoke, disconnect) |
 | `modules/clients`, `modules/websites` | Clients, client-portal access, websites and URL validation |
-| `modules/dashboard` | Dashboard counts and recent activity |
+| `modules/dashboard` | The dashboards: one workspace for a chosen period (`analytics.py`), every workspace side by side for agencies (`overview.py`), reviews, recent activity |
 | `modules/audit` | The append-only audit log |
 | `modules/site` | Marketing site settings and product module statuses (public and admin API) |
 | `platform.py` | Outlogik staff roles (`content_editor`, `site_admin`) and `require_staff(...)` for `/api/v1/admin/...` |
@@ -201,18 +201,40 @@ users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
   - **Anything that fetches another website goes through `audits/fetch.py`**, never a plain
     HTTP client (see SECURITY.md).
 - **Google integration** (`integrations`, `data_sources`, `ga4_daily`, `ga4_breakdowns`,
-  `gsc_daily`, `gsc_queries`; migration 0016):
+  `gsc_daily`, `gsc_queries`; migration 0016; `ga4_pages`, `gsc_pages`, `gsc_query_pages`,
+  migration 0017):
   - One Google connection per workspace, with at most one GA4 property and one Search Console
     site (`data_sources`). Only what the connected account can see may be chosen.
   - Syncs run as jobs (`integrations.sync`; nightly `integrations.sync_all` at 05:23 Toronto):
-    90 days the first time, then the last 7 days replaced each night. Synced days are kept as
-    daily rows ("snapshots"), so reports don't call Google.
+    16 months the first time (90 days for visits by landing page), then the last 7 days
+    replaced each night. Synced days are kept as daily rows ("snapshots"), so reports don't
+    call Google. Search Console's pages and searches-by-page are a snapshot of its latest 28
+    days, replaced at each sync. `data_sources.history_from` and `pages_from` record where
+    the history starts, so comparisons know what was synced (Google leaves out days without
+    visits, so counting rows can't tell).
   - Visits from AI tools are GA4 sessions whose source is an AI assistant's site
     (`AI_SOURCES` in `sync.py`: ChatGPT, Perplexity, Gemini, Copilot, Claude, You.com).
   - `GET /orgs/{slug}/workspaces/{id}/analytics/summary?days=28` compares the period with the
     one before; the comparison is left out unless that earlier period was fully synced.
   - Tests use a fake Google (`tests/test_integrations.py`, `google.TRANSPORT`) that answers with
     the real APIs' paths and JSON shapes.
+- **Dashboards** (H1-8; `workspace_reviews`, migration 0017):
+  - `GET /orgs/{slug}/workspaces/{id}/dashboard?days=28&compare=previous` (or `start`, `end`;
+    `compare` = `previous`, `year`, `none`): totals, daily series, AI tools, channels, top
+    landing pages, searches in positions 8–20, pages shown but rarely clicked, the latest audit
+    with its history, and "what changed".
+  - **Comparisons only with fully synced periods**; otherwise `previous` is null and the app
+    says so. "What changed" is written by fixed rules in `analytics.changes()`, never by AI,
+    and never forecasts.
+  - `GET /orgs/{slug}/dashboard/overview?days=28`: every workspace the caller can see (archived
+    clients left out), what needs attention (Google needs reconnecting, visits down 20% or
+    more from at least 50, audit errors, Google not connected), and 12 weeks of visits.
+    Account managers and reviews only for people with `members.read`.
+  - `PUT /orgs/{slug}/workspaces/{id}/review` (`workspaces.review`) records a review for the
+    caller's organization; it works on a view-only shared workspace because the review is the
+    agency's own note.
+  - The app's charts use ECharts (only the line and bar charts, SVG renderer), loaded only
+    when a chart is shown. Colours come from the `--ol-chart-*` theme tokens in both modes.
 - **Row-level security** (migration 0012) backs all of this up in Postgres. `get_org_context`
   calls `core.db.set_tenant`, which sets `app.org_id` and `app.linked_ws` at the start of each
   transaction for the rest of the request.

@@ -66,6 +66,10 @@ class DataSource(UUIDPrimaryKey, Timestamps, Base):
     sync_status: Mapped[str] = mapped_column(String(20), default="pending")
     last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     synced_through: Mapped[date | None] = mapped_column(Date)  # the latest day with data
+    # The first day synced: comparisons are only made with periods from this day on.
+    # (Google leaves out days with no visits, so counting rows can't tell.)
+    history_from: Mapped[date | None] = mapped_column(Date)
+    pages_from: Mapped[date | None] = mapped_column(Date)  # GA4 visits by landing page
     last_error: Mapped[str | None] = mapped_column(String(500))
 
 
@@ -130,6 +134,56 @@ class GscQuery(UUIDPrimaryKey, Base):
         Uuid, ForeignKey("organizations.id", ondelete="CASCADE"))
     period_end: Mapped[date] = mapped_column(Date)
     query: Mapped[str] = mapped_column(String(500))
+    clicks: Mapped[int] = mapped_column(Integer, default=0)
+    impressions: Mapped[int] = mapped_column(Integer, default=0)
+    position: Mapped[float] = mapped_column(Float, default=0)
+
+
+class Ga4Page(UUIDPrimaryKey, Base):
+    """Sessions per day by the page they started on (GA4's landing page)."""
+
+    __tablename__ = "ga4_pages"
+    __table_args__ = (UniqueConstraint("source_id", "day", "path"),)
+
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("data_sources.id", ondelete="CASCADE"))
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("organizations.id", ondelete="CASCADE"))
+    day: Mapped[date] = mapped_column(Date)
+    path: Mapped[str] = mapped_column(String(1000))
+    sessions: Mapped[int] = mapped_column(Integer, default=0)
+    key_events: Mapped[float] = mapped_column(Float, default=0)
+
+
+class GscPage(UUIDPrimaryKey, Base):
+    """Search results by page over the 28 days up to `period_end` (replaced at each sync)."""
+
+    __tablename__ = "gsc_pages"
+
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("data_sources.id", ondelete="CASCADE"), index=True)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("organizations.id", ondelete="CASCADE"))
+    period_end: Mapped[date] = mapped_column(Date)
+    page: Mapped[str] = mapped_column(String(2048))
+    clicks: Mapped[int] = mapped_column(Integer, default=0)
+    impressions: Mapped[int] = mapped_column(Integer, default=0)
+    position: Mapped[float] = mapped_column(Float, default=0)
+
+
+class GscQueryPage(UUIDPrimaryKey, Base):
+    """Searches and the page Google showed for them, over the 28 days up to `period_end`
+    (replaced at each sync). Used for "searches you almost rank for"."""
+
+    __tablename__ = "gsc_query_pages"
+
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("data_sources.id", ondelete="CASCADE"), index=True)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("organizations.id", ondelete="CASCADE"))
+    period_end: Mapped[date] = mapped_column(Date)
+    query: Mapped[str] = mapped_column(String(500))
+    page: Mapped[str] = mapped_column(String(2048))
     clicks: Mapped[int] = mapped_column(Integer, default=0)
     impressions: Mapped[int] = mapped_column(Integer, default=0)
     position: Mapped[float] = mapped_column(Float, default=0)

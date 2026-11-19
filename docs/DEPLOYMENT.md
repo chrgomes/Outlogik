@@ -218,8 +218,9 @@ server yet", and nothing else is affected. Use the same Google Cloud project as 
    Review usually takes from a few days to a few weeks.
 
 **What it syncs:** after someone connects Google in a workspace and picks a GA4 property and a
-Search Console site, the worker copies the last 90 days, then refreshes the last 7 days every
-night (05:23 Toronto). Disconnecting revokes Outlogik's access at Google and deletes the synced
+Search Console site, the worker copies the last 16 months (so the dashboard can compare with
+the same period last year straight away), then refreshes the last 7 days every night (05:23
+Toronto). Disconnecting revokes Outlogik's access at Google and deletes the synced
 history.
 
 ### Background jobs (the worker)

@@ -107,8 +107,14 @@ deployment must add. Each item is covered by backend or frontend tests unless no
     history.
   - If Google stops accepting a token, the connection is marked "reconnect" and nightly syncs
     skip it instead of retrying.
-  - All six tables are under row-level security; the cross-tenant suite includes a victim
-    Google connection.
+  - All nine tables of Google data are under row-level security; the cross-tenant suite
+    includes a victim Google connection.
+- **Dashboards:** the agency overview lists only workspaces the caller can see, and leaves out
+  team details (account managers, reviews) for anyone without `members.read`, so client-portal
+  users never see them. Parts the caller's role can't read (`analytics.read`, `audits.read`)
+  are left out of the response, not just hidden in the app. Reviews belong to the reviewing
+  organization (row-level security: that organization only), so a business never sees its
+  agency's reviews. The cross-tenant suite includes a victim's review.
 - **Background jobs:** emails are sent by a job, and their text (which can contain a sign-in,
   reset or invitation link) is erased from the job record as soon as the email is sent or gives
   up. Errors are stored without the payload. Finished jobs are deleted after 30 days, and

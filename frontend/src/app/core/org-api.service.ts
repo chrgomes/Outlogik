@@ -106,6 +106,11 @@ export class OrgApi {
     return this.send<void>('DELETE', `workspaces/${workspaceId}/integrations/google`);
   }
 
+  // Dashboard
+  markReviewed(workspaceId: string) {
+    return this.send<{ reviewed_at: string; reviewed_by: string | null }>('PUT', `workspaces/${workspaceId}/review`);
+  }
+
   // Website audits
   startAudit(workspaceId: string, websiteId: string) {
     return this.send<Audit>('POST', `workspaces/${workspaceId}/audits`, { website_id: websiteId });

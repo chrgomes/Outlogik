@@ -1,7 +1,7 @@
 """The traffic and search summary for a workspace: the last N days against the N before.
 
 Only days Outlogik has synced count. "previous" is None unless the whole previous period was
-synced, so a comparison is never made against a partial period.
+synced (`history_from`), so a comparison is never made against a partial period.
 """
 
 from datetime import date, timedelta
@@ -36,8 +36,8 @@ def _ga4(db: Session, src: DataSource, days: int) -> dict:
         return row[:-1], row[-1]
 
     now, _ = totals(start, end)
-    before, before_days = totals(p_start, p_end)
-    full = before_days >= days
+    before, _ = totals(p_start, p_end)
+    full = bool(src.history_from and src.history_from <= p_start)
     metrics = {m: {"value": float(now[i]), "previous": float(before[i]) if full else None}
                for i, m in enumerate(GA4_METRICS)}
     series = {d: (s, u) for d, s, u in db.execute(
@@ -76,9 +76,8 @@ def _gsc(db: Session, src: DataSource, days: int) -> dict:
                 "position": weighted / impressions if impressions else 0.0}, n
 
     now, _ = totals(start, end)
-    before, before_days = totals(p_start, p_end)
-    # Search Console can leave out days with no impressions, so most of the period is enough.
-    full = before_days >= days * 0.8
+    before, _ = totals(p_start, p_end)
+    full = bool(src.history_from and src.history_from <= p_start)
     metrics = {k: {"value": v, "previous": before[k] if full else None} for k, v in now.items()}
     series = {d: (c, i) for d, c, i in db.execute(
         select(GscDaily.day, GscDaily.clicks, GscDaily.impressions).where(

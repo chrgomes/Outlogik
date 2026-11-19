@@ -14,8 +14,136 @@ unfinished, security notes, and what's next.
 | H1-5 Background jobs | **Done** (2026-11-18) |
 | H1-6 SEO crawler and audits | **Done** (2026-11-18) |
 | H1-7 Integrations and Google | **Done** (2026-11-19); waits on your Google Cloud setup to connect real accounts |
-| H1-8 Dashboards | Next |
-| H1-9 … H1-12 | Not started |
+| H1-8 Dashboards | **Done** (2026-11-19) |
+| H1-9 Basic reporting | Next |
+| H1-10 … H1-12 | Not started |
+
+---
+
+## H1-8: Dashboards
+
+Built to the mockup approved on 2026-11-19, with the additions you chose (#1–#5, #7, #9–#11).
+
+### 1. What was completed
+
+- **The business dashboard** (also an agency's view of one client):
+  - **Period:** last 7, 28 or 90 days, or a custom range up to 16 months. **Compare with** the
+    period before, the same period last year, or nothing.
+  - **What changed** (#4): plain sentences worked out from the numbers by fixed rules, for
+    example "Visits are up 6% (3,113), mostly from Organic Search (+131) compared with
+    before." No AI writing, no forecasts.
+  - **Headline figures:** visits, visitors, visits from AI tools, search clicks, key events and
+    audit errors, each with its change.
+  - **Charts:** visits per day with the comparison period as a dashed line; Google search
+    clicks per day; audit errors and warnings over the last six audits (#5).
+  - **Visits from AI tools** by tool, and **where visits came from** by channel.
+  - **Latest audit:** errors, warnings and notices, what to fix first, and a link to it.
+  - **Pages that bring the most visits** (#1), by the page each visit started on.
+  - **Searches you almost rank for** (#2): positions 8 to 20.
+  - **Shown in search, rarely clicked** (#3): pages on Google's first page clicked less than
+    half as often as the site's other pages, with a link to the audit's title advice.
+  - **Top Google searches.**
+  - **Before anything is connected:** three steps (add your website, run an audit, connect
+    Google) and, in each empty section, what will appear there and what it needs.
+- **The agency dashboard** (all workspaces):
+  - Headline figures across clients, **what needs attention** (Google needs reconnecting, visits
+    down 20% or more, audit errors, Google not connected) with a button to fix each, and weekly
+    visits across all clients for 12 weeks.
+  - **Client table** with a trend line per client, visits and change, AI visits, search
+    clicks, audit status and Google status.
+  - **Sort and filter** (#9): biggest drop or gain, most AI visits, most audit errors, name;
+    needs attention, audit errors, Google not connected, my clients.
+  - **Account manager and "Reviewed" date** per client (#10), with **Mark reviewed**.
+- **More history from Google:** the first sync now copies 16 months (what Search Console
+  keeps), so "same period last year" works from day one. Visits by landing page start with 90
+  days.
+- **Honest comparisons:** a comparison is shown only when the whole earlier period was synced;
+  otherwise the dashboard says "No earlier data to compare".
+- **Permissions:** the dashboard leaves out what a role can't read (traffic, audits). Client
+  Viewers see their client's numbers but never the team details. **Mark reviewed** needs the
+  new `workspaces.review` permission (owners, administrators, Marketing Managers, Account
+  Managers).
+
+### 2. Files changed
+
+**Backend:**
+- `dashboard/`: new `analytics.py` (one workspace), `overview.py` (agency), `models.py`
+  (reviews); `router.py` and `schemas.py` extended.
+- `integrations/`: `sync.py` (16 months, landing pages, Search Console pages and searches by
+  page), `models.py` (three tables, `history_from`, `pages_from`), `summary.py` (same
+  comparison rule as the dashboard).
+- `rbac/catalogue.py` (`workspaces.review`). Migration `0017`.
+- Tests: new `test_dashboards.py`; updated integration, cross-tenant and role tests.
+
+**App:** `features/dashboard/` rewritten (page, workspace view, agency view, chart component,
+ECharts setup, styles, tests); chart colours in the theme; one API call; the Integrations page
+mentions 16 months. ECharts 5.6.0 added.
+
+**Docs:** `ARCHITECTURE.md`, `SECURITY.md`, `DEPLOYMENT.md`, `HYBRID_SAAS_PLAN.md`, this
+tracker.
+
+### 3. Database changes (migration `0017`)
+
+| Change | Existing data |
+|---|---|
+| `ga4_pages` (daily visits by landing page) | None |
+| `gsc_pages`, `gsc_query_pages` (Search Console's latest 28 days by page, and by search and page) | None |
+| `workspace_reviews` (organization, workspace, when, by whom) | None |
+| `data_sources.history_from`, `pages_from` | Empty until the next first sync |
+| Row-level security on the four new tables (reviews: the reviewing organization only) | None |
+
+Run up, down and up again; the test suite builds from it.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **464 passed** (was 443) |
+| App (Vitest) | **132 passed** (was 128) |
+| Website (Vitest) | 93 passed (was 92, the privacy policy test) |
+
+The new backend tests cover:
+- the default period and its comparison; same period last year; no comparison; a comparison
+  left out when the earlier period wasn't synced
+- "what changed", including the channel that explains a change
+- custom ranges and their limits
+- top pages, searches in positions 8–20, rarely clicked pages
+- the latest audit, its history, new and fixed issues, what to fix first
+- a workspace with nothing connected
+- roles without traffic or audit access
+- the agency overview, what needs attention (including a drop in visits and Google needing
+  reconnection), account managers, reviews, "my clients", client-portal users, archived
+  clients, and an agency's review of a business's shared workspace staying the agency's
+- the cross-organization attack suite found the new routes by itself, now includes a victim's
+  review, and every attempt failed
+
+**Browser check** with data synced through the real code (from the fake Google, with numbers
+that vary by day): business dashboard, agency dashboard and the getting-started view in light
+and dark mode. An axe scan found no problems in any of them; no sideways scrolling on a phone;
+Mark reviewed worked.
+
+### 5. Unfinished (on purpose)
+
+- **The "Client report" button (#11) isn't there yet.** Reports are H1-9; a button that does
+  nothing would break the no-placeholders rule, so it arrives with the reports.
+- **Alerts, AI search visibility and Google Business Profile** are planned for later (H1.5 and
+  H2), as agreed. **A marketing score and forecasts are left out** on purpose.
+- **The searches and page lists** cover Search Console's latest 28 days whatever period is
+  chosen; the dashboard says so under them.
+- **Still waiting on Google Cloud** for real data; until then the dashboard shows the
+  getting-started steps.
+
+### 6. Security notes
+
+- Parts a role can't read are left out of the API response, not just hidden in the app.
+- Team details (account managers, reviews) are only sent to people who can see the team.
+- Reviews are under row-level security for the reviewing organization only.
+- The new routes are covered by the cross-organization attack suite.
+
+### 7. Next: H1-9 basic reporting
+
+SEO and analytics reports per workspace as PDF and CSV, including the **Client report** button
+on the agency dashboard.
 
 ---
 

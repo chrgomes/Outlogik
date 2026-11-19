@@ -87,6 +87,11 @@ class FakeGoogle:
             if dims == ["date"]:
                 rows.append({"dimensionValues": [{"value": key}], "metricValues": [
                     {"value": v} for v in ("100", "80", "30", "60", "250", "4.0")]})
+            elif dims[1] == "landingPage":
+                rows += [{"dimensionValues": [{"value": key}, {"value": "/"}],
+                          "metricValues": [{"value": "60"}, {"value": "2"}]},
+                         {"dimensionValues": [{"value": key}, {"value": "/menu"}],
+                          "metricValues": [{"value": "40"}, {"value": "2"}]}]
             elif dims[1] == "sessionDefaultChannelGroup":
                 rows += [{"dimensionValues": [{"value": key}, {"value": "Organic Search"}],
                           "metricValues": [{"value": "70"}]},
@@ -107,6 +112,22 @@ class FakeGoogle:
             # Search Console is 2–3 days behind
             return {"rows": [{"keys": [d.isoformat()], "clicks": 10, "impressions": 200,
                               "position": 8.0} for d in self.days(body)[:-2]]}
+        if body["dimensions"] == ["page"]:
+            return {"rows": [
+                {"keys": ["https://bakery.example.com/"], "clicks": 200, "impressions": 3000,
+                 "position": 4.0},
+                {"keys": ["https://bakery.example.com/cakes"], "clicks": 9, "impressions": 2100,
+                 "position": 9.5}]}
+        if body["dimensions"] == ["query", "page"]:
+            return {"rows": [
+                {"keys": ["sourdough near me", "https://bakery.example.com/"], "clicks": 40,
+                 "impressions": 900, "position": 3.2},
+                {"keys": ["birthday cakes toronto", "https://bakery.example.com/cakes"],
+                 "clicks": 9, "impressions": 1320, "position": 8.4},
+                {"keys": ["wedding cakes", "https://bakery.example.com/cakes"], "clicks": 0,
+                 "impressions": 380, "position": 16.2},
+                {"keys": ["cakes", "https://bakery.example.com/cakes"], "clicks": 0,
+                 "impressions": 4000, "position": 34.0}]}
         return {"rows": [{"keys": ["sourdough near me"], "clicks": 40, "impressions": 900,
                           "position": 3.2},
                          {"keys": ["bakery toronto"], "clicks": 12, "impressions": 1500,
@@ -260,7 +281,7 @@ def test_only_what_the_account_can_see_can_be_chosen(client, fake, bakery):
     assert res.status_code == 422
 
 
-def test_choosing_syncs_90_days_then_the_summary_compares_periods(client, db, fake, bakery):
+def test_choosing_syncs_16_months_then_the_summary_compares_periods(client, db, fake, bakery):
     _, _, base = bakery
     connect(client, base)
     res = choose(client, base)
@@ -271,7 +292,7 @@ def test_choosing_syncs_90_days_then_the_summary_compares_periods(client, db, fa
     assert sources["ga4"]["synced_through"] == yesterday.isoformat()
     gsc_through = yesterday - timedelta(days=2)
     assert sources["search_console"]["synced_through"] == gsc_through.isoformat()
-    assert db.scalar(select(func.count()).select_from(Ga4Daily)) == 90
+    assert db.scalar(select(func.count()).select_from(Ga4Daily)) == 486
 
     s = client.get(f"{base}/analytics/summary").json()
     assert s["ga4"]["sessions"] == {"value": 2800.0, "previous": 2800.0}
@@ -295,17 +316,33 @@ def test_later_syncs_refetch_only_the_last_week(client, db, fake, bakery):
     fake.calls.clear()
     assert client.post(f"{base}/integrations/google/sync").status_code == 202
     reports = [json.loads(r.content) for r in fake.calls if r.url.path.endswith(":runReport")]
-    assert len(reports) == 3
+    assert len(reports) == 4  # totals, channels, AI tools, landing pages
     assert len(FakeGoogle.days(reports[0])) == 7
-    assert db.scalar(select(func.count()).select_from(Ga4Daily)) == 90  # replaced, not doubled
+    assert db.scalar(select(func.count()).select_from(Ga4Daily)) == 486  # replaced, not doubled
 
 
 def test_summary_without_full_previous_period_has_no_comparison(client, db, fake, bakery):
     _, _, base = bakery
     connect(client, base)
     choose(client, base)
+    cutoff = utcnow().date() - timedelta(days=100)
+    db.execute(Ga4Daily.__table__.delete().where(Ga4Daily.day < cutoff))
+    source = db.scalar(select(DataSource).where(DataSource.kind == "ga4"))
+    source.history_from = cutoff
+    db.commit()
     s = client.get(f"{base}/analytics/summary?days=90").json()
     assert s["ga4"]["sessions"] == {"value": 9000.0, "previous": None}
+
+
+def test_first_sync_stores_landing_pages_and_search_detail(client, db, fake, bakery):
+    from app.models import Ga4Page, GscPage, GscQueryPage
+
+    _, _, base = bakery
+    connect(client, base)
+    choose(client, base)
+    assert db.scalar(select(func.count()).select_from(Ga4Page)) == 180  # 90 days × 2 pages
+    assert db.scalar(select(func.count()).select_from(GscPage)) == 2
+    assert db.scalar(select(func.count()).select_from(GscQueryPage)) == 4
 
 
 def test_summary_before_anything_is_connected(client, bakery):
@@ -338,7 +375,7 @@ def test_google_outage_fails_the_sync_and_keeps_the_history(client, db, fake, ba
     body = client.get(f"{base}/integrations/google").json()
     assert body["status"] == "connected"
     assert {s["sync_status"] for s in body["sources"]} == {"failed"}
-    assert db.scalar(select(func.count()).select_from(Ga4Daily)) == 90
+    assert db.scalar(select(func.count()).select_from(Ga4Daily)) == 486
 
 
 def test_removing_a_source_deletes_its_history(client, db, fake, bakery):

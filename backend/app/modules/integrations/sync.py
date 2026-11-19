@@ -1,7 +1,9 @@
 """Copying Google data into Outlogik's daily history (snapshots).
 
-- The first sync fetches the last 90 days; later ones refetch the last 7 (Google revises recent
-  days) and replace those days.
+- The first sync fetches the last 16 months (what Search Console keeps), so a period can be
+  compared with the same period last year straight away; visits by landing page start with
+  the last 90 days. Later syncs refetch the last 7 days (Google revises recent days) and
+  replace those days.
 - Search Console data arrives 2–3 days late; it's stored for the days Google returns.
 - Visits from AI tools are GA4 sessions whose source is one of AI_SOURCES.
 """
@@ -20,17 +22,24 @@ from app.modules.integrations.models import (
     DataSource,
     Ga4Breakdown,
     Ga4Daily,
+    Ga4Page,
     GscDaily,
+    GscPage,
     GscQuery,
+    GscQueryPage,
     Integration,
 )
 from app.modules.integrations.service import access_token
 
 log = logging.getLogger(__name__)
 
-FIRST_SYNC_DAYS = 90
+FIRST_SYNC_DAYS = 486  # 16 months
+FIRST_SYNC_PAGE_DAYS = 90
 REFRESH_DAYS = 7
 TOP_QUERIES = 250
+TOP_PAGES = 500
+TOP_QUERY_PAGES = 1000
+MAX_PAGE_ROWS = 100_000
 # Referring sites of AI assistants and answer engines → the name shown
 AI_SOURCES = {
     "chatgpt.com": "ChatGPT", "chat.openai.com": "ChatGPT",
@@ -41,9 +50,9 @@ AI_SOURCES = {
 }
 
 
-def _range(source: DataSource) -> tuple[date, date]:
+def _range(source: DataSource, first: int = FIRST_SYNC_DAYS) -> tuple[date, date]:
     end = utcnow().date() - timedelta(days=1)  # yesterday: today isn't complete
-    days = REFRESH_DAYS if source.synced_through else FIRST_SYNC_DAYS
+    days = REFRESH_DAYS if source.synced_through else first
     return end - timedelta(days=days - 1), end
 
 
@@ -58,6 +67,8 @@ def _day(value: str) -> date:
 
 def sync_ga4(db: Session, source: DataSource, token: str) -> date | None:
     start, end = _range(source)
+    if source.history_from is None:
+        source.history_from = start
     dates = [{"startDate": start.isoformat(), "endDate": end.isoformat()}]
     totals = google.ga4_report(token, source.external_id, {
         "dateRanges": dates, "dimensions": [{"name": "date"}], "limit": 1000,
@@ -99,11 +110,37 @@ def sync_ga4(db: Session, source: DataSource, token: str) -> date | None:
     for (d, name), sessions in merged.items():
         db.add(Ga4Breakdown(source_id=source.id, organization_id=source.organization_id,
                             day=d, dimension="ai_source", value=name, sessions=sessions))
+    _sync_ga4_pages(db, source, token)
     return latest or end
+
+
+def _sync_ga4_pages(db: Session, source: DataSource, token: str) -> None:
+    start, end = _range(source, FIRST_SYNC_PAGE_DAYS)
+    if source.pages_from is None:
+        source.pages_from = start
+    report = google.ga4_report(token, source.external_id, {
+        "dateRanges": [{"startDate": start.isoformat(), "endDate": end.isoformat()}],
+        "dimensions": [{"name": "date"}, {"name": "landingPage"}],
+        "metrics": [{"name": "sessions"}, {"name": "keyEvents"}],
+        "orderBys": [{"metric": {"metricName": "sessions"}, "desc": True}],
+        "limit": MAX_PAGE_ROWS})
+    db.execute(delete(Ga4Page).where(Ga4Page.source_id == source.id,
+                                     Ga4Page.day.between(start, end)))
+    merged: dict[tuple[date, str], list[float]] = {}
+    for (day, path), (sessions, events) in _ga4_rows(report):
+        path = (path or "(not set)")[:1000]
+        row = merged.setdefault((_day(day), path), [0, 0.0])
+        row[0] += int(sessions)
+        row[1] += float(events)
+    for (d, path), (sessions, events) in merged.items():
+        db.add(Ga4Page(source_id=source.id, organization_id=source.organization_id, day=d,
+                       path=path, sessions=sessions, key_events=events))
 
 
 def sync_search_console(db: Session, source: DataSource, token: str) -> date | None:
     start, end = _range(source)
+    if source.history_from is None:
+        source.history_from = start
     daily = google.search_analytics(token, source.external_id, {
         "startDate": start.isoformat(), "endDate": end.isoformat(), "dimensions": ["date"],
         "rowLimit": 1000})
@@ -127,10 +164,29 @@ def sync_search_console(db: Session, source: DataSource, token: str) -> date | N
         for row in queries.get("rows", []):
             db.add(GscQuery(source_id=source.id, organization_id=source.organization_id,
                             period_end=period_end, query=row["keys"][0][:500],
-                            clicks=int(row.get("clicks", 0)),
-                            impressions=int(row.get("impressions", 0)),
-                            position=float(row.get("position", 0))))
+                            **_gsc_numbers(row)))
+        window = {"startDate": (period_end - timedelta(days=27)).isoformat(),
+                  "endDate": period_end.isoformat()}
+        pages = google.search_analytics(token, source.external_id, {
+            **window, "dimensions": ["page"], "rowLimit": TOP_PAGES})
+        db.execute(delete(GscPage).where(GscPage.source_id == source.id))
+        for row in pages.get("rows", []):
+            db.add(GscPage(source_id=source.id, organization_id=source.organization_id,
+                           period_end=period_end, page=row["keys"][0][:2048],
+                           **_gsc_numbers(row)))
+        pairs = google.search_analytics(token, source.external_id, {
+            **window, "dimensions": ["query", "page"], "rowLimit": TOP_QUERY_PAGES})
+        db.execute(delete(GscQueryPage).where(GscQueryPage.source_id == source.id))
+        for row in pairs.get("rows", []):
+            db.add(GscQueryPage(source_id=source.id, organization_id=source.organization_id,
+                                period_end=period_end, query=row["keys"][0][:500],
+                                page=row["keys"][1][:2048], **_gsc_numbers(row)))
     return latest
+
+
+def _gsc_numbers(row: dict) -> dict:
+    return {"clicks": int(row.get("clicks", 0)), "impressions": int(row.get("impressions", 0)),
+            "position": float(row.get("position", 0))}
 
 
 def sync_source(db: Session, source_id: uuid.UUID) -> None:

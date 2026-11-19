@@ -178,7 +178,7 @@ def test_limited_member_can_only_hand_out_what_they_see(client, new_client, db, 
                         "members.update", "roles.read", "clients.read", "client_users.manage",
                         "websites.read", "websites.write", "dashboard.read", "audits.read",
                         "audits.run", "integrations.read", "integrations.manage",
-                        "analytics.read"]})
+                        "analytics.read", "workspaces.review"]})
     assert res.status_code == 201 and res.json()["workspace_scope"] == "assigned"
     lead_browser, lead = signed_in_as(new_client, db, agency, "lead@agency.example.com", "member")
     client.patch(f"{API}/{agency}/members/{lead.id}", json={"role_id": res.json()["id"]})
