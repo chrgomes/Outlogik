@@ -42,6 +42,17 @@ describe('Legal pages', () => {
     expect(robots()).toBeNull();
   });
 
+  it('explains Google account data, with Google’s Limited Use statement', async () => {
+    const el = await open('/privacy-policy', LEGAL);
+    const text = el.textContent!.replace(/\s+/g, ' ');
+    expect(el.querySelector('h2#google')!.textContent).toContain('3. Google account data');
+    expect(text).toContain('it can never change anything in your Google account');
+    expect(text).toContain('we don’t use it to train AI models');
+    expect(text).toContain('including the Limited Use requirements');
+    expect(el.querySelector('a[href="https://developers.google.com/terms/api-services-user-data-policy"]')).not.toBeNull();
+    expect(el.querySelector('h2#contact')!.textContent).toContain('11. Contact us');
+  });
+
   it('names the analytics tools in use, and the provincial regulator where there is one', async () => {
     const el = await open('/privacy-policy', { ...LEGAL, province: 'Quebec', ga4_measurement_id: 'G-TEST1234' });
     const text = el.textContent!;

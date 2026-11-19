@@ -213,9 +213,8 @@ server yet", and nothing else is affected. Use the same Google Cloud project as 
    it, because Analytics and Search Console read access are "sensitive" scopes: expect to show a
    short screen recording of connecting Google in Outlogik, explain why each scope is needed
    ("show the business its own traffic and search results"), and confirm the privacy policy
-   covers Google data. **The privacy policy doesn't cover it yet:** it needs a short section on
-   what Outlogik reads from Google, that it's used only to show the workspace its own reports,
-   isn't sold or used for advertising, how to disconnect, and Google's "Limited Use" statement.
+   covers Google data: it does, in section 3 "Google account data"
+   (`https://outlogik.com/privacy-policy#google`), including Google's Limited Use statement.
    Review usually takes from a few days to a few weeks.
 
 **What it syncs:** after someone connects Google in a workspace and picks a GA4 property and a

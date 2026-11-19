@@ -128,10 +128,12 @@ a phone; an axe scan found no problems in light or dark mode.
 - **Real Google connections wait on your Google Cloud setup** (DEPLOYMENT.md has the steps).
   Until the app is verified, only test users you list (up to 100) can connect, and their
   connections expire after 7 days.
-- **The privacy policy needs a section on Google data** before Google's review: what's read,
-  that it's used only for the workspace's own reports, not sold or used for ads, how to
-  disconnect, and Google's "Limited Use" statement. It's legal copy, so I haven't written it
-  without you. I can draft it for your review.
+- **The privacy policy now covers Google data** (section 3, approved 2026-11-19): what's read,
+  that it's used only for the workspace's own reports, not sold, used for ads or to train AI
+  models, who can see it, how to disconnect, and Google's Limited Use statement. A lawyer's
+  review is still on the launch checklist. When Google access is removed from the Google
+  account side, copied data stays until the person disconnects in Outlogik or asks us; the
+  policy says so.
 - **Google Business Profile** moved to the SEO and AI Search module (H2), as agreed.
 - **No charts yet.** The dashboards (H1-8) add charts from this same history.
 - **No email when a connection breaks.** Comes with alerts and notifications (H1.5).

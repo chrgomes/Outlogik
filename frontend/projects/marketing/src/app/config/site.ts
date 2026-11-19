@@ -96,7 +96,7 @@ export const LEGAL: NavLink[] = [
 ];
 
 /** When the legal pages' text was last changed (shown on the pages). Update with any change. */
-export const LEGAL_UPDATED = 'November 17, 2026';
+export const LEGAL_UPDATED = 'November 19, 2026';
 
 export type FeatureStatus = 'available' | 'in_development';
 
