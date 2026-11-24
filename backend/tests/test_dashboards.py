@@ -251,17 +251,17 @@ def test_account_managers_reviews_and_my_clients(new_client, db, agency):
     assert list(mine) == ["Alpha Dental"] and mine["Alpha Dental"]["assigned_to_me"]
 
 
-def test_client_portal_users_see_numbers_but_not_the_team(new_client, db, agency):
+def test_client_portal_users_get_their_dashboard_not_the_overview(new_client, db, agency):
+    """Since H1-10 the agency overview isn't part of the client portal (§7)."""
     slug = agency["slug"]
     portal = seed_member(db, slug, "jo@alpha.example.com", "client")
     link_client(db, portal, agency["alpha"])
     from tests.conftest import login
     browser = new_client()
     login(browser, "jo@alpha.example.com")
-    o = browser.get(f"{API}/{slug}/dashboard/overview").json()
-    assert [r["name"] for r in o["workspaces"]] == ["Alpha Dental"]
-    row = o["workspaces"][0]
-    assert row["visits"] == 2800 and row["managers"] is None and row["review"] is None
+    assert browser.get(f"{API}/{slug}/dashboard/overview").status_code == 403
+    d = browser.get(f"{API}/{slug}/workspaces/{agency['ws']['Alpha Dental']}/dashboard").json()
+    assert d["ga4"]["metrics"]["sessions"]["value"] == 2800
     res = browser.put(f"{API}/{slug}/workspaces/{agency['ws']['Alpha Dental']}/review")
     assert res.status_code == 403
 

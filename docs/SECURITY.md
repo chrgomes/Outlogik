@@ -34,6 +34,10 @@ deployment must add. Each item is covered by backend or frontend tests unless no
 - **The client portal stays out of search results:** `app.outlogik.com/robots.txt` disallows
   everything, and every page and API response says `X-Robots-Tag: noindex, nofollow`. The
   website has its own robots.txt and sitemap (see Search).
+- **Your account** (H1-10): changing your password needs the current one; wrong guesses count
+  like failed sign-ins (5 in 15 minutes, then a pause). A change signs out every other device
+  and emails the person, so a change they didn't make doesn't go unnoticed. Name changes are
+  recorded in the audit log.
 - **Super Admins** can only be created with the CLI.
 - **Sign-up is invite-only by default** (`SIGNUP_MODE=invite_only`): clients and staff join through invitations, and organizations are created with the CLI.
 

@@ -88,3 +88,9 @@ export function changeTone(value: number, previous: number | null, lowerIsBetter
   if (previous === null || previous === value || (previous && Math.round(((value - previous) / previous) * 100) === 0)) return 'text-muted';
   return (value > previous) !== lowerIsBetter ? 'text-success' : 'text-danger';
 }
+
+/** Who a client-portal user can contact about their workspace. */
+export interface Contacts {
+  organization_name: string;
+  contacts: { name: string; email: string; role: 'account_manager' | 'owner' }[];
+}

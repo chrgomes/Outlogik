@@ -7,7 +7,7 @@ import { CurrentOrgService } from '../../core/current-org.service';
 import { OrgApi, queryParams } from '../../core/org-api.service';
 import { ErrorState, LoadingState } from '../../shared/states/states';
 import { Chart, ChartColors, ChartOptions } from './chart';
-import { Compare, Metric, WorkspaceDashboard, changeText, changeTone } from './dashboard.types';
+import { Compare, Contacts, Metric, WorkspaceDashboard, changeText, changeTone } from './dashboard.types';
 
 export interface PeriodChoice {
   days: number | null;
@@ -49,6 +49,21 @@ const shortDate = (iso: string) =>
             }
           </ol>
         </section>
+      }
+
+      @if (contacts.value(); as c) {
+        @if (c.contacts.length) {
+          <section class="dash-card dash-contact mb-4" aria-labelledby="contact-h">
+            <h2 id="contact-h" class="h6 mb-2">{{ c.contacts[0].role === 'account_manager'
+              ? (c.contacts.length > 1 ? 'Your account managers' : 'Your account manager') : 'Your contact at ' + c.organization_name }}</h2>
+            <ul class="list-unstyled mb-0 d-flex flex-wrap gap-4">
+              @for (p of c.contacts; track p.email) {
+                <li><span class="fw-medium d-block">{{ p.name }}</span>
+                  <a [href]="'mailto:' + p.email">{{ p.email }}</a></li>
+              }
+            </ul>
+          </section>
+        }
       }
 
       @if (d.changes.length) {
@@ -168,7 +183,9 @@ const shortDate = (iso: string) =>
             }
             <a class="fw-semibold mt-auto" [routerLink]="['/o', org.slug(), 'audits', a.workspace_id, a.id]">Open the audit</a>
           } @else {
-            <p class="dash-empty">{{ d.setup.audits_visible ? 'No audit yet. An audit checks your pages for technical, SEO and AI search problems.' : 'Audits aren’t part of your role.' }}</p>
+            <p class="dash-empty">{{ !d.setup.audits_visible ? 'Audits aren’t part of your role.'
+              : org.can('audits.run') ? 'No audit yet. An audit checks your pages for technical, SEO and AI search problems.'
+              : 'No audit yet. ' + (org.isClientUser() ? (org.membership()?.organization_name ?? 'Your agency') : 'Someone who runs audits') + ' will run the first one.' }}</p>
           }
         </section>
       </div>
@@ -261,6 +278,10 @@ export class WorkspaceDashboardView {
   protected readonly org = inject(CurrentOrgService);
   private readonly api = inject(OrgApi);
 
+  /** Client-portal users see who to contact at the agency. */
+  protected readonly contacts = httpResource<Contacts>(() => this.org.isClientUser()
+    ? this.api.url(`workspaces/${this.workspaceId()}/contacts`) : undefined);
+
   protected readonly data = httpResource<WorkspaceDashboard>(() => {
     const p = this.period();
     return {
@@ -335,13 +356,19 @@ export class WorkspaceDashboardView {
   protected readonly analyticsMissing = computed(() => {
     const s = this.data.value()?.setup;
     if (!s?.analytics_visible) return 'Traffic numbers aren’t part of your role.';
-    if (s.google === 'error') return 'Google stopped accepting the connection. Reconnect it in Integrations.';
-    return s.ga4 ? 'Waiting for the first sync from Google Analytics.' : 'Appears when Google Analytics is connected in Integrations.';
+    if (s.google === 'error') return this.canManage()
+      ? 'Google stopped accepting the connection. Reconnect it in Integrations.'
+      : `Google stopped accepting the connection. ${this.whoConnects()} needs to reconnect it.`;
+    if (s.ga4) return 'Waiting for the first sync from Google Analytics.';
+    return this.canManage() ? 'Appears when Google Analytics is connected in Integrations.'
+      : `Appears when ${this.whoConnects()} connects Google Analytics.`;
   });
   protected readonly searchMissing = computed(() => {
     const s = this.data.value()?.setup;
     if (!s?.analytics_visible) return 'Search numbers aren’t part of your role.';
-    return s.search_console ? 'Waiting for the first sync from Search Console.' : 'Appears when Search Console is connected in Integrations.';
+    if (s.search_console) return 'Waiting for the first sync from Search Console.';
+    return this.canManage() ? 'Appears when Search Console is connected in Integrations.'
+      : `Appears when ${this.whoConnects()} connects Search Console.`;
   });
 
   protected readonly visitsChart = computed<ChartOptions>(() => {
@@ -392,6 +419,11 @@ export class WorkspaceDashboardView {
     const h = this.data.value()?.audit?.history ?? [];
     return 'Errors and warnings in the last audits: ' + h.map((a) => `${a.errors} errors, ${a.warnings} warnings`).join('; then ');
   });
+
+  private readonly canManage = computed(() => this.org.can('integrations.manage'));
+  /** Who connects Google, in words the reader understands. */
+  private readonly whoConnects = computed(() => this.org.isClientUser()
+    ? (this.org.membership()?.organization_name ?? 'your agency') : 'someone who manages integrations');
 
   protected share(value: number, max: number): number {
     return max ? Math.max(2, (value / max) * 100) : 0;

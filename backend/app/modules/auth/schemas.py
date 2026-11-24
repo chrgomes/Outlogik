@@ -31,6 +31,15 @@ class LoginIn(BaseModel):
     pow: Solution | None = None
 
 
+class ProfileIn(BaseModel):
+    full_name: Name
+
+
+class ChangePasswordIn(BaseModel):
+    current_password: Annotated[str, Field(min_length=1, max_length=128)]
+    new_password: Password
+
+
 class ForgotPasswordIn(BaseModel):
     email: Email
     pow: Solution | None = None

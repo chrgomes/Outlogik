@@ -31,7 +31,7 @@ import { IssueCounts } from './audit-parts';
       } @else {
         <div class="ol-table-card">
           <table class="table ol-table">
-            <thead><tr><th>Website</th><th>Latest audit</th><th>Issues</th><th>Schedule</th>
+            <thead><tr><th>Website</th><th>Latest audit</th><th>Issues</th>@if (!org.isClientUser()) {<th>Schedule</th>}
               <th><span class="visually-hidden">Actions</span></th></tr></thead>
             <tbody>
               @for (s of rows(); track s.website_id) {
@@ -62,6 +62,7 @@ import { IssueCounts } from './audit-parts';
                       <ol-issue-counts [errors]="s.latest!.errors" [warnings]="s.latest!.warnings" [notices]="s.latest!.notices" />
                     }
                   </td>
+                  @if (!org.isClientUser()) {
                   <td>
                     @if (canRun(s)) {
                       <select class="form-select form-select-sm" [attr.aria-label]="'Schedule for ' + s.website_name"
@@ -74,6 +75,7 @@ import { IssueCounts } from './audit-parts';
                       <span class="text-muted">{{ frequencyLabel[s.audit_frequency] }}</span>
                     }
                   </td>
+                  }
                   <td class="text-end">
                     @if (canRun(s)) {
                       <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap"

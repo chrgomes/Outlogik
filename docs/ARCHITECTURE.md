@@ -162,6 +162,18 @@ users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
   Client Viewer. A role sees every workspace (`workspace_scope = all`) or only the ones each
   member is assigned (`assigned`, stored in `workspace_assignments`). The startup sync adds new
   built-in roles to existing organizations and keeps names and permissions current.
+- **The client portal** (H1-10) is the same app for a Client Viewer (`OrgContext
+  .is_client_user`), limited to the workspaces they're assigned:
+  - **Server:** the agency-wide overview (`/dashboard/overview`) is refused to them; their
+    workspace dashboard, audits and reports work as for anyone, with no team details or
+    internal notes. `GET /orgs/{slug}/workspaces/{id}/contacts` lists who to contact: the
+    workspace's account managers, otherwise the organization's owners.
+  - **App:** one of their workspaces is always selected (never "All workspaces"); the menu
+    shows Dashboard, Audits and Reports; agency pages (clients, websites, organization
+    settings) send them to their dashboard (`staffGuard`); messages name the agency instead of
+    pointing to pages they can't open.
+- **Your account** (`/o/{slug}/account`, everyone): `PATCH /auth/me` (name) and
+  `POST /auth/change-password` (current password; other sessions revoked; email sent).
 - **Access grants** (`workspace_grants`) let a business share its own workspace with an
   agency. The agency's requests then include that workspace (`OrgContext.linked`), with
   "manage" or "view" access. Websites created there belong to the business.

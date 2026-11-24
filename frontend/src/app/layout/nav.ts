@@ -9,6 +9,8 @@ export interface NavItem {
   /** Shown to one account type only (businesses have no clients; agencies share nothing). */
   agencyOnly?: boolean;
   businessOnly?: boolean;
+  /** Not in the client portal: clients see their own dashboard, audits and reports (§7). */
+  staffOnly?: boolean;
 }
 
 export interface NavSection {
@@ -22,8 +24,9 @@ export const NAV: NavSection[] = [
     items: [
       { label: 'Dashboard', icon: 'grid-1x2', path: 'dashboard', permission: 'dashboard.read' },
       { label: 'Clients', icon: 'briefcase', path: 'clients', permission: 'clients.read',
-        agencyOnly: true },
-      { label: 'Websites', icon: 'globe2', path: 'websites', permission: 'websites.read' },
+        agencyOnly: true, staffOnly: true },
+      { label: 'Websites', icon: 'globe2', path: 'websites', permission: 'websites.read',
+        staffOnly: true },
       { label: 'Audits', icon: 'heart-pulse', path: 'audits', permission: 'audits.read' },
       { label: 'Reports', icon: 'file-earmark-bar-graph', path: 'reports', permission: 'reports.read' },
       { label: 'Integrations', icon: 'plug', path: 'integrations', permission: 'integrations.read' },
@@ -33,7 +36,7 @@ export const NAV: NavSection[] = [
     label: 'Settings',
     items: [
       { label: 'Organization', icon: 'building', path: 'settings/organization',
-        permission: 'organization.read' },
+        permission: 'organization.read', staffOnly: true },
       { label: 'Team', icon: 'people', path: 'settings/members', permission: 'members.read' },
       { label: 'Roles', icon: 'shield-lock', path: 'settings/roles', permission: 'roles.read' },
       { label: 'Plan', icon: 'speedometer2', path: 'settings/plan', permission: 'plan.read' },

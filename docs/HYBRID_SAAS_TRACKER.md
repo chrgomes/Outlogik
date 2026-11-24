@@ -16,8 +16,111 @@ unfinished, security notes, and what's next.
 | H1-7 Integrations and Google | **Done** (2026-11-19); waits on your Google Cloud setup to connect real accounts |
 | H1-8 Dashboards | **Done** (2026-11-19) |
 | H1-9 Basic reporting | **Done** (2026-11-24) |
-| H1-10 Client portal on workspaces | Next |
-| H1-11 … H1-12 | Not started |
+| H1-10 Client portal on workspaces | **Done** (2026-11-24) |
+| H1-11 Self-serve sign-up and basic Super Admin | Next |
+| H1-12 H1 review | Not started |
+
+---
+
+## H1-10: Client portal
+
+### 1. What was completed
+
+I signed in as a client user first, to see what clients got before this step. Their data was
+already limited to their own client, but the experience was the agency's: they landed on the
+agency overview ("Northline Agency · all clients", "Needs attention", "Google not connected"),
+had the agency's Clients and Organization pages in the menu, and had no way to reach their
+account manager. Now:
+
+- **Clients land on their own dashboard:** their workspace's figures, charts, AI tool visits,
+  searches and latest audit. There's no "All workspaces"; a client linked to two businesses
+  switches between those two only.
+- **"Your account manager"** at the top of their dashboard, with an email link. If the agency
+  hasn't assigned one, it shows the agency's owners instead.
+- **A menu of three:** Dashboard, Audits, Reports. They can download their reports (PDF and
+  CSV) and open their audits.
+- **Agency pages are closed to them:** Clients, Websites and Organization settings send them
+  back to their dashboard; team, roles, plan and integrations say they don't have access.
+- **Written for clients:** "Appears when Northline connects Google Analytics" rather than
+  "connect it in Integrations"; "No audit yet. Northline will run the first one."; no audit
+  schedule column (an agency setting).
+- **The server enforces it too:** the agency overview is refused to client users (403), not
+  just hidden. Team lists, internal notes and other clients stay out of reach, as before.
+- **"Your account" for everyone** (in the user menu): change your name, change your password
+  (needs the current one; your other devices are signed out and you get an email), sign out
+  everywhere, and see where you're a member. Until now there was no way to change a password
+  while signed in.
+
+The spec's other client portal items (campaign progress, approving content, tasks, messages)
+come with those features in H1.5 and H2.
+
+### 2. Files changed
+
+**Backend:**
+- `dashboard/router.py`: the overview refused to client users; new `contacts` endpoint.
+- `auth/`: `PATCH /auth/me` and `POST /auth/change-password` (schemas, service, router).
+- Tests: new `test_portal.py`; one dashboard test updated (clients now get their own
+  dashboard instead of the overview, by design).
+
+**App:**
+- New `features/account/` (Your account page, portal and account tests).
+- `core/workspace.service.ts` (a client always has a workspace selected), `core/guards.ts`
+  (`staffGuard`), routes, menu (`staffOnly`), top bar (no "All workspaces" for clients; "Your
+  account" in the user menu).
+- Dashboard: the account manager card and client wording; audits: no schedule column for
+  clients.
+
+**Docs:** `ARCHITECTURE.md`, `SECURITY.md`, `HYBRID_SAAS_PLAN.md`, this tracker.
+
+### 3. Database changes
+
+None.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **497 passed** (was 486) |
+| App (Vitest) | **148 passed** (was 141) |
+| Website (Vitest) | 93 passed (unchanged) |
+
+The new tests cover:
+- clients get their own dashboard, not the overview, and not another client's
+- contacts: the assigned account manager, else the owners; disabled managers left out;
+  another client's contacts refused; no team list or internal notes for clients
+- changing your name; changing your password (other devices signed out, this one kept, an
+  email sent, recorded); the current password required; guessing it limited; both need a
+  session
+- in the app: a client always has one of their workspaces selected; the portal menu; the
+  account manager card and client wording; agency pages redirect; the account page
+
+**Browser check:** signed in as a client user and visited every page, then tried the agency
+pages and APIs directly. Everything above held. An axe scan of the portal dashboard and the
+account page found no problems in light or dark mode; no sideways scrolling on a phone.
+
+### 5. Unfinished (on purpose)
+
+- **Campaign progress, content approvals, tasks and messaging** in the portal come with
+  those features (H1.5 and H2). For now clients contact their account manager by email.
+- **Changing your email address** isn't possible yet; the account page says to ask for an
+  invitation to the new address. A safe email change (confirming both addresses) can come
+  with the account security work in H1.5, alongside two-step sign-in.
+- **The portal shows the agency's name** in the top bar; the agency's logo and colours come
+  with white-label branding in H1.5.
+
+### 6. Security notes
+
+- The agency overview is refused by the server to client users, so hiding it in the app
+  isn't the only protection.
+- Contacts show only account managers assigned to that workspace (or the owners), never the
+  rest of the team.
+- Password changes need the current password, are rate-limited, sign out other devices and
+  notify the person by email.
+
+### 7. Next: H1-11 self-serve sign-up and basic Super Admin
+
+Choose business or agency at sign-up (behind an invitation code during the beta); a Super
+Admin area to list organizations and users, assign plans and suspend accounts; platform roles.
 
 ---
 

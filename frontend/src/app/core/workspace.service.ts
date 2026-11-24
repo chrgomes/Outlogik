@@ -12,6 +12,8 @@ const KEY = 'ol.workspace.';
  *
  * - A business has one workspace, its own, which is always selected.
  * - An agency picks one in the top bar (its own, or a client's), or "All workspaces" (null).
+ * - A client-portal user always has one of their own workspaces selected, never "All": the
+ *   portal shows a client their own dashboard, not the agency's overview (§7).
  *   The choice is remembered per organization in this browser.
  */
 @Injectable({ providedIn: 'root' })
@@ -33,12 +35,16 @@ export class WorkspaceService {
   /** Changes aren't allowed in the selected workspace (shared with view-only access). */
   readonly readOnly = computed(() => this.current()?.access === 'view');
 
-  /** The selected workspace, or null for all of them (agencies only). */
+  /** The selected workspace, or null for all of them (agency staff only). */
   readonly current = computed<Workspace | null>(() => {
     if (!this.org.isAgency()) return this.own();
     const id = this.selectedId();
-    return this.workspaces().find((w) => w.id === id) ?? null;
+    const selected = this.workspaces().find((w) => w.id === id);
+    if (this.org.isClientUser()) return selected ?? this.workspaces()[0] ?? null;
+    return selected ?? null;
   });
+  /** Whether "All workspaces" is offered. */
+  readonly canSeeAll = computed(() => !this.org.isClientUser());
   /** Agencies with more than one workspace get the switcher. */
   readonly canSwitch = computed(() => this.org.isAgency() && this.workspaces().length > 1);
 

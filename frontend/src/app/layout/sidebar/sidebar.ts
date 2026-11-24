@@ -43,7 +43,8 @@ export class Sidebar {
     return NAV.map((s) => ({
       label: s.label,
       items: s.items.filter((i) => this.org.permissions().has(i.permission)
-          && (!i.agencyOnly || this.org.isAgency()) && (!i.businessOnly || !this.org.isAgency()))
+          && (!i.agencyOnly || this.org.isAgency()) && (!i.businessOnly || !this.org.isAgency())
+          && (!i.staffOnly || !this.org.isClientUser()))
         // One command per segment: 'settings/members' as a single command becomes settings%2Fmembers.
         .map((i) => ({ ...i, link: ['/o', this.org.slug(), ...i.path.split('/')] })),
     })).filter((s) => s.items.length > 0);

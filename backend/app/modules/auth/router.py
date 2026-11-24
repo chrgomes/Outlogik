@@ -10,11 +10,13 @@ from app.modules.auth.cookies import clear_session_cookie, set_session_cookie
 from app.modules.auth.deps import DB, CurrentAuth, CurrentUser, OptionalAuth
 from app.modules.auth.schemas import (
     AcceptInviteIn,
+    ChangePasswordIn,
     ForgotPasswordIn,
     InvitePreviewOut,
     LoginIn,
     MeOut,
     MessageOut,
+    ProfileIn,
     RegisterIn,
     ResetPasswordIn,
     TokenIn,
@@ -113,6 +115,30 @@ def logout_all(auth: CurrentAuth, request: Request, db: DB) -> Response:
 @router.get("/me", response_model=MeOut)
 def me(user: CurrentUser, db: DB) -> MeOut:
     return _me(db, user)
+
+
+@router.patch("/me", response_model=MeOut, summary="Change your name")
+def update_me(body: ProfileIn, auth: CurrentAuth, request: Request, db: DB) -> MeOut:
+    service.update_profile(db, auth.user, body.full_name, client_ip(request))
+    db.commit()
+    return _me(db, auth.user)
+
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT,
+             summary="Change your password; other devices are signed out")
+def change_password(body: ChangePasswordIn, auth: CurrentAuth, request: Request, db: DB) -> None:
+    s = get_settings()
+    key = str(auth.user.id)
+    # Wrong guesses count like failed sign-ins, so a stolen session can't try passwords freely.
+    check_failures("password-change-fail", key, s.rate_limit_login_failures_email)
+    try:
+        service.change_password(db, auth.user, auth.session.id, current=body.current_password,
+                                new=body.new_password, ip=client_ip(request))
+    except AppError:
+        record_failure("password-change-fail", key, s.rate_limit_login_failures_email)
+        raise
+    clear_failures("password-change-fail", key)
+    db.commit()
 
 
 @router.post("/forgot-password", response_model=MessageOut,
