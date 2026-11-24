@@ -31,6 +31,8 @@ PERMISSIONS: dict[str, str] = {
     "integrations.manage": "Connect and disconnect Google, and choose what it syncs",
     "analytics.read": "View traffic and search results synced from Google",
     "workspaces.review": "Mark a client's workspace as reviewed on the dashboard",
+    "reports.read": "View and download reports",
+    "reports.create": "Create and delete reports",
 }
 
 OWNER, ADMIN, MEMBER, CLIENT = "owner", "admin", "member", "client"
@@ -48,6 +50,7 @@ GROUP_LABELS = {
     "access_grants": "Agency access", "linked_accounts": "Linked businesses",
     "plan": "Plan", "audits": "Website audits",
     "integrations": "Integrations", "analytics": "Analytics", "workspaces": "Workspaces",
+    "reports": "Reports",
 }
 
 
@@ -80,6 +83,7 @@ DEFAULT_ROLES: dict[str, dict] = {
             "organization.read", "members.read", "roles.read", "clients.read", "clients.write",
             "websites.read", "websites.write", "dashboard.read", "audits.read", "audits.run",
             "integrations.read", "integrations.manage", "analytics.read", "workspaces.review",
+            "reports.read", "reports.create",
         },
         "kinds": {BUSINESS, AGENCY},
         "scope": ALL_WORKSPACES,
@@ -92,7 +96,7 @@ DEFAULT_ROLES: dict[str, dict] = {
             "organization.read", "members.read", "roles.read", "clients.read",
             "client_users.manage", "websites.read", "websites.write", "dashboard.read",
             "audits.read", "audits.run", "integrations.read", "integrations.manage",
-            "analytics.read", "workspaces.review",
+            "analytics.read", "workspaces.review", "reports.read", "reports.create",
         },
         "kinds": {AGENCY},
         "scope": ASSIGNED_WORKSPACES,
@@ -101,7 +105,7 @@ DEFAULT_ROLES: dict[str, dict] = {
         "name": "Reporting Viewer",
         "description": "Read-only access to every workspace's websites and results.",
         "permissions": {"organization.read", "clients.read", "websites.read", "dashboard.read",
-                        "audits.read", "integrations.read", "analytics.read"},
+                        "audits.read", "integrations.read", "analytics.read", "reports.read"},
         "kinds": {BUSINESS, AGENCY},
         "scope": ALL_WORKSPACES,
     },
@@ -110,7 +114,7 @@ DEFAULT_ROLES: dict[str, dict] = {
         "description": "Client-portal access: read-only, limited to the clients they're "
                        "linked to.",
         "permissions": {"organization.read", "clients.read", "websites.read", "dashboard.read",
-                        "audits.read", "analytics.read"},
+                        "audits.read", "analytics.read", "reports.read"},
         "kinds": {AGENCY},
         "scope": ASSIGNED_WORKSPACES,
     },

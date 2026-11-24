@@ -23,6 +23,7 @@ from app.modules.leads.models import Lead, LeadNote, NewsletterSubscriber
 from app.modules.organizations.models import Invitation, Organization, OrganizationMember
 from app.modules.plans.models import Plan, PlanEntitlement, Subscription
 from app.modules.rbac.models import Permission, Role, RolePermission
+from app.modules.reports.models import Report
 from app.modules.site.models import PortalFeature, SiteSettings
 from app.modules.users.models import User
 from app.modules.websites.models import Website
@@ -57,6 +58,7 @@ __all__ = [
     "PlanEntitlement",
     "Permission",
     "PortalFeature",
+    "Report",
     "Role",
     "RolePermission",
     "SiteSettings",

@@ -15,8 +15,141 @@ unfinished, security notes, and what's next.
 | H1-6 SEO crawler and audits | **Done** (2026-11-18) |
 | H1-7 Integrations and Google | **Done** (2026-11-19); waits on your Google Cloud setup to connect real accounts |
 | H1-8 Dashboards | **Done** (2026-11-19) |
-| H1-9 Basic reporting | Next |
-| H1-10 … H1-12 | Not started |
+| H1-9 Basic reporting | **Done** (2026-11-24) |
+| H1-10 Client portal on workspaces | Next |
+| H1-11 … H1-12 | Not started |
+
+---
+
+## H1-9: Reports
+
+### 1. What was completed
+
+- **Reports for a workspace** (a new **Reports** item in the menu):
+  - Choose the **period** (last 7, 28 or 90 days, or your own dates, up to 16 months) and
+    what to **compare with** (the period before, the same period last year, or nothing).
+  - Choose what to **include**: Traffic, Visits from AI tools, Google search, Website audit.
+    Sections a person's role can't see aren't offered.
+  - Give it a **title**, or keep the suggested one ("Corner Bakery: marketing report").
+- **Saved as they were made.** A report keeps its figures, so the PDF you sent a client last
+  month says exactly what it said then, whatever has synced since.
+- **Every report says where its numbers come from** (spec §10):
+  - the **period** and the comparison period
+  - the **sources**, with how recent their data is (for example "Google Search Console:
+    sc-domain:bakery.example.com, data through November 21")
+  - **what's not available or limited**, in plain words, for example "Google search figures
+    run to November 21: Search Console reports 2–3 days behind" or "Search Console isn't
+    connected"
+  - "Every figure comes from the sources above. Outlogik doesn't estimate missing data or
+    forecast results."
+- **PDF**, with Outlogik's Albert Sans font:
+  - a title block and "About this report"
+  - What changed and the key figures
+  - charts: visits per day with the comparison period, search clicks per day, audit errors
+    and warnings over time
+  - tables: channels, pages that bring the most visits, AI tools, top searches, searches you
+    almost rank for, pages rarely clicked, audit issues **with how to fix each one**
+  - "Prepared by Northline Agency for Alpha Dental" on agencies' client reports, and a page
+    footer
+- **CSV files**, one per table (daily figures, channels, pages, AI tools, searches, almost
+  ranking, rarely clicked, audit issues), which open correctly in Excel, accents included.
+- **Agency dashboard:** the **Client report** button on each client row (approved as #11)
+  opens New report with that client already chosen.
+- **Permissions:** viewing and downloading (`reports.read`): everyone except custom roles
+  without it, including Client Viewers for the client portal (H1-10). Making and deleting
+  (`reports.create`): owners, administrators, Marketing Managers and Account Managers.
+
+### 2. A change from the plan
+
+The plan expected **WeasyPrint** for PDFs. I used **ReportLab** instead. WeasyPrint needs system
+libraries that are awkward to install on Windows, where you develop; ReportLab is pure Python,
+so PDFs work the same on your computer and the servers, with nothing extra to install. It also
+draws the charts itself. The plan is updated.
+
+### 3. Files changed
+
+**Backend:**
+- New module `reports/`: `models.py`, `schemas.py`, `service.py` (the saved snapshot, sources
+  and what's unavailable), `pdf.py`, `exports.py` (CSV), `router.py`, and `fonts/` (Albert Sans,
+  with its open font licence).
+- `rbac/catalogue.py` (`reports.read`, `reports.create`). Migration `0018`.
+- `pyproject.toml`: `reportlab` (and `pypdf`, for tests only).
+- Tests: new `test_reports.py`; updated cross-tenant and role tests.
+
+**App:** new `features/reports/` (Reports page, New report dialog, tests); the menu, route,
+types and API calls; the Client report button on the agency dashboard; one new icon. A small
+fix for every page: hidden column labels in scrolling tables could widen the page on a phone.
+
+**Docs:** `ARCHITECTURE.md`, `SECURITY.md`, `HYBRID_SAAS_PLAN.md`, this tracker.
+
+### 4. Database changes (migration `0018`)
+
+| Change | Existing data |
+|---|---|
+| `reports` (organization, workspace, title, sections, period, comparison, the saved figures) | None |
+| Row-level security on `reports`: the organization that made it only | None |
+
+Run up, down and up again; the test suite builds from it.
+
+### 5. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **486 passed** (was 464) |
+| App (Vitest) | **141 passed** (was 132) |
+| Website (Vitest) | 93 passed (unchanged) |
+
+The new backend tests cover:
+- a report naming its period, sources and what's unavailable; a report before anything is
+  connected
+- the PDF containing every part, read back from the PDF itself
+- figures staying the same after new data syncs
+- only the chosen sections; a custom period
+- **outside text can't change the PDF:** markup in a search term is printed, not obeyed
+- **CSV formula injection:** a `=HYPERLINK(...)` search term is made safe
+- safe download names; an unknown CSV table
+- listing and deleting (recorded in the audit log)
+- viewers download but can't make or delete; a role without traffic access can't make or
+  open a report with traffic in it
+- client-portal users see only their client's reports
+- an agency's report on a business's shared workspace stays the agency's
+- the cross-organization attack suite found the new routes by itself, now includes a victim's
+  report, and every attempt failed
+
+**Browser check:**
+- made a report through the dialog; downloaded the PDF (27 KB) and a CSV
+- the agency's **Client report** button opened the dialog with the right client chosen
+- an axe scan found no problems on the page in light or dark mode, nor in the dialog (one
+  note was about the dimmed page behind it)
+- no sideways scrolling on a phone
+
+The check caught two things, both fixed: the dialog showed the wrong client while making the
+report for the right one, and a hidden table label made the page scroll sideways on a phone.
+
+### 6. Unfinished (on purpose)
+
+- **White-label branding** (agency logo, colours, footer) and **scheduled reports** come in
+  H1.5, as planned. Reports say "Prepared by" the agency's name for now.
+- **Excel files:** CSV for now; Excel later if you want it.
+- **Search terms in other alphabets** (for example Chinese) show as `?` in the PDF, because
+  Albert Sans covers Latin languages (English and French are fine). The CSV files keep them
+  exactly.
+- **The searches and page lists** cover Search Console's latest 28 days whatever period is
+  chosen; the report says so.
+- Real data still waits on the Google Cloud setup.
+
+### 7. Security notes
+
+- Outside text is escaped before it reaches the PDF, and CSV cells are protected against
+  formula injection; both are tested.
+- Reports are visible only within the organization that made them, to people who can see the
+  workspace and every section in the report; row-level security backs this up.
+- Downloads are signed-in requests like the rest of the app, never public links.
+
+### 8. Next: H1-10 client portal on workspaces
+
+Client Viewers see their workspace's dashboard, audits and reports, and never anything
+agency-wide or internal.
 
 ---
 

@@ -337,3 +337,33 @@ export interface AnalyticsSummary {
   top_queries: { query: string; clicks: number; impressions: number; ctr: number; position: number }[];
   top_queries_through: string | null;
 }
+
+// Reports (H1-9)
+export type ReportSection = 'traffic' | 'ai' | 'search' | 'audit';
+
+export interface Report {
+  id: string;
+  workspace_id: string;
+  workspace_name: string;
+  title: string;
+  sections: ReportSection[];
+  period_start: string;
+  period_end: string;
+  compare: 'previous' | 'year' | 'none';
+  compare_start: string | null;
+  compare_end: string | null;
+  sources: { name: string; detail: string; through: string | null }[];
+  unavailable: string[];
+  csv_files: { name: string; label: string }[];
+  created_at: string;
+  created_by: string | null;
+}
+
+export interface ReportRequest {
+  title: string | null;
+  sections: ReportSection[];
+  days: number | null;
+  start: string | null;
+  end: string | null;
+  compare: 'previous' | 'year' | 'none';
+}

@@ -242,3 +242,9 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--ol-text-strong);
   }
 }
+
+// Screen-reader-only labels in a scrolling table stay inside its box (they're positioned
+// absolutely), so they can't widen the page on a phone.
+.table-responsive {
+  position: relative;
+}

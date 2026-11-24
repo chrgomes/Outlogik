@@ -8,6 +8,8 @@ import {
   AuditFrequency,
   Client,
   GoogleIntegration,
+  Report,
+  ReportRequest,
   ClientUser,
   Invitation,
   Member,
@@ -109,6 +111,14 @@ export class OrgApi {
   // Dashboard
   markReviewed(workspaceId: string) {
     return this.send<{ reviewed_at: string; reviewed_by: string | null }>('PUT', `workspaces/${workspaceId}/review`);
+  }
+
+  // Reports
+  createReport(workspaceId: string, body: ReportRequest) {
+    return this.send<Report>('POST', `workspaces/${workspaceId}/reports`, body);
+  }
+  deleteReport(id: string) {
+    return this.send<void>('DELETE', `reports/${id}`);
   }
 
   // Website audits

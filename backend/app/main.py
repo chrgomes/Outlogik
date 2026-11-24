@@ -27,6 +27,7 @@ from app.modules.organizations.router import router as organizations_router
 from app.modules.plans.router import router as plans_router
 from app.modules.rbac.router import router as rbac_router
 from app.modules.rbac.service import sync_permissions
+from app.modules.reports.router import router as reports_router
 from app.modules.site import service as site_service
 from app.modules.site.router import admin as site_admin_router
 from app.modules.site.router import public as site_public_router
@@ -81,6 +82,7 @@ def create_app() -> FastAPI:
     api.include_router(integrations_router)
     api.include_router(integrations_callback_router)
     api.include_router(dashboard_router)
+    api.include_router(reports_router)
     api.include_router(site_public_router)
     api.include_router(leads_router)
     api.include_router(leads_open_router)

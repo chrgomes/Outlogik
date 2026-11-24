@@ -115,6 +115,16 @@ deployment must add. Each item is covered by backend or frontend tests unless no
   are left out of the response, not just hidden in the app. Reviews belong to the reviewing
   organization (row-level security: that organization only), so a business never sees its
   agency's reviews. The cross-tenant suite includes a victim's review.
+- **Reports:**
+  - Search terms and page addresses are typed by strangers. In PDFs, every piece of outside
+    text is escaped before ReportLab reads it (it has its own markup), and characters the font
+    can't draw are shown as `?`. A test feeds markup through and checks it's printed, not obeyed.
+  - CSV cells starting with `=`, `+`, `-` or `@` get a leading apostrophe, so spreadsheet apps
+    don't run them as formulas (CSV injection; OWASP's advice). Tested with a `=HYPERLINK`.
+  - Download file names are reduced to letters, digits and dashes.
+  - A report is only opened by someone in the organization that made it, who can see its
+    workspace and every section in it; reports are under row-level security for that
+    organization only, and the cross-tenant suite includes a victim's report.
 - **Background jobs:** emails are sent by a job, and their text (which can contain a sign-in,
   reset or invitation link) is erased from the job record as soon as the email is sent or gives
   up. Errors are stored without the payload. Finished jobs are deleted after 30 days, and
