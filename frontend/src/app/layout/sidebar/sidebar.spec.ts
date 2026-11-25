@@ -29,6 +29,16 @@ describe('Sidebar', () => {
     expect(links).toEqual(['Dashboard', 'Clients', 'Websites', 'Organization']);
   });
 
+  it('shows client-portal users only their portal pages', () => {
+    TestBed.inject(AuthService).me.set(me([membership({ role_key: 'client', workspace_scope: 'assigned',
+      permissions: ['organization.read', 'dashboard.read', 'clients.read', 'websites.read', 'audits.read', 'reports.read'] })]));
+    TestBed.inject(CurrentOrgService).slug.set('acme');
+    const fixture = TestBed.createComponent(Sidebar);
+    fixture.detectChanges();
+    const links = [...(fixture.nativeElement as HTMLElement).querySelectorAll('nav a')].map((a) => a.textContent!.trim());
+    expect(links).toEqual(['Dashboard', 'Audits', 'Reports']);
+  });
+
   it('hides the Settings heading when no settings page is available', () => {
     const { el } = render(['dashboard.read', 'clients.read']);
     expect(el.textContent).not.toContain('Settings');

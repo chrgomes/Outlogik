@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 
 import { NoAccess, NoOrganization, NotFound } from './features/system/system-pages';
 import {
-  agencyGuard, authGuard, businessGuard, guestGuard, homeRedirect, orgGuard, permissionGuard,
+  agencyGuard, authGuard, businessGuard, guestGuard, homeRedirect, orgGuard, permissionGuard, staffGuard,
   siteAdminGuard,
 } from './core/guards';
 import { CenteredLayout } from './layout/centered/centered';
@@ -79,28 +79,28 @@ export const routes: Routes = [
       },
       {
         path: 'clients',
-        canActivate: [agencyGuard, permissionGuard],
+        canActivate: [agencyGuard, permissionGuard, staffGuard],
         data: { permission: 'clients.read' },
         title: 'Clients · Outlogik',
         loadComponent: () => import('./features/clients/clients-list').then((m) => m.ClientsList),
       },
       {
         path: 'clients/:clientId',
-        canActivate: [agencyGuard, permissionGuard],
+        canActivate: [agencyGuard, permissionGuard, staffGuard],
         data: { permission: 'clients.read' },
         title: 'Client · Outlogik',
         loadComponent: () => import('./features/clients/client-detail').then((m) => m.ClientDetail),
       },
       {
         path: 'websites',
-        canActivate: [permissionGuard],
+        canActivate: [permissionGuard, staffGuard],
         data: { permission: 'websites.read' },
         title: 'Websites · Outlogik',
         loadComponent: () => import('./features/websites/websites-list').then((m) => m.WebsitesList),
       },
       {
         path: 'settings/organization',
-        canActivate: [permissionGuard],
+        canActivate: [permissionGuard, staffGuard],
         data: { permission: 'organization.read' },
         title: 'Organization · Outlogik',
         loadComponent: () =>
@@ -126,6 +126,13 @@ export const routes: Routes = [
         data: { permission: 'audits.read' },
         title: 'Audits · Outlogik',
         loadComponent: () => import('./features/audits/audits-list').then((m) => m.AuditsList),
+      },
+      {
+        path: 'reports',
+        canActivate: [permissionGuard],
+        data: { permission: 'reports.read' },
+        title: 'Reports · Outlogik',
+        loadComponent: () => import('./features/reports/reports-list').then((m) => m.ReportsList),
       },
       {
         path: 'integrations',
@@ -162,6 +169,11 @@ export const routes: Routes = [
         title: 'Linked businesses · Outlogik',
         loadComponent: () =>
           import('./features/access/linked-businesses').then((m) => m.LinkedBusinesses),
+      },
+      {
+        path: 'account',
+        title: 'Your account · Outlogik',
+        loadComponent: () => import('./features/account/account').then((m) => m.AccountPage),
       },
       { path: 'no-access', component: NoAccess, title: 'No access · Outlogik' },
     ],

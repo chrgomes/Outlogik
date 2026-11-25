@@ -21,6 +21,7 @@ from app.models import (
     DataSource,
     Integration,
     Organization,
+    Report,
     Role,
     Workspace,
     WorkspaceReview,
@@ -72,6 +73,8 @@ SNAPSHOT = """
       FROM integrations i WHERE i.organization_id = :org
     UNION ALL SELECT 'data_source', d.id::text, d.external_id || d.sync_status FROM data_sources d
       WHERE d.organization_id = :org
+    UNION ALL SELECT 'report', rp.id::text, rp.title FROM reports rp
+      WHERE rp.organization_id = :org
     UNION ALL SELECT 'review', r.id::text, r.reviewed_at::text FROM workspace_reviews r
       WHERE r.organization_id = :org
     UNION ALL SELECT 'grant', g.id::text, g.status FROM workspace_grants g
@@ -113,12 +116,19 @@ def victim(client, db):
                       name="Victim", synced_through=date(2026, 11, 1)))
     db.add(WorkspaceReview(organization_id=acme_id, workspace_id=workspace,
                            reviewed_at=datetime(2026, 11, 1, tzinfo=UTC)))
+    report = Report(organization_id=acme_id, workspace_id=workspace, title="Victim report",
+                    sections=["audit"], period_start=date(2026, 10, 1),
+                    period_end=date(2026, 10, 28), compare="none",
+                    data={"workspace_name": "x", "prepared_by": "Acme", "prepared_for": None,
+                          "sources": [], "unavailable": [], "audit_issues": [],
+                          "dashboard": {"period": {"compare_start": None, "compare_end": None}}})
+    db.add(report)
     db.commit()
     return {"slug": acme, "org_id": acme_id, "client_id": str(c.id), "website_id": site["id"],
             "member_id": str(manager.id), "user_id": str(portal.user_id),
             "role_id": role["id"], "invitation_id": invitation["id"],
             "workspace_id": str(workspace), "own_workspace_id": str(own),
-            "audit_id": str(audit.id)}
+            "audit_id": str(audit.id), "report_id": str(report.id), "table": "audit_issues"}
 
 
 @pytest.fixture
@@ -174,6 +184,8 @@ def valid_body(method: str, path: str, victim: dict) -> dict | None:
     if method == "POST":
         if path.endswith("/users"):
             return {"member_id": victim["member_id"]}
+        if path.endswith("/reports"):
+            return {"sections": ["audit"]}
         return {"url": "attack.example.com"}
     if method == "PATCH":
         return {"status": "disabled"} if "/members/" in path else {"name": "Pwned"}

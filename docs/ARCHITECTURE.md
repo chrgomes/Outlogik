@@ -33,6 +33,7 @@ schemas, service functions and router.
 | `jobs/` and `worker.py` | Background jobs: the `jobs` table, `enqueue()`, retries, recovery, the job kinds (`jobs/handlers.py`), and the Celery worker with its schedule |
 | `modules/audits` | Website audits: the safe fetcher (`fetch.py`), page reader (`parse.py`), crawler, the check catalogue (`checks.py`), PageSpeed, the audit job, schedules and comparison |
 | `modules/integrations` | Outside accounts connected to a workspace (Google): sign-in with PKCE (`service.py`), every Google call (`google.py`), encrypted tokens (`crypto.py`), the GA4 and Search Console syncs (`sync.py`) and the traffic summary (`summary.py`) |
+| `modules/reports` | Saved reports: the snapshot (`service.py`), the PDF (`pdf.py`, ReportLab, Albert Sans in `fonts/`) and CSV files (`exports.py`) |
 | `modules/plans` | Plans, their limits, subscriptions and trials; `check_limit(...)`, called by the services that add websites, clients and team members |
 | `modules/grants` | Access grants: a business shares its workspace with an agency (send, accept, revoke, disconnect) |
 | `modules/clients`, `modules/websites` | Clients, client-portal access, websites and URL validation |
@@ -161,6 +162,18 @@ users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
   Client Viewer. A role sees every workspace (`workspace_scope = all`) or only the ones each
   member is assigned (`assigned`, stored in `workspace_assignments`). The startup sync adds new
   built-in roles to existing organizations and keeps names and permissions current.
+- **The client portal** (H1-10) is the same app for a Client Viewer (`OrgContext
+  .is_client_user`), limited to the workspaces they're assigned:
+  - **Server:** the agency-wide overview (`/dashboard/overview`) is refused to them; their
+    workspace dashboard, audits and reports work as for anyone, with no team details or
+    internal notes. `GET /orgs/{slug}/workspaces/{id}/contacts` lists who to contact: the
+    workspace's account managers, otherwise the organization's owners.
+  - **App:** one of their workspaces is always selected (never "All workspaces"); the menu
+    shows Dashboard, Audits and Reports; agency pages (clients, websites, organization
+    settings) send them to their dashboard (`staffGuard`); messages name the agency instead of
+    pointing to pages they can't open.
+- **Your account** (`/o/{slug}/account`, everyone): `PATCH /auth/me` (name) and
+  `POST /auth/change-password` (current password; other sessions revoked; email sent).
 - **Access grants** (`workspace_grants`) let a business share its own workspace with an
   agency. The agency's requests then include that workspace (`OrgContext.linked`), with
   "manage" or "view" access. Websites created there belong to the business.
@@ -235,6 +248,18 @@ users ─┬─ user_sessions, password_reset_tokens, email_verification_tokens
     agency's own note.
   - The app's charts use ECharts (only the line and bar charts, SVG renderer), loaded only
     when a chart is shown. Colours come from the `--ol-chart-*` theme tokens in both modes.
+- **Reports** (H1-9; `reports`, migration 0018):
+  - `POST /orgs/{slug}/workspaces/{id}/reports` puts a report together from the same
+    calculations as the dashboard and **saves it whole** (`reports.data`): period, sections
+    (`traffic`, `ai`, `search`, `audit`), sources with their dates, anything unavailable, the
+    figures and tables. PDFs and CSVs are drawn from that snapshot, so a report never changes
+    after it's made.
+  - `GET /orgs/{slug}/reports/{id}/pdf` and `/csv/{table}` download it. PDFs are drawn with
+    ReportLab (pure Python: no system libraries, so it works the same on Windows and the
+    servers), with the Albert Sans font embedded.
+  - A report belongs to the organization that made it. Opening one needs `reports.read` plus
+    the permission behind each of its sections (`analytics.read`, `audits.read`).
+  - The agency dashboard's **Client report** button opens `/reports?new=<workspace>`.
 - **Row-level security** (migration 0012) backs all of this up in Postgres. `get_org_context`
   calls `core.db.set_tenant`, which sets `app.org_id` and `app.linked_ws` at the start of each
   transaction for the rest of the request.

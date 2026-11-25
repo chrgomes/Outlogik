@@ -15,8 +15,244 @@ unfinished, security notes, and what's next.
 | H1-6 SEO crawler and audits | **Done** (2026-11-18) |
 | H1-7 Integrations and Google | **Done** (2026-11-19); waits on your Google Cloud setup to connect real accounts |
 | H1-8 Dashboards | **Done** (2026-11-19) |
-| H1-9 Basic reporting | Next |
-| H1-10 … H1-12 | Not started |
+| H1-9 Basic reporting | **Done** (2026-11-24) |
+| H1-10 Client portal on workspaces | **Done** (2026-11-24) |
+| H1-11 Self-serve sign-up and basic Super Admin | Next |
+| H1-12 H1 review | Not started |
+
+---
+
+## H1-10: Client portal
+
+### 1. What was completed
+
+I signed in as a client user first, to see what clients got before this step. Their data was
+already limited to their own client, but the experience was the agency's: they landed on the
+agency overview ("Northline Agency · all clients", "Needs attention", "Google not connected"),
+had the agency's Clients and Organization pages in the menu, and had no way to reach their
+account manager. Now:
+
+- **Clients land on their own dashboard:** their workspace's figures, charts, AI tool visits,
+  searches and latest audit. There's no "All workspaces"; a client linked to two businesses
+  switches between those two only.
+- **"Your account manager"** at the top of their dashboard, with an email link. If the agency
+  hasn't assigned one, it shows the agency's owners instead.
+- **A menu of three:** Dashboard, Audits, Reports. They can download their reports (PDF and
+  CSV) and open their audits.
+- **Agency pages are closed to them:** Clients, Websites and Organization settings send them
+  back to their dashboard; team, roles, plan and integrations say they don't have access.
+- **Written for clients:** "Appears when Northline connects Google Analytics" rather than
+  "connect it in Integrations"; "No audit yet. Northline will run the first one."; no audit
+  schedule column (an agency setting).
+- **The server enforces it too:** the agency overview is refused to client users (403), not
+  just hidden. Team lists, internal notes and other clients stay out of reach, as before.
+- **"Your account" for everyone** (in the user menu): change your name, change your password
+  (needs the current one; your other devices are signed out and you get an email), sign out
+  everywhere, and see where you're a member. Until now there was no way to change a password
+  while signed in.
+
+The spec's other client portal items (campaign progress, approving content, tasks, messages)
+come with those features in H1.5 and H2.
+
+### 2. Files changed
+
+**Backend:**
+- `dashboard/router.py`: the overview refused to client users; new `contacts` endpoint.
+- `auth/`: `PATCH /auth/me` and `POST /auth/change-password` (schemas, service, router).
+- Tests: new `test_portal.py`; one dashboard test updated (clients now get their own
+  dashboard instead of the overview, by design).
+
+**App:**
+- New `features/account/` (Your account page, portal and account tests).
+- `core/workspace.service.ts` (a client always has a workspace selected), `core/guards.ts`
+  (`staffGuard`), routes, menu (`staffOnly`), top bar (no "All workspaces" for clients; "Your
+  account" in the user menu).
+- Dashboard: the account manager card and client wording; audits: no schedule column for
+  clients.
+
+**Docs:** `ARCHITECTURE.md`, `SECURITY.md`, `HYBRID_SAAS_PLAN.md`, this tracker.
+
+### 3. Database changes
+
+None.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **497 passed** (was 486) |
+| App (Vitest) | **148 passed** (was 141) |
+| Website (Vitest) | 93 passed (unchanged) |
+
+The new tests cover:
+- clients get their own dashboard, not the overview, and not another client's
+- contacts: the assigned account manager, else the owners; disabled managers left out;
+  another client's contacts refused; no team list or internal notes for clients
+- changing your name; changing your password (other devices signed out, this one kept, an
+  email sent, recorded); the current password required; guessing it limited; both need a
+  session
+- in the app: a client always has one of their workspaces selected; the portal menu; the
+  account manager card and client wording; agency pages redirect; the account page
+
+**Browser check:** signed in as a client user and visited every page, then tried the agency
+pages and APIs directly. Everything above held. An axe scan of the portal dashboard and the
+account page found no problems in light or dark mode; no sideways scrolling on a phone.
+
+### 5. Unfinished (on purpose)
+
+- **Campaign progress, content approvals, tasks and messaging** in the portal come with
+  those features (H1.5 and H2). For now clients contact their account manager by email.
+- **Changing your email address** isn't possible yet; the account page says to ask for an
+  invitation to the new address. A safe email change (confirming both addresses) can come
+  with the account security work in H1.5, alongside two-step sign-in.
+- **The portal shows the agency's name** in the top bar; the agency's logo and colours come
+  with white-label branding in H1.5.
+
+### 6. Security notes
+
+- The agency overview is refused by the server to client users, so hiding it in the app
+  isn't the only protection.
+- Contacts show only account managers assigned to that workspace (or the owners), never the
+  rest of the team.
+- Password changes need the current password, are rate-limited, sign out other devices and
+  notify the person by email.
+
+### 7. Next: H1-11 self-serve sign-up and basic Super Admin
+
+Choose business or agency at sign-up (behind an invitation code during the beta); a Super
+Admin area to list organizations and users, assign plans and suspend accounts; platform roles.
+
+---
+
+## H1-9: Reports
+
+### 1. What was completed
+
+- **Reports for a workspace** (a new **Reports** item in the menu):
+  - Choose the **period** (last 7, 28 or 90 days, or your own dates, up to 16 months) and
+    what to **compare with** (the period before, the same period last year, or nothing).
+  - Choose what to **include**: Traffic, Visits from AI tools, Google search, Website audit.
+    Sections a person's role can't see aren't offered.
+  - Give it a **title**, or keep the suggested one ("Corner Bakery: marketing report").
+- **Saved as they were made.** A report keeps its figures, so the PDF you sent a client last
+  month says exactly what it said then, whatever has synced since.
+- **Every report says where its numbers come from** (spec §10):
+  - the **period** and the comparison period
+  - the **sources**, with how recent their data is (for example "Google Search Console:
+    sc-domain:bakery.example.com, data through November 21")
+  - **what's not available or limited**, in plain words, for example "Google search figures
+    run to November 21: Search Console reports 2–3 days behind" or "Search Console isn't
+    connected"
+  - "Every figure comes from the sources above. Outlogik doesn't estimate missing data or
+    forecast results."
+- **PDF**, with Outlogik's Albert Sans font:
+  - a title block and "About this report"
+  - What changed and the key figures
+  - charts: visits per day with the comparison period, search clicks per day, audit errors
+    and warnings over time
+  - tables: channels, pages that bring the most visits, AI tools, top searches, searches you
+    almost rank for, pages rarely clicked, audit issues **with how to fix each one**
+  - "Prepared by Northline Agency for Alpha Dental" on agencies' client reports, and a page
+    footer
+- **CSV files**, one per table (daily figures, channels, pages, AI tools, searches, almost
+  ranking, rarely clicked, audit issues), which open correctly in Excel, accents included.
+- **Agency dashboard:** the **Client report** button on each client row (approved as #11)
+  opens New report with that client already chosen.
+- **Permissions:** viewing and downloading (`reports.read`): everyone except custom roles
+  without it, including Client Viewers for the client portal (H1-10). Making and deleting
+  (`reports.create`): owners, administrators, Marketing Managers and Account Managers.
+
+### 2. A change from the plan
+
+The plan expected **WeasyPrint** for PDFs. I used **ReportLab** instead. WeasyPrint needs system
+libraries that are awkward to install on Windows, where you develop; ReportLab is pure Python,
+so PDFs work the same on your computer and the servers, with nothing extra to install. It also
+draws the charts itself. The plan is updated.
+
+### 3. Files changed
+
+**Backend:**
+- New module `reports/`: `models.py`, `schemas.py`, `service.py` (the saved snapshot, sources
+  and what's unavailable), `pdf.py`, `exports.py` (CSV), `router.py`, and `fonts/` (Albert Sans,
+  with its open font licence).
+- `rbac/catalogue.py` (`reports.read`, `reports.create`). Migration `0018`.
+- `pyproject.toml`: `reportlab` (and `pypdf`, for tests only).
+- Tests: new `test_reports.py`; updated cross-tenant and role tests.
+
+**App:** new `features/reports/` (Reports page, New report dialog, tests); the menu, route,
+types and API calls; the Client report button on the agency dashboard; one new icon. A small
+fix for every page: hidden column labels in scrolling tables could widen the page on a phone.
+
+**Docs:** `ARCHITECTURE.md`, `SECURITY.md`, `HYBRID_SAAS_PLAN.md`, this tracker.
+
+### 4. Database changes (migration `0018`)
+
+| Change | Existing data |
+|---|---|
+| `reports` (organization, workspace, title, sections, period, comparison, the saved figures) | None |
+| Row-level security on `reports`: the organization that made it only | None |
+
+Run up, down and up again; the test suite builds from it.
+
+### 5. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **486 passed** (was 464) |
+| App (Vitest) | **141 passed** (was 132) |
+| Website (Vitest) | 93 passed (unchanged) |
+
+The new backend tests cover:
+- a report naming its period, sources and what's unavailable; a report before anything is
+  connected
+- the PDF containing every part, read back from the PDF itself
+- figures staying the same after new data syncs
+- only the chosen sections; a custom period
+- **outside text can't change the PDF:** markup in a search term is printed, not obeyed
+- **CSV formula injection:** a `=HYPERLINK(...)` search term is made safe
+- safe download names; an unknown CSV table
+- listing and deleting (recorded in the audit log)
+- viewers download but can't make or delete; a role without traffic access can't make or
+  open a report with traffic in it
+- client-portal users see only their client's reports
+- an agency's report on a business's shared workspace stays the agency's
+- the cross-organization attack suite found the new routes by itself, now includes a victim's
+  report, and every attempt failed
+
+**Browser check:**
+- made a report through the dialog; downloaded the PDF (27 KB) and a CSV
+- the agency's **Client report** button opened the dialog with the right client chosen
+- an axe scan found no problems on the page in light or dark mode, nor in the dialog (one
+  note was about the dimmed page behind it)
+- no sideways scrolling on a phone
+
+The check caught two things, both fixed: the dialog showed the wrong client while making the
+report for the right one, and a hidden table label made the page scroll sideways on a phone.
+
+### 6. Unfinished (on purpose)
+
+- **White-label branding** (agency logo, colours, footer) and **scheduled reports** come in
+  H1.5, as planned. Reports say "Prepared by" the agency's name for now.
+- **Excel files:** CSV for now; Excel later if you want it.
+- **Search terms in other alphabets** (for example Chinese) show as `?` in the PDF, because
+  Albert Sans covers Latin languages (English and French are fine). The CSV files keep them
+  exactly.
+- **The searches and page lists** cover Search Console's latest 28 days whatever period is
+  chosen; the report says so.
+- Real data still waits on the Google Cloud setup.
+
+### 7. Security notes
+
+- Outside text is escaped before it reaches the PDF, and CSV cells are protected against
+  formula injection; both are tested.
+- Reports are visible only within the organization that made them, to people who can see the
+  workspace and every section in the report; row-level security backs this up.
+- Downloads are signed-in requests like the rest of the app, never public links.
+
+### 8. Next: H1-10 client portal on workspaces
+
+Client Viewers see their workspace's dashboard, audits and reports, and never anything
+agency-wide or internal.
 
 ---
 

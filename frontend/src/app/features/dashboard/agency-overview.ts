@@ -122,7 +122,8 @@ const change = (r: OverviewRow) =>
           <div class="table-responsive">
             <table class="table ol-table mb-0 dash-clients">
               <thead><tr><th>Client</th><th>Visits</th><th class="text-end">From AI tools</th><th class="text-end">Search clicks</th>
-                <th>Audit</th><th>Google</th>@if (showTeam()) { <th>Account manager</th> }</tr></thead>
+                <th>Audit</th><th>Google</th>@if (showTeam()) { <th>Account manager</th> }
+                @if (canReport()) { <th><span class="visually-hidden">Report</span></th> }</tr></thead>
               <tbody>
                 @for (r of rows(); track r.id) {
                   <tr>
@@ -160,9 +161,14 @@ const change = (r: OverviewRow) =>
                         }
                       </td>
                     }
+                    @if (canReport()) {
+                      <td class="text-end"><a class="btn btn-sm btn-outline-secondary text-nowrap"
+                        [routerLink]="['/o', org.slug(), 'reports']" [queryParams]="{ new: r.id }"
+                        [attr.aria-label]="'Client report for ' + r.name">Client report</a></td>
+                    }
                   </tr>
                 } @empty {
-                  <tr><td [attr.colspan]="showTeam() ? 7 : 6" class="text-muted">No clients match.</td></tr>
+                  <tr><td [attr.colspan]="6 + (showTeam() ? 1 : 0) + (canReport() ? 1 : 0)" class="text-muted">No clients match.</td></tr>
                 }
               </tbody>
             </table>
@@ -190,6 +196,7 @@ export class AgencyOverview {
   protected readonly busy = signal<string | null>(null);
 
   protected readonly showTeam = computed(() => (this.data.value()?.workspaces ?? []).some((r) => r.managers !== null));
+  protected readonly canReport = computed(() => this.org.can('reports.create'));
   protected readonly hasMine = computed(() => (this.data.value()?.workspaces ?? []).some((r) => r.assigned_to_me));
 
   protected readonly kpis = computed(() => {

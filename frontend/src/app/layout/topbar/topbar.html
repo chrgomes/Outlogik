@@ -81,14 +81,16 @@
 
   <ng-template #wsMenu>
     <div class="ol-menu ws-menu" cdkMenu>
-      <button type="button" class="ol-menu-item" cdkMenuItemRadio
-        [cdkMenuItemChecked]="ws.current() === null" (cdkMenuItemTriggered)="ws.select(null)">
-        <ol-icon name="grid-1x2" />
-        <span class="flex-grow-1">All workspaces</span>
-        @if (ws.current() === null) {
-          <ol-icon name="check2" class="ol-menu-check" />
-        }
-      </button>
+      @if (ws.canSeeAll()) {
+        <button type="button" class="ol-menu-item" cdkMenuItemRadio
+          [cdkMenuItemChecked]="ws.current() === null" (cdkMenuItemTriggered)="ws.select(null)">
+          <ol-icon name="grid-1x2" />
+          <span class="flex-grow-1">All workspaces</span>
+          @if (ws.current() === null) {
+            <ol-icon name="check2" class="ol-menu-check" />
+          }
+        </button>
+      }
       @if (ws.own(); as own) {
         <div class="ol-menu-divider" role="separator"></div>
         <div class="ol-menu-label">Your own marketing</div>
@@ -190,6 +192,12 @@
       <span class="text-muted d-block text-truncate">{{ auth.user()?.email }}</span>
     </div>
     <div class="ol-menu-divider" role="separator"></div>
+    @if (org.area() === 'org' && org.slug()) {
+      <button type="button" class="ol-menu-item" cdkMenuItem (cdkMenuItemTriggered)="openAccount()">
+        <ol-icon name="person-circle" />
+        Your account
+      </button>
+    }
     <button type="button" class="ol-menu-item" cdkMenuItem (cdkMenuItemTriggered)="auth.logout()">
       <ol-icon name="box-arrow-right" />
       Sign out

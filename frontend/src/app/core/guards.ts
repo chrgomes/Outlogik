@@ -67,6 +67,13 @@ export const permissionGuard: CanActivateFn = (route) => {
   return inject(Router).createUrlTree(['/o', org.slug(), 'no-access']);
 };
 
+/** Agency staff pages (clients, websites, organization settings): client-portal users go to
+ * their dashboard instead. Their data stays limited by the API either way. */
+export const staffGuard: CanActivateFn = () => {
+  const org = inject(CurrentOrgService);
+  return !org.isClientUser() || inject(Router).createUrlTree(['/o', org.slug(), 'dashboard']);
+};
+
 /** Agency-only pages (clients): a business account goes to its dashboard instead. */
 export const agencyGuard: CanActivateFn = () => {
   const org = inject(CurrentOrgService);

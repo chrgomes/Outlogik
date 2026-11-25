@@ -51,6 +51,10 @@ export class Topbar {
     void this.router.navigate(['/o', slug]);
   }
 
+  protected openAccount(): void {
+    void this.router.navigate(['/o', this.org.slug(), 'account']);
+  }
+
   protected openAdmin(): void {
     void this.router.navigate(['/admin']);
   }

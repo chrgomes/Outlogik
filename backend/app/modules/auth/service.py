@@ -73,6 +73,43 @@ def revoke_all_sessions(db: Session, user_id: uuid.UUID) -> int:
     return result.rowcount or 0
 
 
+def revoke_other_sessions(db: Session, user_id: uuid.UUID, keep: uuid.UUID) -> int:
+    result = db.execute(delete(UserSession).where(UserSession.user_id == user_id,
+                                                  UserSession.id != keep))
+    return result.rowcount or 0
+
+
+# --- your account ---------------------------------------------------------------------------
+
+def change_password(db: Session, user: User, session_id: uuid.UUID, *, current: str, new: str,
+                    ip: str | None) -> None:
+    """Needs the current password. Signs out every other device and emails the person, so a
+    change they didn't make doesn't go unnoticed."""
+    if not verify_password(user.password_hash, current):
+        raise AppError("That isn't your current password.", code="wrong_password",
+                       status_code=400, details=[{"field": "current_password",
+                                                  "message": "That isn't your current password."}])
+    user.password_hash = hash_password(new)
+    revoked = revoke_other_sessions(db, user.id, keep=session_id)
+    record(db, "auth.password_change", actor_user_id=user.id, target_type="user",
+           target_id=user.id, meta={"sessions_revoked": revoked}, ip=ip)
+    s = get_settings()
+    send_email(
+        user.email, f"Your {s.app_name} password was changed",
+        f"Hi {user.full_name},\n\nThe password for your {s.app_name} account was just changed"
+        f"{', and you were signed out on your other devices' if revoked else ''}.\n\n"
+        f"If you didn't do this, reset your password now:\n{s.frontend_url}/forgot-password\n",
+    )
+
+
+def update_profile(db: Session, user: User, full_name: str, ip: str | None) -> None:
+    if user.full_name != full_name:
+        record(db, "auth.profile_update", actor_user_id=user.id, target_type="user",
+               target_id=user.id, meta={"full_name": {"from": user.full_name, "to": full_name}},
+               ip=ip)
+        user.full_name = full_name
+
+
 # --- registration / login -------------------------------------------------------------------
 
 def register(db: Session, *, email: str, password: str, full_name: str, organization_name: str,

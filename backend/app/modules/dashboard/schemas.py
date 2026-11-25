@@ -237,3 +237,14 @@ class OverviewOut(BaseModel):
     weekly: list[WeekOut]
     attention: list[AttentionOut]
     workspaces: list[OverviewRowOut]
+
+
+class ContactOut(BaseModel):
+    name: str
+    email: str
+    role: Literal["account_manager", "owner"]
+
+
+class ContactsOut(BaseModel):
+    organization_name: str
+    contacts: list[ContactOut]

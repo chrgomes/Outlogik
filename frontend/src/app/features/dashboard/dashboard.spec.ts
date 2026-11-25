@@ -218,6 +218,16 @@ describe('Dashboard', () => {
     expect(el.querySelector('#dash-compare')).toBeNull();
   });
 
+  it('offers a client report for each client', async () => {
+    const { http, fixture, el } = await render('agency', [...ALL, 'analytics.read', 'reports.create'],
+      [WS({ name: 'Agency' }), WS({ id: 'w1', kind: 'client', name: 'Alpha' })]);
+    http.expectOne((r) => r.url === `${BASE}/dashboard/overview`).flush(overviewData());
+    await flushPending();
+    fixture.detectChanges();
+    const links = [...el.querySelectorAll('a')].filter((a) => a.textContent!.includes('Client report'));
+    expect(links.map((a) => a.getAttribute('href'))).toContain('/o/acme/reports?new=w2');
+  });
+
   it('marks a client as reviewed', async () => {
     const { http, fixture, el } = await render('agency', undefined,
       [WS({ name: 'Agency' }), WS({ id: 'w1', kind: 'client', name: 'Alpha' })]);
