@@ -6,7 +6,9 @@ export interface User {
   full_name: string;
   is_super_admin: boolean;
   /** Outlogik staff role for the website admin area (super admins report 'site_admin'). */
-  platform_role: 'content_editor' | 'site_admin' | null;
+  platform_role: 'content_editor' | 'site_admin' | 'platform_admin' | 'support_admin' | 'billing_admin' | null;
+  /** What Outlogik staff may do in the platform (Super Admin) area. */
+  platform_caps: string[];
   email_verified_at: string | null;
   created_at: string;
 }

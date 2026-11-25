@@ -24,7 +24,7 @@ from app.modules.auth.schemas import (
 )
 from app.modules.leads import challenge
 from app.modules.organizations import invitations
-from app.platform import staff_role
+from app.platform import platform_caps, staff_role
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -32,6 +32,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def _me(db, user) -> MeOut:
     out = UserOut.model_validate(user)
     out.platform_role = staff_role(user)
+    out.platform_caps = sorted(platform_caps(user))
     return MeOut(user=out, memberships=service.memberships_for(db, user))
 
 
@@ -48,7 +49,8 @@ def register(body: RegisterIn, request: Request, response: Response, db: DB) -> 
     user, _ = service.register(db, email=body.email, password=body.password,
                                full_name=body.full_name,
                                organization_name=body.organization_name,
-                               account_type=body.account_type, ip=ip)
+                               account_type=body.account_type, ip=ip,
+                               signup_code=body.signup_code)
     token = service.create_session(db, user, ip, user_agent(request))
     db.commit()
     set_session_cookie(response, token)

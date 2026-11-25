@@ -66,8 +66,11 @@ class Settings(BaseSettings):
     email_verification_token_hours: int = 48
     invitation_token_days: int = 7
 
-    # Outlogik is an agency: clients are invited to their portal, nobody signs up themselves.
-    signup_mode: Literal["open", "invite_only"] = "invite_only"
+    # Who can create a new organization:
+    # - invite_only: nobody signs up; organizations are made with the CLI, people are invited
+    # - code: anyone with an invitation code from the Super Admin area (the beta, decision D7)
+    # - open: anyone
+    signup_mode: Literal["open", "code", "invite_only"] = "invite_only"
 
     # Rate limits: (max attempts, window seconds)
     rate_limit_enabled: bool = True

@@ -24,6 +24,7 @@ from app.modules.audits.schemas import (
     IssueGroupOut,
     IssueRef,
 )
+from app.modules.organizations.models import Organization
 from app.modules.plans.service import cap, check_limit, record_use
 from app.modules.websites.models import Website
 from app.modules.workspaces.models import Workspace
@@ -135,10 +136,13 @@ def run(db: Session, audit_id: uuid.UUID) -> None:
 
 def schedule_due(db: Session) -> int:
     """Start the audits websites have asked for (weekly or monthly). Skips websites whose plan
-    has no audits left this month; they're tried again the next day."""
+    has no audits left this month (they're tried again the next day), and suspended
+    organizations."""
     started = 0
-    sites = db.scalars(select(Website).where(Website.audit_frequency != "off",
-                                             Website.status == "active")).all()
+    sites = db.scalars(select(Website).join(Organization,
+                                            Organization.id == Website.organization_id)
+                       .where(Website.audit_frequency != "off", Website.status == "active",
+                              Organization.status != "suspended")).all()
     now = utcnow()
     for site in sites:
         last = db.scalar(select(func.max(Audit.created_at)).where(Audit.website_id == site.id))

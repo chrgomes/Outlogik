@@ -30,6 +30,7 @@ from app.modules.integrations.models import (
     Integration,
 )
 from app.modules.integrations.service import access_token
+from app.modules.organizations.models import Organization
 
 log = logging.getLogger(__name__)
 
@@ -214,10 +215,12 @@ def sync_source(db: Session, source_id: uuid.UUID) -> None:
 
 
 def sync_all(db: Session) -> int:
-    """Nightly: queue a sync of every source whose connection works."""
+    """Nightly: queue a sync of every source whose connection works, except in suspended
+    organizations."""
     ids = list(db.scalars(select(DataSource.id).join(
         Integration, Integration.id == DataSource.integration_id)
-        .where(Integration.status == "connected")))
+        .join(Organization, Organization.id == DataSource.organization_id)
+        .where(Integration.status == "connected", Organization.status != "suspended")))
     for source_id in ids:
         source = db.get(DataSource, source_id)
         enqueue("integrations.sync", {"source_id": str(source_id)},

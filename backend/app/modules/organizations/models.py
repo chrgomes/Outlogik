@@ -18,6 +18,11 @@ class Organization(UUIDPrimaryKey, Timestamps, Base):
     status: Mapped[str] = mapped_column(String(20), default="active", server_default="active")
     # business: markets itself (one workspace, no clients). agency: also works for clients.
     kind: Mapped[str] = mapped_column(String(20), default="agency", server_default="agency")
+    # Why staff suspended the organization (shown in the Super Admin area)
+    suspended_reason: Mapped[str | None] = mapped_column(String(500))
+    # The invitation code used at sign-up, during the beta
+    signup_code_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("signup_codes.id", ondelete="SET NULL"))
 
 
 class OrganizationMember(UUIDPrimaryKey, Timestamps, Base):

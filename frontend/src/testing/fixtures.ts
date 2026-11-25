@@ -24,6 +24,7 @@ export function me(memberships: Membership[] = [membership()], user: Partial<Use
       full_name: 'Olive van Owner',
       is_super_admin: false,
       platform_role: null,
+      platform_caps: [],
       email_verified_at: null,
       created_at: '2026-11-14T00:00:00Z',
       ...user,

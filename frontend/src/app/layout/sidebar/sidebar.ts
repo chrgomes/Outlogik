@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
+import { AuthService } from '../../core/auth.service';
 import { CurrentOrgService } from '../../core/current-org.service';
 import { LayoutService } from '../../core/layout.service';
 import { Icon } from '@brand/icon/icon';
@@ -26,6 +27,7 @@ import { ADMIN_NAV, NAV } from '../nav';
 export class Sidebar {
   protected readonly layout = inject(LayoutService);
   protected readonly org = inject(CurrentOrgService);
+  private readonly auth = inject(AuthService);
 
   /** Collapsing applies on desktop only; the mobile slide-over is always full width. */
   protected readonly collapsed = computed(
@@ -36,9 +38,13 @@ export class Sidebar {
   /** Each link as router commands, so the template doesn't care which area is open. */
   protected readonly sections = computed(() => {
     if (this.admin()) {
+      const caps = this.auth.platformCaps();
+      const website = this.auth.isSiteAdmin();
       return ADMIN_NAV.map((s) => ({
-        label: s.label, items: s.items.map((i) => ({ ...i, link: ['/admin', ...i.path.split('/')] })),
-      }));
+        label: s.label,
+        items: s.items.filter((i) => (i.cap ? caps.has(i.cap) : website))
+          .map((i) => ({ ...i, link: ['/admin', ...i.path.split('/')] })),
+      })).filter((s) => s.items.length > 0);
     }
     return NAV.map((s) => ({
       label: s.label,

@@ -22,6 +22,7 @@ from app.modules.organizations.models import Organization, OrganizationMember
 from app.modules.organizations.service import create_organization
 from app.modules.rbac.models import Role
 from app.modules.rbac.service import role_permission_codes
+from app.modules.superadmin import codes
 from app.modules.users.models import User
 
 INVALID_CREDENTIALS = "Incorrect email or password."
@@ -113,11 +114,14 @@ def update_profile(db: Session, user: User, full_name: str, ip: str | None) -> N
 # --- registration / login -------------------------------------------------------------------
 
 def register(db: Session, *, email: str, password: str, full_name: str, organization_name: str,
-             ip: str | None, account_type: str = "agency") -> tuple[User, Organization]:
-    if get_settings().signup_mode != "open":
+             ip: str | None, account_type: str = "agency",
+             signup_code: str | None = None) -> tuple[User, Organization]:
+    mode = get_settings().signup_mode
+    if mode == "invite_only":
         raise Forbidden("Sign-up is by invitation only.", code="signup_disabled")
     if db.scalar(select(User.id).where(User.email == email)):
         raise Conflict("An account with this email already exists.", code="email_taken")
+    code = codes.consume(db, signup_code, account_type) if mode == "code" else None
 
     user = User(email=email, password_hash=hash_password(password), full_name=full_name)
     db.add(user)
@@ -127,8 +131,10 @@ def register(db: Session, *, email: str, password: str, full_name: str, organiza
         db.rollback()
         raise Conflict("An account with this email already exists.", code="email_taken") from None
     org = create_organization(db, organization_name, owner=user, kind=account_type)
+    if code is not None:
+        org.signup_code_id = code.id
     record(db, "auth.register", actor_user_id=user.id, target_type="user", target_id=user.id,
-           ip=ip)
+           meta={"signup_code": code.label} if code else {}, ip=ip)
     record(db, "organization.create", actor_user_id=user.id, organization_id=org.id,
            target_type="organization", target_id=org.id,
            meta={"name": org.name, "kind": org.kind}, ip=ip)

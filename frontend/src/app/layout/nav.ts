@@ -53,10 +53,21 @@ export interface AdminNavItem {
   icon: IconName;
   /** Path below /admin */
   path: string;
+  /** Platform capability needed; without one, the item is for site admins (the website). */
+  cap?: string;
 }
 
-/** Sidebar navigation in the website admin area (/admin), for Outlogik site admins. */
+/** Sidebar navigation in the staff area (/admin): the platform, then the website. */
 export const ADMIN_NAV: { label?: string; items: AdminNavItem[] }[] = [
+  {
+    label: 'Platform',
+    items: [
+      { label: 'Overview', icon: 'speedometer2', path: 'platform', cap: 'platform.read' },
+      { label: 'Organizations', icon: 'building', path: 'platform/organizations', cap: 'platform.read' },
+      { label: 'Users', icon: 'people', path: 'platform/users', cap: 'platform.read' },
+      { label: 'Invitation codes', icon: 'envelope', path: 'platform/codes', cap: 'signup_codes.manage' },
+    ],
+  },
   {
     label: 'Leads',
     items: [

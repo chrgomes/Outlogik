@@ -3,7 +3,10 @@ import { Routes } from '@angular/router';
 import { NoAccess, NoOrganization, NotFound } from './features/system/system-pages';
 import {
   agencyGuard, authGuard, businessGuard, guestGuard, homeRedirect, orgGuard, permissionGuard, staffGuard,
-  siteAdminGuard,
+  adminHomeRedirect,
+  platformGuard,
+  staffAreaGuard,
+  websiteAdminGuard,
 } from './core/guards';
 import { CenteredLayout } from './layout/centered/centered';
 import { Shell } from './layout/shell/shell';
@@ -56,6 +59,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/access/accept-access').then((m) => m.AcceptAccess),
       },
       { path: 'not-found', component: NotFound, title: 'Not found · Outlogik' },
+      {
+        path: 'suspended/:orgSlug',
+        canActivate: [authGuard],
+        title: 'Suspended · Outlogik',
+        loadComponent: () => import('./features/system/suspended').then((m) => m.SuspendedPage),
+      },
       {
         path: 'no-organization',
         component: NoOrganization,
@@ -179,34 +188,76 @@ export const routes: Routes = [
     ],
   },
   {
-    // Outlogik's website admin: leads, newsletter, website settings (site admins only).
+    // Outlogik staff: the platform (Super Admin) area, and the website admin (site admins).
     path: 'admin',
     component: Shell,
-    canActivate: [siteAdminGuard],
+    canActivate: [staffAreaGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'leads' },
+      { path: '', pathMatch: 'full', canActivate: [adminHomeRedirect], children: [] },
+      {
+        path: 'platform',
+        canActivate: [platformGuard],
+        title: 'Overview · Platform · Outlogik',
+        loadComponent: () => import('./features/platform/overview').then((m) => m.PlatformOverview),
+      },
+      {
+        path: 'platform/organizations',
+        canActivate: [platformGuard],
+        title: 'Organizations · Platform · Outlogik',
+        loadComponent: () => import('./features/platform/organizations').then((m) => m.PlatformOrganizations),
+      },
+      {
+        path: 'platform/organizations/:orgId',
+        canActivate: [platformGuard],
+        title: 'Organization · Platform · Outlogik',
+        loadComponent: () => import('./features/platform/organization').then((m) => m.PlatformOrganization),
+      },
+      {
+        path: 'platform/users',
+        canActivate: [platformGuard],
+        title: 'Users · Platform · Outlogik',
+        loadComponent: () => import('./features/platform/users').then((m) => m.PlatformUsers),
+      },
+      {
+        path: 'platform/users/:userId',
+        canActivate: [platformGuard],
+        title: 'User · Platform · Outlogik',
+        loadComponent: () => import('./features/platform/user').then((m) => m.PlatformUser),
+      },
+      {
+        path: 'platform/codes',
+        canActivate: [platformGuard],
+        data: { cap: 'signup_codes.manage' },
+        title: 'Invitation codes · Platform · Outlogik',
+        loadComponent: () => import('./features/platform/codes').then((m) => m.PlatformCodes),
+      },
       {
         path: 'leads',
+        canActivate: [websiteAdminGuard],
         title: 'Leads · Website admin · Outlogik',
         loadComponent: () => import('./features/admin/leads-list').then((m) => m.LeadsList),
       },
       {
         path: 'leads/:leadId',
+        canActivate: [websiteAdminGuard],
         title: 'Lead · Website admin · Outlogik',
         loadComponent: () => import('./features/admin/lead-detail').then((m) => m.LeadDetail),
       },
       {
         path: 'newsletter',
+        canActivate: [websiteAdminGuard],
         title: 'Newsletter · Website admin · Outlogik',
         loadComponent: () => import('./features/admin/subscribers').then((m) => m.Subscribers),
       },
       {
         path: 'settings',
+        canActivate: [websiteAdminGuard],
         title: 'Website settings · Website admin · Outlogik',
         loadComponent: () => import('./features/admin/site-settings').then((m) => m.SiteSettingsPage),
       },
       {
         path: 'portal-features',
+        canActivate: [websiteAdminGuard],
         title: 'Portal features · Website admin · Outlogik',
         loadComponent: () => import('./features/admin/portal-features').then((m) => m.PortalFeatures),
       },

@@ -7,7 +7,7 @@ import { me, membership } from '../../../testing/fixtures';
 import { flushPending, page } from '../../../testing/org-setup';
 import { AuthService } from '../../core/auth.service';
 import { CurrentOrgService } from '../../core/current-org.service';
-import { homeRedirect, siteAdminGuard } from '../../core/guards';
+import { adminHomeRedirect, homeRedirect, platformGuard, staffAreaGuard, websiteAdminGuard } from '../../core/guards';
 import { Sidebar } from '../../layout/sidebar/sidebar';
 import { Topbar } from '../../layout/topbar/topbar';
 import { LeadDetail } from './lead-detail';
@@ -15,11 +15,17 @@ import { LeadsList } from './leads-list';
 import { PortalFeatures } from './portal-features';
 import { SiteSettingsPage } from './site-settings';
 
-function setup(role: 'site_admin' | 'content_editor' | null = 'site_admin', memberships = [membership()]) {
+type StaffRole = 'site_admin' | 'content_editor' | 'platform_admin' | 'support_admin' | 'billing_admin' | null;
+const CAPS: Record<string, string[]> = {
+  platform_admin: ['orgs.suspend', 'plans.assign', 'platform.read', 'signup_codes.manage', 'users.suspend'],
+  support_admin: ['platform.read', 'users.suspend'], billing_admin: ['plans.assign', 'platform.read'],
+};
+
+function setup(role: StaffRole = 'site_admin', memberships = [membership()]) {
   TestBed.configureTestingModule({
     providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
   });
-  TestBed.inject(AuthService).me.set(me(memberships, { platform_role: role }));
+  TestBed.inject(AuthService).me.set(me(memberships, { platform_role: role, platform_caps: CAPS[role ?? ''] ?? [] }));
   return TestBed.inject(HttpTestingController);
 }
 
@@ -32,7 +38,7 @@ const lead = {
   spam_reason: null, spam_reason_text: null, created_at: '2026-11-15T10:00:00Z', updated_at: '2026-11-15T10:00:00Z', notes: [],
 };
 
-describe('Website admin access', () => {
+describe('Outlogik admin access', () => {
   const run = <T>(fn: () => T) => TestBed.runInInjectionContext(fn);
   const url = (tree: unknown) => TestBed.inject(Router).serializeUrl(tree as UrlTree);
   /** Runs a guard, answering its /me request with the user set up by setup(). */
@@ -42,12 +48,27 @@ describe('Website admin access', () => {
     TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/me').flush(user);
     return result;
   }
-  const guard = () => check(() => siteAdminGuard({} as ActivatedRouteSnapshot, { url: '/admin' } as RouterStateSnapshot));
+  const guard = () => check(() => staffAreaGuard({} as ActivatedRouteSnapshot, { url: '/admin' } as RouterStateSnapshot));
+  const routeWith = (data: Record<string, string>) => ({ data } as unknown as ActivatedRouteSnapshot);
 
-  it('lets site admins in and switches the app to the admin area', async () => {
+  it.each(['site_admin', 'platform_admin', 'support_admin', 'billing_admin'] as const)(
+    'lets staff in and switches the app to the admin area (%s)', async (role) => {
+      setup(role);
+      expect(await guard()).toBe(true);
+      expect(TestBed.inject(CurrentOrgService).area()).toBe('admin');
+    });
+
+  it('keeps website pages for site admins and platform pages for platform staff', () => {
+    setup('support_admin');
+    expect(url(run(() => websiteAdminGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)))).toBe('/admin');
+    expect(run(() => platformGuard(routeWith({}), {} as RouterStateSnapshot))).toBe(true);
+    expect(url(run(() => platformGuard(routeWith({ cap: 'signup_codes.manage' }), {} as RouterStateSnapshot)))).toBe('/not-found');
+    expect(url(run(() => adminHomeRedirect({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)))).toBe('/admin/platform');
+    TestBed.resetTestingModule();
     setup('site_admin');
-    expect(await guard()).toBe(true);
-    expect(TestBed.inject(CurrentOrgService).area()).toBe('admin');
+    expect(run(() => websiteAdminGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot))).toBe(true);
+    expect(url(run(() => platformGuard(routeWith({}), {} as RouterStateSnapshot)))).toBe('/not-found');
+    expect(url(run(() => adminHomeRedirect({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)))).toBe('/admin/leads');
   });
 
   it.each([null, 'content_editor'] as const)('shows "not found" to everyone else (%s)', async (role) => {
@@ -73,7 +94,16 @@ describe('Website admin access', () => {
       ['Inbox', '/admin/leads'], ['Newsletter', '/admin/newsletter'],
       ['Settings', '/admin/settings'], ['Portal features', '/admin/portal-features'],
     ]);
-    expect(el.textContent).toContain('Website admin');
+    expect(el.textContent).toContain('Outlogik admin');
+  });
+
+  it('shows platform staff the platform pages their role allows', () => {
+    setup('billing_admin');
+    TestBed.inject(CurrentOrgService).area.set('admin');
+    const fixture = TestBed.createComponent(Sidebar);
+    fixture.detectChanges();
+    const links = [...(fixture.nativeElement as HTMLElement).querySelectorAll('nav a')].map((a) => a.textContent!.trim());
+    expect(links).toEqual(['Overview', 'Organizations', 'Users']);
   });
 
   it('offers the admin area in the workspace menu to site admins only', () => {
@@ -86,7 +116,7 @@ describe('Website admin access', () => {
       (fixture.nativeElement.querySelector('.org-switcher') as HTMLButtonElement).click();
       fixture.detectChanges();
       const items = [...document.querySelectorAll('.ol-menu [role="menuitemradio"]')].map((i) => i.textContent!.trim());
-      expect(items.some((t) => t.includes('Website admin'))).toBe(role === 'site_admin');
+      expect(items.some((t) => t.includes('Outlogik admin'))).toBe(role === 'site_admin');
       fixture.destroy();
     }
   });

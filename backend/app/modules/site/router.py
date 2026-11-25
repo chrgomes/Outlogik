@@ -31,7 +31,8 @@ def public_site(db: DB, response: Response) -> PublicSiteOut:
     response.headers["Cache-Control"] = PUBLIC_CACHE
     return PublicSiteOut(settings=service.read_settings(db),
                          portal_features=service.list_features(db, include_hidden=False),
-                         signup_open=app_settings().signup_mode == "open")
+                         signup_open=app_settings().signup_mode != "invite_only",
+                         signup_code_required=app_settings().signup_mode == "code")
 
 
 @admin.get("/site/settings", response_model=AdminSettingsOut)

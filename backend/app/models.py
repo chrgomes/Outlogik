@@ -25,6 +25,7 @@ from app.modules.plans.models import Plan, PlanEntitlement, Subscription
 from app.modules.rbac.models import Permission, Role, RolePermission
 from app.modules.reports.models import Report
 from app.modules.site.models import PortalFeature, SiteSettings
+from app.modules.superadmin.models import SignupCode
 from app.modules.users.models import User
 from app.modules.websites.models import Website
 from app.modules.workspaces.models import Workspace, WorkspaceAssignment
@@ -61,6 +62,7 @@ __all__ = [
     "Report",
     "Role",
     "RolePermission",
+    "SignupCode",
     "SiteSettings",
     "Subscription",
     "UsageRecord",

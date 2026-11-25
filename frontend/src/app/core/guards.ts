@@ -24,7 +24,8 @@ export const homeRedirect: CanActivateFn = async () => {
   if (!me) return router.createUrlTree(['/login']);
   const first = me.memberships[0];
   if (first) return router.createUrlTree(['/o', first.organization_slug]);
-  return router.createUrlTree([me.user.platform_role === 'site_admin' ? '/admin' : '/no-organization']);
+  const staff = me.user.platform_role === 'site_admin' || (me.user.platform_caps ?? []).includes('platform.read');
+  return router.createUrlTree([staff ? '/admin' : '/no-organization']);
 };
 
 /**
@@ -37,26 +38,43 @@ export const orgGuard: CanActivateFn = async (route) => {
   const currentOrg = inject(CurrentOrgService);
   const me = await inject(AuthService).ensureLoaded();
   if (!me) return false; // authGuard redirects to sign-in
-  if (!me.memberships.some((m) => m.organization_slug === slug)) {
-    return router.createUrlTree(['/not-found']);
-  }
+  const membership = me.memberships.find((m) => m.organization_slug === slug);
+  if (!membership) return router.createUrlTree(['/not-found']);
+  if (membership.organization_status === 'suspended') return router.createUrlTree(['/suspended', slug]);
   currentOrg.slug.set(slug);
   currentOrg.area.set('org');
   return true;
 };
 
 /**
- * /admin: Outlogik site admins only. Everyone else sees "not found", matching the API, which
- * answers 404 so the admin area doesn't reveal itself.
+ * /admin: Outlogik staff only (the website admin, the platform area, or both). Everyone else
+ * sees "not found", matching the API, which answers 404 so the admin area doesn't reveal itself.
  */
-export const siteAdminGuard: CanActivateFn = async (_route, state) => {
+export const staffAreaGuard: CanActivateFn = async (_route, state) => {
   const router = inject(Router);
   const currentOrg = inject(CurrentOrgService); // before any await: inject() needs the guard's context
-  const me = await inject(AuthService).ensureLoaded();
+  const auth = inject(AuthService);
+  const me = await auth.ensureLoaded();
   if (!me) return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
-  if (me.user.platform_role !== 'site_admin') return router.createUrlTree(['/not-found']);
+  if (!auth.isStaff()) return router.createUrlTree(['/not-found']);
   currentOrg.area.set('admin');
   return true;
+};
+
+/** /admin pages for the website (leads, newsletter, settings): site admins only. */
+export const websiteAdminGuard: CanActivateFn = () =>
+  inject(AuthService).isSiteAdmin() || inject(Router).createUrlTree(['/admin']);
+
+/** /admin/platform pages: staff with the capability in the route's data (default platform.read). */
+export const platformGuard: CanActivateFn = (route) => {
+  const cap = (route.data['cap'] as string | undefined) ?? 'platform.read';
+  return inject(AuthService).platformCaps().has(cap) || inject(Router).createUrlTree(['/not-found']);
+};
+
+/** /admin → the first page this staff member can open. */
+export const adminHomeRedirect: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  return inject(Router).createUrlTree(['/admin', auth.isPlatformStaff() ? 'platform' : 'leads']);
 };
 
 /** Pages that need a permission show "no access" instead (the API also refuses). */

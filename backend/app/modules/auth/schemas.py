@@ -22,6 +22,8 @@ class RegisterIn(BaseModel):
     organization_name: Name
     # business: markets itself. agency: also manages clients' marketing.
     account_type: AccountType = "agency"
+    # Needed when SIGNUP_MODE=code (the beta)
+    signup_code: Annotated[str | None, Field(max_length=40)] = None
 
 
 class LoginIn(BaseModel):
@@ -61,8 +63,11 @@ class UserOut(BaseModel):
     email: str
     full_name: str
     is_super_admin: bool
-    # "content_editor" or "site_admin" for Outlogik staff (Super Admins report "site_admin")
+    # Outlogik staff: "content_editor", "site_admin", "platform_admin", "support_admin" or
+    # "billing_admin" (Super Admins report "site_admin")
     platform_role: str | None = None
+    # What staff may do in the platform (Super Admin) area; empty for everyone else
+    platform_caps: list[str] = []
     email_verified_at: datetime | None
     created_at: datetime
 

@@ -88,7 +88,9 @@ def test_every_admin_route_requires_a_staff_role():
                 d = stack.pop()
                 deps.append(d)
                 stack.extend(d.dependencies)
-            assert any(hasattr(d.call, "staff_roles") for d in deps), rc.path
+            # Website admin routes check a staff role; platform routes a capability (H1-11).
+            assert any(hasattr(d.call, "staff_roles") or hasattr(d.call, "platform_cap")
+                       for d in deps), rc.path
             checked += 1
     assert checked >= 4
 

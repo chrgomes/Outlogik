@@ -263,6 +263,38 @@ python -m app.cli grant-staff --email you@outlogik.com --role site_admin
 
 Sign in at `https://app.staging.outlogik.com`. Invite colleagues and clients from the app.
 
+**You as Super Admin.** To use the platform area (Outlogik admin → Platform: organizations,
+users, plans, suspensions, invitation codes), make your account a Super Admin:
+
+```bash
+python -m app.cli create-super-admin --email you@outlogik.com --name "Your Name"
+```
+
+**Other Outlogik staff** get one role each (they need an account first, for example an
+invitation to the Outlogik organization):
+
+```bash
+python -m app.cli grant-staff --email colleague@outlogik.com --role support_admin
+```
+
+| Role | Can |
+|---|---|
+| `platform_admin` | Everything in the platform area: organizations, users, plans, suspensions, invitation codes |
+| `support_admin` | See organizations and users; suspend and reactivate users |
+| `billing_admin` | See organizations and users; assign plans and trials |
+| `site_admin` | The website admin (leads, newsletter, website settings) |
+| `content_editor` | Website content (later) |
+
+Super Admins can do all of these. `python -m app.cli revoke-staff --email …` removes a role.
+Every change staff make is recorded, with who made it.
+
+**Opening the beta.** Sign-up starts invite-only. To let people sign up with an invitation code,
+set `SIGNUP_MODE` to `code` on both the **api** and **worker** components and redeploy. Then
+make codes in Outlogik admin → **Invitation codes** (one per group, so you can see where
+sign-ups came from) and send people `https://app.outlogik.com/register?code=THE-CODE`, which
+fills the code in for them. A code can be limited to businesses or agencies, to a number of
+uses, and to a number of days; it's shown once, when made, and can be revoked.
+
 **Plans.** New organizations start on a 14-day free trial. Organizations created with the
 command above get one too, unless you add `--plan agency_business` (or another plan). To give
 an organization a plan (until billing exists), in the same console:
@@ -372,5 +404,7 @@ a `downgrade`).
       reviewed, ideally by a lawyer
 - [ ] Google Search Console and Bing: domain verified, sitemap submitted
 - [ ] Uptime checks and database alerts set
+- [ ] Your account is a Super Admin; other staff have their roles (`grant-staff`)
+- [ ] When the beta opens: `SIGNUP_MODE=code` on api and worker, invitation codes made
 - [ ] Google: APIs enabled, consent screen, OAuth client, secrets on api and worker; app
       published and verified before clients outside the test-user list connect

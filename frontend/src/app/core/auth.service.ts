@@ -21,6 +21,11 @@ export class AuthService {
   readonly memberships = computed(() => this.me()?.memberships ?? []);
   /** Outlogik staff who can use the website admin area (/admin). */
   readonly isSiteAdmin = computed(() => this.user()?.platform_role === 'site_admin');
+  /** Outlogik staff who can use the platform (Super Admin) area, and what they may do there. */
+  readonly platformCaps = computed(() => new Set(this.user()?.platform_caps ?? []));
+  readonly isPlatformStaff = computed(() => this.platformCaps().has('platform.read'));
+  /** Anyone allowed into /admin: the website admin, the platform area, or both. */
+  readonly isStaff = computed(() => this.isSiteAdmin() || this.isPlatformStaff());
   private loading: Promise<Me | null> | null = null;
   private loaded = false;
 
@@ -66,7 +71,7 @@ export class AuthService {
 
   async register(body: {
     email: string; password: string; full_name: string; organization_name: string;
-    account_type: AccountType;
+    account_type: AccountType; signup_code?: string;
   }): Promise<Me> {
     return this.signedIn(this.http.post<Me>(`${API}/register`, body));
   }

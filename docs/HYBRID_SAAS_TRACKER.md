@@ -17,8 +17,134 @@ unfinished, security notes, and what's next.
 | H1-8 Dashboards | **Done** (2026-11-19) |
 | H1-9 Basic reporting | **Done** (2026-11-24) |
 | H1-10 Client portal on workspaces | **Done** (2026-11-24) |
-| H1-11 Self-serve sign-up and basic Super Admin | Next |
-| H1-12 H1 review | Not started |
+| H1-11 Self-serve sign-up and basic Super Admin | **Done** (2026-11-25) |
+| H1-12 H1 review | Next |
+
+---
+
+## H1-11: Sign-up with invitation codes, and a basic Super Admin area
+
+### 1. What was completed
+
+- **Sign-up for the beta** (decision D7): a new sign-up mode, `code`. Anyone with an invitation
+  code can create a business or agency account; without one, sign-up says so.
+  - Codes look like `K7PM-3QXR-9TWD`, can be typed in any case, with or without dashes, and a
+    link like `/register?code=…` fills the code in.
+  - A code can be limited to businesses or agencies, to a number of uses and to a number of
+    days, and can be revoked. Each organization remembers which code it signed up with.
+  - Sign-up stays invite-only until you switch to `code` (DEPLOYMENT.md has the steps).
+- **Outlogik staff roles:**
+
+  | Role | Can |
+  |---|---|
+  | Super Admin | Everything |
+  | Platform admin | Organizations, users, plans, suspensions, invitation codes |
+  | Support admin | See organizations and users; suspend and reactivate users |
+  | Billing admin | See organizations and users; assign plans and trials |
+  | Site admin, content editor | The website admin, as before |
+
+- **A Platform section in Outlogik admin:**
+  - **Overview:** businesses, agencies, new organizations, users, suspensions, plans (trial,
+    trial ended, active, past due or cancelled), active clients and websites, active codes,
+    and background job health (waiting, running, failed, gave up), with warnings highlighted.
+    No revenue, because plans are assigned by hand until billing exists.
+  - **Organizations:** search and filter; each one's plan, limits and usage, members, the code
+    it signed up with, and every staff change with who made it. **Assign a plan or a trial**,
+    and **suspend or reactivate** with a reason.
+  - **Users:** search and filter; each person's organizations and staff changes; **suspend or
+    reactivate** with a reason (they're signed out everywhere).
+  - **Invitation codes:** make (the code is shown once), list with uses and status, revoke.
+- **Suspensions take effect everywhere:**
+  - Members of a suspended organization see a clear "suspended" page instead of failing pages,
+    including if it's suspended while they're using it.
+  - Its scheduled audits and Google syncs stop.
+  - Agencies lose access to a suspended business's shared workspace.
+  - Nothing is deleted; reactivating restores everything.
+- **Every staff action is recorded** with who did it, and shown on the organization or user.
+
+The full control centre (feature flags, logs, email templates, integration management and so
+on) is H1.5, as planned.
+
+### 2. Files changed
+
+**Backend:**
+- New module `superadmin/`: `models.py` (invitation codes), `codes.py`, `schemas.py`,
+  `router.py`.
+- `platform.py` (staff roles and capabilities), `users/models.py` (roles, suspension reason),
+  `organizations/models.py` (suspension reason, sign-up code), `auth/` (sign-up with a code;
+  staff capabilities in `/auth/me`), `core/config.py` (`SIGNUP_MODE=code`), `site/` (the app
+  learns a code is needed), `tenancy/context.py` (suspended businesses' shared workspaces left
+  out), `audits/service.py` and `integrations/sync.py` (skip suspended organizations).
+- Migration `0019`.
+- Tests: new `test_superadmin.py`; the admin route test also accepts capability checks.
+
+**App:**
+- New `features/platform/` (overview, organizations, organization, users, user, invitation
+  codes, the reason dialog, tests) and `features/system/suspended.ts`.
+- Guards (`staffAreaGuard`, `websiteAdminGuard`, `platformGuard`, `adminHomeRedirect`; the
+  suspended redirect), routes, the admin menu (by capability), the top bar ("Outlogik
+  admin"), the sign-up page (invitation code), the session interceptor (suspended mid-session).
+
+**Docs:** `DEPLOYMENT.md` (Super Admin, staff roles, opening the beta), `ARCHITECTURE.md`,
+`SECURITY.md`, `HYBRID_SAAS_PLAN.md`, `.env.example`, this tracker.
+
+### 3. Database changes (migration `0019`)
+
+| Change | Existing data |
+|---|---|
+| `signup_codes` (hash, last four characters, label, account type, uses and limit, expiry, revoked) | None |
+| `organizations.suspended_reason`, `organizations.signup_code_id` | Empty |
+| `users.suspended_reason` | Empty |
+| Staff roles allowed: also `platform_admin`, `support_admin`, `billing_admin` | Unchanged |
+
+Run up, down and up again; the test suite builds from it.
+
+### 4. Tests
+
+| Suite | Result |
+|---|---|
+| Backend (pytest) | **516 passed** (was 497) |
+| App (Vitest) | **164 passed** (was 148) |
+| Website (Vitest) | 93 passed (unchanged) |
+
+The new backend tests cover:
+- signing up with a code (any case, with or without dashes); missing or wrong codes; codes
+  for one account type, used up, expired or revoked; codes never listed after they're made
+- what each staff role can and can't do, and customers not finding the API at all
+- the overview's counts; organizations search, filters and detail; users search
+- assigning a plan (trials need a length; a plan for the wrong account type is refused)
+- suspending an organization (members refused, scheduled audits skipped, reactivated) and a
+  business shared with an agency disappearing from it
+- suspending a user (signed out, can't sign in); not yourself; staff only by a Super Admin
+
+**Browser check:** a platform admin made a code; someone signed up with its link; the admin
+assigned a plan, suspended the organization (its member saw the suspended page) and
+reactivated it, with each step in the history; a support admin saw no codes page. An axe scan
+of every page found no problems (it caught faint text on the warning tiles, fixed); no
+sideways scrolling on a phone.
+
+### 5. Unfinished (on purpose)
+
+- **The full control centre** (feature flags, logs, email templates, integration and AI
+  settings, announcements, maintenance mode) is H1.5.
+- **Staff roles are granted with the command line**, not in the app, so nobody can give
+  themselves more access from a browser.
+- **Revenue** isn't shown until billing exists (H3).
+- **Sign-up stays invite-only** until you set `SIGNUP_MODE=code`.
+
+### 6. Security notes
+
+- Platform endpoints answer 404 to anyone without the capability; a test checks every admin
+  route has a staff check.
+- Invitation codes are stored hashed, shown once, about 60 bits, and counted under a row lock.
+- Suspending needs a reason, can't target yourself (or other staff, unless you're a Super
+  Admin), signs users out, and is recorded.
+- A suspended business's shared workspace is left out of its agency's access in the request
+  context itself.
+
+### 7. Next: H1-12 the H1 review
+
+A security review, the isolation tests, and a staging deployment for an internal alpha.
 
 ---
 

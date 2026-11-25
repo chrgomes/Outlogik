@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { apiProblem, applyFieldErrors } from '../../core/api-errors';
 import { AccountType } from '../../core/api.types';
@@ -30,6 +30,16 @@ import { FieldError, PasswordInput, showError } from '../../shared/forms/forms';
     }
 
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @if (signup.codeRequired()) {
+        <div class="mb-3">
+          <label for="signup_code" class="form-label">Invitation code</label>
+          <input id="signup_code" class="form-control" formControlName="signup_code" autocomplete="off"
+            autocapitalize="characters" spellcheck="false" aria-describedby="signup-code-hint"
+            [class.is-invalid]="invalid('signup_code')" />
+          <ol-field-error [control]="form.controls.signup_code" />
+          <div id="signup-code-hint" class="form-text">Outlogik is in a private beta. Enter the code you were given.</div>
+        </div>
+      }
       <fieldset class="mb-3">
         <legend class="form-label fs-6 mb-2">Who is the account for?</legend>
         @for (t of accountTypes; track t.value) {
@@ -96,6 +106,8 @@ export class Register {
     organization_name: ['', [Validators.required, Validators.maxLength(200)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128)]],
+    // During the beta; a link like /register?code=K7PM-3QXR-9TWD fills it in.
+    signup_code: [inject(ActivatedRoute).snapshot.queryParamMap.get('code') ?? '', [Validators.maxLength(40)]],
   });
   private readonly accountType = toSignal(this.form.controls.account_type.valueChanges,
     { initialValue: this.form.controls.account_type.value });
@@ -111,13 +123,18 @@ export class Register {
   protected async submit(): Promise<void> {
     this.error.set(null);
     this.emailTaken.set(false);
+    const code = this.form.controls.signup_code;
+    if (this.signup.codeRequired() && !code.value.trim()) {
+      code.setErrors({ server: 'Enter the invitation code you were given.' });
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
     this.busy.set(true);
     try {
-      const me = await this.auth.register(this.form.getRawValue());
+      const { signup_code, ...rest } = this.form.getRawValue();
+      const me = await this.auth.register(this.signup.codeRequired() ? { ...rest, signup_code: signup_code.trim() } : rest);
       await this.router.navigate(['/o', me.memberships[0].organization_slug]);
     } catch (err) {
       const problem = apiProblem(err);

@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 
 from fastapi import Depends, Path
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.core.db import get_db, set_tenant
 from app.core.errors import Forbidden, NotFound
@@ -87,9 +87,13 @@ def load_org_context(db: Session, user: User, org_slug: str) -> OrgContext:
     from app.modules.grants.models import WorkspaceGrant
     from app.modules.workspaces.models import Workspace, WorkspaceAssignment
 
+    # Workspaces businesses shared with this agency, unless that business is suspended
+    owner = aliased(Organization)
     linked = dict(db.execute(
-        select(WorkspaceGrant.workspace_id, WorkspaceGrant.access).where(
-            WorkspaceGrant.agency_organization_id == org.id, WorkspaceGrant.status == "active")
+        select(WorkspaceGrant.workspace_id, WorkspaceGrant.access)
+        .join(owner, owner.id == WorkspaceGrant.organization_id)
+        .where(WorkspaceGrant.agency_organization_id == org.id, WorkspaceGrant.status == "active",
+               owner.status == "active")
     ).all())
     workspace_ids = client_ids = None
     if role.workspace_scope == ASSIGNED_WORKSPACES:

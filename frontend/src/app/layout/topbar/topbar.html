@@ -14,7 +14,7 @@
   @if (org.area() === 'admin') {
     <span class="org-badge" aria-hidden="true"><ol-icon name="sliders" /></span>
     <span class="org-text">
-      <span class="org-name">Website admin</span>
+      <span class="org-name">Outlogik admin</span>
       <span class="org-role">Outlogik staff</span>
     </span>
   } @else {
@@ -47,7 +47,7 @@
         }
       </button>
     }
-    @if (auth.isSiteAdmin()) {
+    @if (auth.isStaff()) {
       <div class="ol-menu-divider" role="separator"></div>
       <div class="ol-menu-label">Outlogik staff</div>
       <button
@@ -58,7 +58,7 @@
         (cdkMenuItemTriggered)="openAdmin()"
       >
         <ol-icon name="sliders" />
-        <span class="flex-grow-1">Website admin</span>
+        <span class="flex-grow-1">Outlogik admin</span>
         @if (org.area() === 'admin') {
           <ol-icon name="check2" class="ol-menu-check" />
         }

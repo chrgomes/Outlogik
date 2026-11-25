@@ -127,6 +127,61 @@ describe('Invite-only sign-up', () => {
 });
 
 describe('Register page', () => {
+  it('asks for the invitation code during the beta, and fills it in from the link', async () => {
+    const http = setup();
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/register?code=K7PM-3QXR-9TWD');
+    http.expectOne('/api/v1/public/site').flush({ signup_open: true, signup_code_required: true });
+    harness.detectChanges();
+    const el = harness.routeNativeElement!;
+    expect((el.querySelector('#signup_code') as HTMLInputElement).value).toBe('K7PM-3QXR-9TWD');
+    type(el, '#full_name', 'Olive');
+    type(el, '#organization_name', 'Acme');
+    type(el, '#email', 'olive@acme.example.com');
+    type(el, '#password', 'correct horse battery');
+    el.querySelector('form')!.dispatchEvent(new Event('submit'));
+    const req = http.expectOne(`${API}/register`);
+    expect(req.request.body.signup_code).toBe('K7PM-3QXR-9TWD');
+    req.flush({ error: { code: 'signup_code_invalid', message: 'That invitation code has expired.',
+      details: [{ field: 'signup_code', message: 'That invitation code has expired.' }] } },
+    { status: 400, statusText: 'Bad Request' });
+    await settle();
+    harness.detectChanges();
+    expect(el.querySelector('#signup_code')!.classList).toContain('is-invalid');
+    expect(el.textContent).toContain('That invitation code has expired.');
+  });
+
+  it('needs the code before sending, and leaves it out when sign-up is open', async () => {
+    let http = setup();
+    let harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/register');
+    http.expectOne('/api/v1/public/site').flush({ signup_open: true, signup_code_required: true });
+    harness.detectChanges();
+    let el = harness.routeNativeElement!;
+    type(el, '#full_name', 'Olive');
+    type(el, '#organization_name', 'Acme');
+    type(el, '#email', 'olive@acme.example.com');
+    type(el, '#password', 'correct horse battery');
+    el.querySelector('form')!.dispatchEvent(new Event('submit'));
+    harness.detectChanges();
+    http.expectNone(`${API}/register`);
+    expect(el.textContent).toContain('Enter the invitation code you were given.');
+    TestBed.resetTestingModule();
+    http = setup();
+    harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/register');
+    http.expectOne('/api/v1/public/site').flush({ signup_open: true });
+    harness.detectChanges();
+    el = harness.routeNativeElement!;
+    expect(el.querySelector('#signup_code')).toBeNull();
+    type(el, '#full_name', 'Olive');
+    type(el, '#organization_name', 'Acme');
+    type(el, '#email', 'olive@acme.example.com');
+    type(el, '#password', 'correct horse battery');
+    el.querySelector('form')!.dispatchEvent(new Event('submit'));
+    expect('signup_code' in http.expectOne(`${API}/register`).request.body).toBe(false);
+  });
+
   it('shows "email taken" on the email field with a sign-in link', async () => {
     const http = setup();
     const harness = await RouterTestingHarness.create();

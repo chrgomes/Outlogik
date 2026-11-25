@@ -13,9 +13,9 @@
   }
 </div>
 
-<nav [attr.aria-label]="admin() ? 'Website admin' : 'Main'">
+<nav [attr.aria-label]="admin() ? 'Outlogik admin' : 'Main'">
   @if (admin() && !collapsed()) {
-    <div class="area-label">Website admin</div>
+    <div class="area-label">Outlogik admin</div>
   }
   @for (section of sections(); track $index) {
     @if (section.label) {

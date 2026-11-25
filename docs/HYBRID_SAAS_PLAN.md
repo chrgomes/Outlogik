@@ -266,7 +266,7 @@ counts as done only when its backend, storage, permissions, error handling and t
 | H1-8 ✅ | **Business and agency dashboards:** ECharts, real data only, empty states that explain how to connect. Approved 2026-11-19 (mockup): a plain-words "what changed" summary; period choice (7, 28, 90 days or custom) compared with the period before or the same period last year; top pages; searches in positions 8–20; pages shown in search but rarely clicked; audit errors and warnings over time. Agencies: sort and filter clients, account manager and last review per client, a client report link (reports themselves are H1-9) | §9 |
 | H1-9 ✅ | **Basic reporting:** SEO and analytics reports per workspace, PDF and CSV | §10 |
 | H1-10 ✅ | **Client portal on workspaces:** Client Viewer sees the dashboard, audits and reports, never agency-wide or internal data | §7 |
-| H1-11 | **Self-serve sign-up and basic Super Admin:** choose business or agency at sign-up (behind an invitation code during beta); Super Admin lists organizations and users, assigns plans, suspends accounts; platform roles (platform, support and billing admin) | §13, §23 |
+| H1-11 ✅ | **Self-serve sign-up and basic Super Admin:** choose business or agency at sign-up (behind an invitation code during beta); Super Admin lists organizations and users, assigns plans, suspends accounts; platform roles (platform, support and billing admin) | §13, §23 |
 | H1-12 | **H1 review:** security review, isolation tests, staging deployment for an internal alpha | §21 |
 
 **Dashboard items decided 2026-11-19:**

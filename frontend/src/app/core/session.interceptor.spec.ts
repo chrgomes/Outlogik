@@ -44,3 +44,29 @@ describe('sessionInterceptor', () => {
     expect(router.url).toBe('/login');
   });
 });
+
+describe('sessionInterceptor: a suspended organization', () => {
+  it('reloads who we are and shows the suspended page', async () => {
+    const { TestBed } = await import('@angular/core/testing');
+    const { provideHttpClient, withInterceptors, HttpClient } = await import('@angular/common/http');
+    const { provideHttpClientTesting, HttpTestingController } = await import('@angular/common/http/testing');
+    const { provideRouter, Router } = await import('@angular/router');
+    const { firstValueFrom } = await import('rxjs');
+    const { AuthService } = await import('./auth.service');
+    const { sessionInterceptor } = await import('./session.interceptor');
+    const { me } = await import('../../testing/fixtures');
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [provideHttpClient(withInterceptors([sessionInterceptor])),
+      provideHttpClientTesting(), provideRouter([{ path: '**', children: [] }])] });
+    TestBed.inject(AuthService).me.set(me());
+    const http = TestBed.inject(HttpTestingController);
+    const call = firstValueFrom(TestBed.inject(HttpClient).get('/api/v1/orgs/acme/websites')).catch(() => null);
+    http.expectOne('/api/v1/orgs/acme/websites').flush(
+      { error: { code: 'org_suspended', message: 'This organization is suspended.', details: null } },
+      { status: 403, statusText: 'Forbidden' });
+    await call;
+    http.expectOne('/api/v1/auth/me').flush(me());
+    await new Promise((r) => setTimeout(r));
+    expect(TestBed.inject(Router).url).toBe('/suspended/acme');
+  });
+});

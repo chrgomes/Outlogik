@@ -40,7 +40,8 @@ schemas, service functions and router.
 | `modules/dashboard` | The dashboards: one workspace for a chosen period (`analytics.py`), every workspace side by side for agencies (`overview.py`), reviews, recent activity |
 | `modules/audit` | The append-only audit log |
 | `modules/site` | Marketing site settings and product module statuses (public and admin API) |
-| `platform.py` | Outlogik staff roles (`content_editor`, `site_admin`) and `require_staff(...)` for `/api/v1/admin/...` |
+| `platform.py` | Outlogik staff roles and what each may do: `require_staff(...)` for the website admin (`content_editor`, `site_admin`), `require_platform(cap)` for the platform area (`platform_admin`, `support_admin`, `billing_admin`; Super Admins can do everything) |
+| `modules/superadmin` | The platform (Super Admin) API at `/api/v1/admin/platform`: overview, organizations (plan, suspend), users (suspend), invitation codes (`codes.py`) |
 | `cli.py` | Admin commands (create a Super Admin, create an organization with `--kind business` or `agency`, grant or revoke staff roles, sync permissions) |
 
 Conventions:

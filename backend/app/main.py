@@ -31,6 +31,7 @@ from app.modules.reports.router import router as reports_router
 from app.modules.site import service as site_service
 from app.modules.site.router import admin as site_admin_router
 from app.modules.site.router import public as site_public_router
+from app.modules.superadmin.router import router as superadmin_router
 from app.modules.websites.router import router as websites_router
 from app.modules.websites.router import workspace_router as workspace_websites_router
 from app.modules.workspaces.router import members_router as member_workspaces_router
@@ -88,6 +89,7 @@ def create_app() -> FastAPI:
     api.include_router(leads_open_router)
     api.include_router(leads_admin_router)
     api.include_router(site_admin_router)
+    api.include_router(superadmin_router)
     app.include_router(api)
     return app
 

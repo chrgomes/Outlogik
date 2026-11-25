@@ -39,6 +39,19 @@ deployment must add. Each item is covered by backend or frontend tests unless no
   and emails the person, so a change they didn't make doesn't go unnoticed. Name changes are
   recorded in the audit log.
 - **Super Admins** can only be created with the CLI.
+- **Outlogik staff roles** (H1-11), one per person, granted with the CLI only:
+  `platform_admin`, `support_admin`, `billing_admin` for the platform area, `site_admin` and
+  `content_editor` for the website admin. Each platform endpoint checks a capability
+  (`require_platform`), and anyone without it gets 404, so the API doesn't reveal itself; a
+  test checks every `/api/v1/admin` route has a staff or capability check.
+- **Suspending** needs a reason, signs a user out everywhere, and is recorded with who did it.
+  Staff can't suspend themselves; only Super Admins can suspend other staff. A suspended
+  organization's members are refused, its scheduled audits and Google syncs stop, and
+  agencies lose access to a suspended business's shared workspace. Nothing is deleted.
+- **Invitation codes** (SIGNUP_MODE=code): 12 characters from an alphabet without look-alikes
+  (about 60 bits); only a hash is stored, the code is shown once; the row is locked while a
+  use is counted, so a limited code can't be used twice at once; registration stays
+  rate-limited.
 - **Sign-up is invite-only by default** (`SIGNUP_MODE=invite_only`): clients and staff join through invitations, and organizations are created with the CLI.
 
 ## Requests

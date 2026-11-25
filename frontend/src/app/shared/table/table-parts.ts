@@ -84,6 +84,10 @@ const STATUS_STYLES: Record<string, string> = {
   in_development: 'text-bg-warning-subtle', hidden: 'text-bg-secondary-subtle',
   // Agency access grants
   revoked: 'text-bg-secondary-subtle',
+  // Platform admin: organizations, users, plans, sign-up codes
+  suspended: 'text-bg-danger-subtle', trialing: 'text-bg-secondary-subtle',
+  trial_ended: 'text-bg-warning-subtle', past_due: 'text-bg-warning-subtle',
+  cancelled: 'text-bg-secondary-subtle', used_up: 'text-bg-secondary-subtle',
 };
 
 /** A small status label: Active, Archived, Paused, Disabled, Pending, Expired. */

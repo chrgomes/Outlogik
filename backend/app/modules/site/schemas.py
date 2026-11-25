@@ -101,6 +101,8 @@ class PublicSiteOut(BaseModel):
     portal_features: list[PortalFeatureOut]
     # False when the app is invite-only: the sign-in page then doesn't offer "Create an account".
     signup_open: bool
+    # During the beta, signing up needs an invitation code (SIGNUP_MODE=code)
+    signup_code_required: bool = False
 
 
 class AdminSettingsOut(BaseModel):
